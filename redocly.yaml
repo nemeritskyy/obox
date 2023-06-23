@@ -22,3 +22,5 @@ paths:
                 type: array
                 items: 
                   type: string
+extends:
+  - recommended
