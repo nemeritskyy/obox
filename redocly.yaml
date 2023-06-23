@@ -78,3 +78,6 @@ components:
     basic_auth:
       type: http
       scheme: basic
+
+extends:
+  - recommended
