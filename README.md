@@ -1,5 +1,5 @@
 # Tools for local using project on your PC
-## _Recomend to use directories and password's as tutorial_
+## _Recommend to use directories and password's as tutorial_
 ## _Install Java JDK:_
 For Windows x64 you can use fast link:  
 https://download.oracle.com/java/19/archive/jdk-19.0.2_windows-x64_bin.exe  
@@ -7,7 +7,7 @@ For other:
 https://www.oracle.com/java/technologies/javase/jdk19-archive-downloads.html  
 
 Run installer with Administrator rights  
-Select destination folder, I recomend create folder for backend tools, for example: C:\obox\java  
+Select destination folder, I recommend create folder for backend tools, for example: C:\obox\java  
 ![N|Solid](https://nemeritskyy.pp.ua/obox/0.png)
 
 ## _Download Apache Tomcat Server with link:_
@@ -27,7 +27,7 @@ https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.10/bin/apache-tomcat-10.1.10.exe
 
 > For test open in your browser: http://localhost:8080  
 > My congratulations, we are halfway to success!  
-> Add war file from repository to directory C:\obox\tomcat\webapps and open your browser http://localhost:8080/obox/
+> Add war file from folder war to directory C:\obox\tomcat\webapps and open your browser http://localhost:8080/obox/
 
 ## _Install MySQL_
 Fast link Windows (x86, 32-bit), MSI Installer:  
