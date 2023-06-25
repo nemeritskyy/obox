@@ -27,7 +27,7 @@ https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.10/bin/apache-tomcat-10.1.10.exe
 
 > For test open in your browser: http://localhost:8080  
 > My congratulations, we are halfway to success!  
-> Add war file from folder war to directory C:\obox\tomcat\webapps and open your browser http://localhost:8080/obox/
+> Add war file from folder releases to directory C:\obox\tomcat\webapps and open your browser http://localhost:8080/obox/
 
 ## _Install MySQL_
 Fast link Windows (x86, 32-bit), MSI Installer:  
