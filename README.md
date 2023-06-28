@@ -1,3 +1,6 @@
+# OpenAPI Swagger
+http://localhost:8080/swagger-ui  
+http://localhost:8080/v3/api-docs  
 # Tools for local using project on your PC
 ## _Recommend to use directories and password's as tutorial_
 ## _Install Java JDK:_
