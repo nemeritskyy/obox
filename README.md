@@ -1,8 +1,12 @@
 # OpenAPI Swagger
 http://localhost:8080/obox/swagger-ui/index.html  
+>Now there is a setting that after restarting the server your user data will be deleted  
 If you need use already created user please use  
 login: admin@mail.com  
 password: password  
+# POSTMAN
+[My workspace for fast application testing](https://www.postman.com/orbital-module-participant-50713643/workspace/obox/request/28060010-cc530140-600d-4a66-a686-daa7d908d6c1)  
+![N|Solid](https://nemeritskyy.pp.ua/obox/24.png)  
 # Tools for local using project on your PC
 ## _Recommend to use directories and password's as tutorial_
 ## _Install Java JDK:_
@@ -35,6 +39,8 @@ https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.10/bin/apache-tomcat-10.1.10.exe
 > Add war file from repository to directory C:\obox\tomcat\webapps and open your browser http://localhost:8080/obox/
 
 ## _Install MySQL_
+## _In Future after reboot you PC start first MySQL Workbench, after that Tomcat_
+
 Fast link Windows (x86, 32-bit), MSI Installer:  
 https://dev.mysql.com/get/Downloads/MySQLInstaller/mysql-installer-web-community-8.0.33.0.msi  
 Step-by-step installation as in the images  
