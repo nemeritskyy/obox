@@ -1,2 +1,1 @@
-buildpacks:clear
-war:deploy theroku/obox.war
+web: java -jar heroku/obox.war
