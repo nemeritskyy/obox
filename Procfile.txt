@@ -1,1 +1,1 @@
-web: java -jar heroku/webapp-runner-main-9.0.75.0.jar heroku/obox.war
+web: java -jar heroku/obox.war
