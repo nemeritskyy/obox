@@ -48,7 +48,6 @@ public class AuthenticationService {
                     .refreshToken(refreshToken)
                     .build();
         } else {
-//            System.out.println("user already exist");
             logger.error("user already exist");
         }
         return AuthenticationResponse.builder()

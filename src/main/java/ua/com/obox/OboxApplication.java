@@ -14,15 +14,16 @@ import static ua.com.obox.authserver.user.Role.MANAGER;
 
 @SpringBootApplication
 public class OboxApplication extends SpringBootServletInitializer {
-
-    public static void main(String[] args) {
-        SpringApplication.run(OboxApplication.class, args);
-    }
-
     @Override
     protected SpringApplicationBuilder configure(SpringApplicationBuilder builder) {
         return builder.sources(OboxApplication.class);
     }
+
+    public static void main(String[] args) {
+
+        SpringApplication.run(OboxApplication.class, args);
+    }
+
 
     @Bean
     public CommandLineRunner commandLineRunner(

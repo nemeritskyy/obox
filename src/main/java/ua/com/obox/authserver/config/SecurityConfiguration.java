@@ -40,34 +40,18 @@ public class SecurityConfiguration {
                         "/v3/api-docs/**",
                         "/configuration/ui",
                         "/configuration/security",
-                        "/webjars/**"
-                )
-                .permitAll()
-                .requestMatchers(
+                        "/webjars/**",
                         "/swagger-resources",
                         "/swagger-resources/**",
                         "/swagger-ui/**",
-//                        "/swagger-ui.html,").hasAnyRole(ADMIN.name(), MANAGER.name(), USER.name()) // swagger only for registered members
-                        "/swagger-ui.html,").permitAll() // swagger only for registered members
-
+                        "/swagger-ui.html,").permitAll()
 
                 .requestMatchers("/api/v1/management/**").hasAnyRole(ADMIN.name(), MANAGER.name())
-
 
                 .requestMatchers(GET, "/api/v1/management/**").hasAnyAuthority(ADMIN_READ.name(), MANAGER_READ.name())
                 .requestMatchers(POST, "/api/v1/management/**").hasAnyAuthority(ADMIN_CREATE.name(), MANAGER_CREATE.name())
                 .requestMatchers(PUT, "/api/v1/management/**").hasAnyAuthority(ADMIN_UPDATE.name(), MANAGER_UPDATE.name())
                 .requestMatchers(DELETE, "/api/v1/management/**").hasAnyAuthority(ADMIN_DELETE.name(), MANAGER_DELETE.name())
-
-
-                /* .requestMatchers("/api/v1/admin/**").hasRole(ADMIN.name())
-
-                 .requestMatchers(GET, "/api/v1/admin/**").hasAuthority(ADMIN_READ.name())
-                 .requestMatchers(POST, "/api/v1/admin/**").hasAuthority(ADMIN_CREATE.name())
-                 .requestMatchers(PUT, "/api/v1/admin/**").hasAuthority(ADMIN_UPDATE.name())
-                 .requestMatchers(DELETE, "/api/v1/admin/**").hasAuthority(ADMIN_DELETE.name())*/
-
-
                 .anyRequest()
                 .authenticated()
                 .and()
@@ -81,7 +65,6 @@ public class SecurityConfiguration {
                 .addLogoutHandler(logoutHandler)
                 .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext())
         ;
-
         return http.build();
     }
 }
