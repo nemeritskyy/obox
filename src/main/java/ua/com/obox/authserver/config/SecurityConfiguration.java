@@ -12,7 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
-
 import static org.springframework.http.HttpMethod.*;
 import static ua.com.obox.authserver.user.Permission.*;
 import static ua.com.obox.authserver.user.Role.*;
@@ -22,7 +21,6 @@ import static ua.com.obox.authserver.user.Role.*;
 @RequiredArgsConstructor
 @EnableMethodSecurity
 public class SecurityConfiguration {
-
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
     private final LogoutHandler logoutHandler;
@@ -32,8 +30,8 @@ public class SecurityConfiguration {
         http
                 .csrf()
                 .disable()
-                .authorizeHttpRequests()
-                .requestMatchers(
+                .authorizeRequests()
+                .antMatchers(
                         "/api/v1/auth/**",
                         "/v2/api-docs",
                         "/v3/api-docs",
@@ -44,14 +42,10 @@ public class SecurityConfiguration {
                         "/swagger-resources",
                         "/swagger-resources/**",
                         "/swagger-ui/**",
-                        "/swagger-ui.html,").permitAll()
-
-                .requestMatchers("/api/v1/management/**").hasAnyRole(ADMIN.name(), MANAGER.name())
-
-                .requestMatchers(GET, "/api/v1/management/**").hasAnyAuthority(ADMIN_READ.name(), MANAGER_READ.name())
-                .requestMatchers(POST, "/api/v1/management/**").hasAnyAuthority(ADMIN_CREATE.name(), MANAGER_CREATE.name())
-                .requestMatchers(PUT, "/api/v1/management/**").hasAnyAuthority(ADMIN_UPDATE.name(), MANAGER_UPDATE.name())
-                .requestMatchers(DELETE, "/api/v1/management/**").hasAnyAuthority(ADMIN_DELETE.name(), MANAGER_DELETE.name())
+                        "/swagger-ui.html"
+                ).permitAll()
+                .antMatchers("/api/v1/management/**").hasAnyRole(ADMIN.name(), MANAGER.name())
+                .antMatchers("/api/v1/management/**").hasAnyAuthority(ADMIN_READ.name(), MANAGER_READ.name())
                 .anyRequest()
                 .authenticated()
                 .and()
@@ -63,8 +57,7 @@ public class SecurityConfiguration {
                 .logout()
                 .logoutUrl("/api/v1/auth/logout")
                 .addLogoutHandler(logoutHandler)
-                .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext())
-        ;
+                .logoutSuccessHandler((request, response, authentication) -> SecurityContextHolder.clearContext());
         return http.build();
     }
 }

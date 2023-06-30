@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/management")
 @Tag(name = "Management")
 public class ManagementController {
-
-
     @Operation(
             description = "Get endpoint for manager",
             summary = "This is a summary for management get endpoint",

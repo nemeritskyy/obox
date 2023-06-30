@@ -1,7 +1,7 @@
 package ua.com.obox.authserver.token;
 
 import ua.com.obox.authserver.user.User;
-import jakarta.persistence.*;
+import javax.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +13,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Entity
 public class Token {
-
   @Id
   @GeneratedValue
   public Integer id;

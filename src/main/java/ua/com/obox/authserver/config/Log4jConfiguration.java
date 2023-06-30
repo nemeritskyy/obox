@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class Log4jConfiguration {
-
     @Bean
     public Logger logger() {
         return LogManager.getLogger();

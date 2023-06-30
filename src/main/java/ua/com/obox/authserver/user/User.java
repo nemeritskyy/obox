@@ -1,7 +1,5 @@
 package ua.com.obox.authserver.user;
 
-
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -9,7 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import ua.com.obox.authserver.token.Token;
-
+import javax.persistence.*;
 import java.util.Collection;
 import java.util.List;
 
@@ -20,7 +18,6 @@ import java.util.List;
 @Entity
 @Table(name = "_user")
 public class User implements UserDetails {
-
   @Id
   @GeneratedValue
   private Integer id;
