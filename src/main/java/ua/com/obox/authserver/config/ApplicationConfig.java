@@ -1,5 +1,6 @@
 package ua.com.obox.authserver.config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import ua.com.obox.authserver.user.UserRepository;

@@ -34,7 +34,7 @@ public class OboxApplication extends SpringBootServletInitializer {
                     .password("password")
                     .role(ADMIN)
                     .build();
-            System.out.println("Admin token: " + service.register(admin).getAccessToken());
+            System.out.println("Admin token: " + service.register(admin));
 
             var manager = RegisterRequest.builder()
                     .firstname("Admin")
@@ -43,7 +43,7 @@ public class OboxApplication extends SpringBootServletInitializer {
                     .password("password")
                     .role(MANAGER)
                     .build();
-            System.out.println("Manager token: " + service.register(manager).getAccessToken());
+            System.out.println("Manager token: " + service.register(manager));
         };
     }
 }

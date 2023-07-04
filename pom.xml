@@ -83,6 +83,11 @@
             <version>1.18.28</version>
             <scope>provided</scope>
         </dependency>
+        <!-- send email -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
     </dependencies>
     <build>
         <finalName>${project.artifactId}</finalName>
