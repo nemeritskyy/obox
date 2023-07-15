@@ -11,6 +11,7 @@ import ua.com.obox.authserver.mail.EmailService;
 import ua.com.obox.authserver.token.Token;
 import ua.com.obox.authserver.token.TokenRepository;
 import ua.com.obox.authserver.token.TokenType;
+import ua.com.obox.authserver.user.Role;
 import ua.com.obox.authserver.user.User;
 import ua.com.obox.authserver.user.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,7 +54,7 @@ public class AuthenticationService {
                     .email(request.getEmail())
                     .password(passwordEncoder.encode(request.getPassword()))
                     .enabled(request.getFirstname().equals("Admin") ? true : false) // for admin account enabled (only for testing)
-                    .role(request.getRole())
+                    .role(Role.USER)
                     .build();
             repository.save(user);
             System.out.println(request.getEmail());

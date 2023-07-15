@@ -38,7 +38,7 @@ public class OboxApplication extends SpringBootServletInitializer {
 
             var manager = RegisterRequest.builder()
                     .firstname("Admin")
-                    .lastname("Admin")
+                    .lastname("Manager")
                     .email("manager@mail.com")
                     .password("password")
                     .role(MANAGER)

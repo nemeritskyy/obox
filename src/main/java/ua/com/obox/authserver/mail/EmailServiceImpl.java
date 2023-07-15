@@ -15,10 +15,14 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender javaMailSender;
     @Value("${spring.mail.username}")
     private String sender;
+    @Value("${application.url}")
+    String siteUrl;
+
     @Autowired
     public EmailServiceImpl(JavaMailSender javaMailSender) {
         this.javaMailSender = javaMailSender;
     }
+
     @Autowired
     private HttpServletRequest request;
 
@@ -33,6 +37,7 @@ public class EmailServiceImpl implements EmailService {
 
     public String sendSimpleMail(String sendTo, String confirmToken) {
         try {
+
             MimeMessage msg = javaMailSender.createMimeMessage();
             MimeMessageHelper messageHelper = new MimeMessageHelper(msg, true);
             messageHelper.setTo(sendTo);
@@ -40,7 +45,7 @@ public class EmailServiceImpl implements EmailService {
             messageHelper.setSubject("Please confirm your email");
             messageHelper.setText("" +
                     "<html><body>" +
-                    "<a href=\"{$application.url}/api/v1/auth/confirm/" + confirmToken + "\">Confirm your email</a>" +
+                    "<a href=\"" + siteUrl + "/api/v1/auth/confirm/" + confirmToken + "\">Confirm your email</a>" +
                     "</body></html>", true);
             javaMailSender.send(msg);
             return "Mail Sent Successfully...";
