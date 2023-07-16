@@ -5,8 +5,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+import ua.com.obox.dbschema.restaurant.RestaurantResponse;
 
-import java.util.Map;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @RestController
@@ -14,6 +15,16 @@ import java.util.NoSuchElementException;
 @RequiredArgsConstructor
 public class TenantController {
     private final TenantService service;
+
+    @GetMapping("/{tenantId}/restaurants")
+    public ResponseEntity<List<RestaurantResponse>> getAllRestaurantsByTenantId(@PathVariable String tenantId) {
+        try {
+            List<RestaurantResponse> restaurantResponses = service.getAllRestaurantsByTenantId(tenantId);
+            return ResponseEntity.ok(restaurantResponses);
+        } catch (NoSuchElementException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurants with Tenant id " + tenantId + " not found", null);
+        }
+    }
 
     @GetMapping("/{tenantId}")
     public ResponseEntity<TenantResponse> getTenantById(@PathVariable String tenantId) {
@@ -26,17 +37,17 @@ public class TenantController {
     }
 
     @PostMapping("/")
-    public ResponseEntity<Map<String, String>> createTenant(@RequestBody Tenant request) {
+    public ResponseEntity<TenantResponseId> createTenant(@RequestBody Tenant request) {
         if (request.getName() == null || request.getName().isEmpty())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name field is required", null);
         if (request.getName().length() > 200)
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name field must contain from 1 to 200 characters", null);
-        Map<String, String> response = service.createTenant(request);
+        TenantResponseId response = service.createTenant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @PatchMapping("{tenantId}")
-    public ResponseEntity<Map<String, String>> patchTenantById(@PathVariable String tenantId, @RequestBody Tenant request) {
+    public ResponseEntity<Void> patchTenantById(@PathVariable String tenantId, @RequestBody Tenant request) {
         try {
             if (request.getName() == null || request.getName().isEmpty()) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name field is required");
@@ -44,18 +55,18 @@ public class TenantController {
             if (request.getName().length() > 200) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name field must contain from 1 to 200 characters");
             }
-            Map<String, String> response = service.patchTenantById(tenantId, request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            service.patchTenantById(tenantId, request);
+            return ResponseEntity.noContent().build();
         } catch (NoSuchElementException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + " not found", null);
         }
     }
 
     @DeleteMapping("/{tenantId}")
-    public ResponseEntity<Map<String, String>> deleteTenantById(@PathVariable String tenantId) {
+    public ResponseEntity<TenantResponseId> deleteTenantById(@PathVariable String tenantId) {
         try {
-            Map<String, String> response = service.deleteTenantById(tenantId);
-            return ResponseEntity.ok(response);
+            service.deleteTenantById(tenantId);
+            return ResponseEntity.noContent().build();
         } catch (NoSuchElementException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + " not found", null);
         }
