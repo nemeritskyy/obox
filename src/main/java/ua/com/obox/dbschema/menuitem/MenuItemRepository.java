@@ -1,7 +1,6 @@
-package ua.com.obox.dbschema.confirmation;
+package ua.com.obox.dbschema.menuitem;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import ua.com.obox.dbschema.menu.MenuItem;
 
 import java.util.List;
 import java.util.UUID;

@@ -1,8 +1,7 @@
-package ua.com.obox.dbschema.menu;
+package ua.com.obox.dbschema.menuitem;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ua.com.obox.dbschema.confirmation.MenuItemRepository;
 
 import java.util.ArrayList;
 import java.util.List;

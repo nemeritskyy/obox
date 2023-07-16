@@ -1,28 +1,30 @@
-package ua.com.obox.dbschema.menu;
+package ua.com.obox.dbschema.menuitem;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
+import ua.com.obox.dbschema.category.Category;
 
 import javax.persistence.*;
-import java.util.UUID;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "category")
-public class Category {
+@Table(name = "menu_item")
+public class MenuItem {
     @Id
     @GeneratedValue(generator = "uuid2")
     @GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(columnDefinition = "CHAR(36)")
-    private String categoryId;
+    private String itemId;
     @ManyToOne
-    @JoinColumn(name = "menu_id")
-    private Menu menu;
+    @JoinColumn(name = "category_id")
+    private Category category;
     private String name;
+    private Double price;
+    private String description;
 }

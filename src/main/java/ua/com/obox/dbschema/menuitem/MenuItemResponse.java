@@ -1,4 +1,4 @@
-package ua.com.obox.dbschema.menu;
+package ua.com.obox.dbschema.menuitem;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
