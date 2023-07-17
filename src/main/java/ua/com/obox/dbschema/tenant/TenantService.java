@@ -7,6 +7,10 @@ import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.restaurant.RestaurantResponse;
+import ua.com.obox.dbschema.tools.exception.Message;
+import ua.com.obox.dbschema.tools.exception.ExceptionTools;
+import ua.com.obox.dbschema.tools.logging.LogLevel;
+import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 import java.util.*;
 
@@ -15,11 +19,15 @@ import java.util.*;
 public class TenantService {
     private final TenantRepository tenantRepository;
     private final RestaurantRepository restaurantRepository;
+    private final LoggingService loggingService;
 
     public List<RestaurantResponse> getAllRestaurantsByTenantId(String tenantId) {
+        String loggingMessage = ExceptionTools.generateLoggingMessage("getAllRestaurantsByTenantId", tenantId);
         List<Restaurant> restaurants = restaurantRepository.findAllByTenant_TenantId(tenantId);
-        if (restaurants.isEmpty())
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurants with Tenant id " + tenantId + " not found", null);
+        if (restaurants.isEmpty()) {
+            loggingService.log(LogLevel.INFO, loggingMessage + Message.NOT_FOUND.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, loggingMessage + Message.NOT_FOUND.getMessage(), null);
+        }
         List<RestaurantResponse> responseList = new ArrayList<>();
 
         for (Restaurant restaurant : restaurants) {
@@ -31,6 +39,8 @@ public class TenantService {
                     .build();
             responseList.add(response);
         }
+
+        loggingService.log(LogLevel.INFO, loggingMessage + Message.FIND_COUNT.getMessage() + responseList.size());
         return responseList;
     }
 
