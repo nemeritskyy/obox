@@ -20,13 +20,14 @@ public class TenantService {
     private final TenantRepository tenantRepository;
     private final RestaurantRepository restaurantRepository;
     private final LoggingService loggingService;
+    String loggingMessage;
 
     public List<RestaurantResponse> getAllRestaurantsByTenantId(String tenantId) {
-        String loggingMessage = ExceptionTools.generateLoggingMessage("getAllRestaurantsByTenantId", tenantId);
+        loggingMessage = ExceptionTools.generateLoggingMessage("getAllRestaurantsByTenantId", tenantId);
         List<Restaurant> restaurants = restaurantRepository.findAllByTenant_TenantId(tenantId);
         if (restaurants.isEmpty()) {
-            loggingService.log(LogLevel.INFO, loggingMessage + Message.NOT_FOUND.getMessage());
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, loggingMessage + Message.NOT_FOUND.getMessage(), null);
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, Message.NOT_FOUND.getMessage().trim(), null);
         }
         List<RestaurantResponse> responseList = new ArrayList<>();
 
@@ -45,8 +46,13 @@ public class TenantService {
     }
 
     public TenantResponse getTenantById(String tenantId) {
+        loggingMessage = ExceptionTools.generateLoggingMessage("getTenantById", tenantId);
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
-        Tenant tenant = tenantInfo.orElseThrow(() -> new NoSuchElementException("No found tenant"));
+        Tenant tenant = tenantInfo.orElseThrow(() -> {
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, Message.NOT_FOUND.getMessage().trim());
+        });
+        loggingService.log(LogLevel.INFO, loggingMessage + Message.GET_BY_ID.getMessage());
         return TenantResponse.builder()
                 .tenantId(tenant.getTenantId())
                 .name(tenant.getName())
@@ -54,30 +60,39 @@ public class TenantService {
     }
 
     public TenantResponseId createTenant(Tenant request) {
+        loggingMessage = ExceptionTools.generateLoggingMessage("createTenant", request.toString());
         Tenant tenant = Tenant.builder()
                 .name(request.getName())
                 .build();
         tenantRepository.save(tenant);
+        loggingService.log(LogLevel.INFO, loggingMessage + Message.CREATE.getMessage());
         return TenantResponseId.builder()
                 .tenantId(tenant.getTenantId())
                 .build();
     }
 
     public void patchTenantById(String tenantId, Tenant request) {
+        loggingMessage = ExceptionTools.generateLoggingMessage("patchTenantById", tenantId);
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
-        Tenant tenant = tenantInfo.orElseThrow(() -> new NoSuchElementException("No found tenant"));
-        if (tenant != null) {
-            tenant.setName(request.getName());
-            tenantRepository.save(tenant);
-        }
+        Tenant tenant = tenantInfo.orElseThrow(() -> {
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, Message.NOT_FOUND.getMessage().trim());
+        });
+        String oldName = tenant.getName();
+        tenant.setName(request.getName());
+        tenantRepository.save(tenant);
+        loggingService.log(LogLevel.INFO, loggingMessage + " OLD name=" + oldName + " NEW" + Message.UPDATE.getMessage() + tenant);
     }
 
     public void deleteTenantById(String tenantId) {
+        loggingMessage = ExceptionTools.generateLoggingMessage("deleteTenantById", tenantId);
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
-        Tenant tenant = tenantInfo.orElseThrow(() -> new NoSuchElementException("No found tenant"));
-        if (tenant != null) {
-            tenantRepository.delete(tenant);
-        }
+        Tenant tenant = tenantInfo.orElseThrow(() -> {
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, Message.NOT_FOUND.getMessage().trim());
+        });
+        tenantRepository.delete(tenant);
+        loggingService.log(LogLevel.INFO, loggingMessage + Message.DELETE.getMessage() + tenant);
     }
 
 }
