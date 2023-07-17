@@ -3,18 +3,34 @@ spring:
     url: jdbc:mysql://localhost:3306/my_db?useSSL=false
     username: root
     password: oboxroot
+    #    url: jdbc:mysql://91.203.4.26:3306/printclo_mp?useSSL=false
+    #    username: printclo_mp
+    #    password: APrZSdYj
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:
         format_sql: true
     database: mysql
-    database-platform: org.hibernate.dialect.MySQLDialect
-
+    database-platform: org.hibernate.dialect.MySQL5Dialect
+  mail:
+    host: mail.obox.com.ua
+    port: 587
+    username: support@obox.com.ua
+    password: lzoEqcLT
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls.enable: true
+server:
+  error:
+    include-stacktrace: never
 application:
+  url: https://api.obox.com.ua
   security:
     jwt:
       secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970

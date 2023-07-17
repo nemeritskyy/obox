@@ -1,5 +1,6 @@
 package ua.com.obox.authserver.auth;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 
+@Hidden
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
