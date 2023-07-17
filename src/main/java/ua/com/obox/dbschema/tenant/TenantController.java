@@ -1,5 +1,9 @@
 package ua.com.obox.dbschema.tenant;
 
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,23 +14,30 @@ import ua.com.obox.dbschema.restaurant.RestaurantResponse;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+
 @RestController
 @RequestMapping("/tenants")
 @RequiredArgsConstructor
+
+@Tag(name = "Tenants")
 public class TenantController {
     private final TenantService service;
 
     @GetMapping("/{tenantId}/restaurants")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
     public ResponseEntity<List<RestaurantResponse>> getAllRestaurantsByTenantId(@PathVariable String tenantId) {
-        try {
-            List<RestaurantResponse> restaurantResponses = service.getAllRestaurantsByTenantId(tenantId);
-            return ResponseEntity.ok(restaurantResponses);
-        } catch (NoSuchElementException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurants with Tenant id " + tenantId + " not found", null);
-        }
+        List<RestaurantResponse> restaurantResponses = service.getAllRestaurantsByTenantId(tenantId);
+        return ResponseEntity.ok(restaurantResponses);
     }
 
     @GetMapping("/{tenantId}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
     public ResponseEntity<TenantResponse> getTenantById(@PathVariable String tenantId) {
         try {
             TenantResponse tenantResponse = service.getTenantById(tenantId);
@@ -37,6 +48,10 @@ public class TenantController {
     }
 
     @PostMapping("/")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Success", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "Bad Request")
+    })
     public ResponseEntity<TenantResponseId> createTenant(@RequestBody Tenant request) {
         if (request.getName() == null || request.getName().isEmpty())
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name field is required", null);
@@ -47,6 +62,10 @@ public class TenantController {
     }
 
     @PatchMapping("{tenantId}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "No Content"),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
     public ResponseEntity<Void> patchTenantById(@PathVariable String tenantId, @RequestBody Tenant request) {
         try {
             if (request.getName() == null || request.getName().isEmpty()) {
@@ -63,6 +82,10 @@ public class TenantController {
     }
 
     @DeleteMapping("/{tenantId}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "No Content"),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
     public ResponseEntity<TenantResponseId> deleteTenantById(@PathVariable String tenantId) {
         try {
             service.deleteTenantById(tenantId);

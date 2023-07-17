@@ -1,7 +1,9 @@
 package ua.com.obox.dbschema.tenant;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.restaurant.RestaurantResponse;
@@ -16,6 +18,8 @@ public class TenantService {
 
     public List<RestaurantResponse> getAllRestaurantsByTenantId(String tenantId) {
         List<Restaurant> restaurants = restaurantRepository.findAllByTenant_TenantId(tenantId);
+        if (restaurants.isEmpty())
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurants with Tenant id " + tenantId + " not found", null);
         List<RestaurantResponse> responseList = new ArrayList<>();
 
         for (Restaurant restaurant : restaurants) {
@@ -27,11 +31,8 @@ public class TenantService {
                     .build();
             responseList.add(response);
         }
-
         return responseList;
     }
-
-
 
     public TenantResponse getTenantById(String tenantId) {
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
@@ -47,38 +48,26 @@ public class TenantService {
                 .name(request.getName())
                 .build();
         tenantRepository.save(tenant);
-//        Map<String, String> response = new HashMap<>();
-//        response.put("tenant_id", tenant.getTenantId());
         return TenantResponseId.builder()
                 .tenantId(tenant.getTenantId())
                 .build();
     }
 
     public void patchTenantById(String tenantId, Tenant request) {
-//        Map<String, String> response = new HashMap<>();
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
         Tenant tenant = tenantInfo.orElseThrow(() -> new NoSuchElementException("No found tenant"));
         if (tenant != null) {
-            tenant.setName(request.getName()); // update name
+            tenant.setName(request.getName());
             tenantRepository.save(tenant);
-//            response.put("tenant_id", tenant.getTenantId());
         }
-//        return TenantResponseId.builder()
-//                .tenantId(tenant.getTenantId())
-//                .build();
     }
 
     public void deleteTenantById(String tenantId) {
-//        Map<String, String> response = new HashMap<>();
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
         Tenant tenant = tenantInfo.orElseThrow(() -> new NoSuchElementException("No found tenant"));
         if (tenant != null) {
             tenantRepository.delete(tenant);
-//            response.put("tenant_id", tenant.getTenantId());
         }
-//        return TenantResponseId.builder()
-//                .tenantId(tenant.getTenantId())
-//                .build();
     }
 
 }

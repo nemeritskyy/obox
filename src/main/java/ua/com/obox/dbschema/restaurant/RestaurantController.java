@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.restaurant;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import ua.com.obox.dbschema.tenant.TenantResponseId;
 
 import java.util.NoSuchElementException;
 
+@Hidden
 @RestController
 @RequestMapping("/restaurant")
 @RequiredArgsConstructor
