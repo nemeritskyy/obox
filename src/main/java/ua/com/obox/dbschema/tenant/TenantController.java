@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.restaurant.RestaurantResponse;
+import ua.com.obox.dbschema.tools.Validator;
 
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -53,10 +54,7 @@ public class TenantController {
             @ApiResponse(responseCode = "400", description = "Bad Request")
     })
     public ResponseEntity<TenantResponseId> createTenant(@RequestBody Tenant request) {
-        if (request.getName() == null || request.getName().isEmpty())
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name field is required", null);
-        if (request.getName().length() > 200)
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name field must contain from 1 to 200 characters", null);
+        Validator.validateName(request.getName());
         TenantResponseId response = service.createTenant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -68,12 +66,7 @@ public class TenantController {
     })
     public ResponseEntity<Void> patchTenantById(@PathVariable String tenantId, @RequestBody Tenant request) {
         try {
-            if (request.getName() == null || request.getName().isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name field is required");
-            }
-            if (request.getName().length() > 200) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name field must contain from 1 to 200 characters");
-            }
+            Validator.validateName(request.getName());
             service.patchTenantById(tenantId, request);
             return ResponseEntity.noContent().build();
         } catch (NoSuchElementException e) {
