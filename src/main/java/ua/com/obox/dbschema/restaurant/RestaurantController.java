@@ -1,8 +1,10 @@
 package ua.com.obox.dbschema.restaurant;
 
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,8 +14,10 @@ import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 
 @RestController
-@RequestMapping("/restaurant")
+@RequestMapping("/restaurants")
 @RequiredArgsConstructor
+
+@Tag(name = "Restaurants")
 public class RestaurantController {
     private final RestaurantService service;
     private final LoggingService loggingService;
@@ -38,30 +42,30 @@ public class RestaurantController {
         RestaurantResponseId response = service.createRestaurant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-//
-//    @PatchMapping("{tenantId}")
-//    public ResponseEntity<Void> patchTenantById(@PathVariable String tenantId, @RequestBody Tenant request) {
-//        try {
-//            if (request.getName() == null || request.getName().isEmpty()) {
-//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name field is required");
-//            }
-//            if (request.getName().length() > 200) {
-//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name field must contain from 1 to 200 characters");
-//            }
-//            service.patchTenantById(tenantId, request);
-//            return ResponseEntity.noContent().build();
-//        } catch (NoSuchElementException e) {
-//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + " not found", null);
-//        }
-//    }
-//
-//    @DeleteMapping("/{tenantId}")
-//    public ResponseEntity<TenantResponseId> deleteTenantById(@PathVariable String tenantId) {
-//        try {
-//            service.deleteTenantById(tenantId);
-//            return ResponseEntity.noContent().build();
-//        } catch (NoSuchElementException e) {
-//            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + " not found", null);
-//        }
-//    }
+
+    @PatchMapping("{restaurantId}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "No Content"),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
+    public ResponseEntity<Void> patchRestaurantById(@PathVariable String restaurantId, @RequestBody
+    @Schema(example = "{\n" +
+            "  \"name\": \"string\",\n" +
+            "  \"address\": \"string\"" +
+            "}")
+    Restaurant request) {
+        Validator.validateName("patchRestaurantById", request.getName(), loggingService);
+        service.patchRestaurantById(restaurantId, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{restaurantId}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "No Content"),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
+    public ResponseEntity<Void> deleteRestaurantById(@PathVariable String restaurantId) {
+        service.deleteRestaurantById(restaurantId);
+        return ResponseEntity.noContent().build();
+    }
 }

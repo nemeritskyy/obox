@@ -81,7 +81,7 @@ public class TenantService {
         String oldName = tenant.getName();
         tenant.setName(request.getName().trim()); // delete whitespaces
         tenantRepository.save(tenant);
-        loggingService.log(LogLevel.INFO, loggingMessage + " OLD name=" + oldName + " NEW" + Message.UPDATE.getMessage() + tenant);
+        loggingService.log(LogLevel.INFO, loggingMessage + " OLD name=" + oldName + " NEW" + Message.UPDATE.getMessage());
     }
 
     public void deleteTenantById(String tenantId) {
@@ -92,7 +92,7 @@ public class TenantService {
             return new ResponseStatusException(HttpStatus.NOT_FOUND, Message.NOT_FOUND.getMessage().trim());
         });
         tenantRepository.delete(tenant);
-        loggingService.log(LogLevel.INFO, loggingMessage + Message.DELETE.getMessage() + tenant);
+        loggingService.log(LogLevel.INFO, loggingMessage + Message.DELETE.getMessage());
     }
 
 }

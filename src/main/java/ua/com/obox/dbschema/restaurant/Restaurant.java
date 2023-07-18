@@ -21,7 +21,7 @@ public class Restaurant {
     @Column(columnDefinition = "CHAR(36)")
     @JsonIgnore
     private String restaurantId;
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id")
     @JsonIgnore
     private Tenant tenant;

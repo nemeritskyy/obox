@@ -8,6 +8,7 @@ import lombok.Getter;
 public enum Message {
     NOT_FOUND(" Not found"),
     TENANT_NOT_FOUND(" Tenant not found"),
+    RESTAURANT_NOT_FOUND(" Restaurant not found"),
     GET_BY_ID(" Get by id"),
     CREATE(" Create"),
     UPDATE(" Update"),

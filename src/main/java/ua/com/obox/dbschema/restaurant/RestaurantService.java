@@ -38,7 +38,7 @@ public class RestaurantService {
     public RestaurantResponseId createRestaurant(Restaurant request) {
         loggingMessage = ExceptionTools.generateLoggingMessage("createRestaurant", request.toString());
         request.setTenantIdForRestaurant(request.getTenant_id());
-        loggingService.log(LogLevel.INFO,"POST tenant id: " + request.getTenant().getTenantId());
+        loggingService.log(LogLevel.INFO, "POST tenant id: " + request.getTenant().getTenantId());
         Tenant tenant = tenantRepository.findByTenantId(request.getTenant().getTenantId()).orElseThrow(() -> {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.TENANT_NOT_FOUND.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.TENANT_NOT_FOUND.getMessage().trim(), null);
@@ -53,5 +53,31 @@ public class RestaurantService {
         return RestaurantResponseId.builder()
                 .restaurantId(restaurant.getRestaurantId())
                 .build();
+    }
+
+    public void patchRestaurantById(String restaurantId, Restaurant request) {
+        loggingMessage = ExceptionTools.generateLoggingMessage("patchRestaurantById", restaurantId);
+        var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
+        Restaurant restaurant = restaurantInfo.orElseThrow(() -> {
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, Message.NOT_FOUND.getMessage().trim());
+        });
+        String oldName = restaurant.getName();
+        String oldAddress = restaurant.getAddress();
+        restaurant.setName(request.getName().trim()); // delete whitespaces
+        restaurant.setAddress(request.getAddress().trim()); // delete whitespaces
+        restaurantRepository.save(restaurant);
+        loggingService.log(LogLevel.INFO, loggingMessage + " OLD name=" + oldName + " OLD address=" + oldAddress + " NEW" + Message.UPDATE.getMessage());
+    }
+
+    public void deleteRestaurantById(String restaurantId) {
+        loggingMessage = ExceptionTools.generateLoggingMessage("deleteRestaurantById", restaurantId);
+        var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
+        Restaurant restaurant = restaurantInfo.orElseThrow(() -> {
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.RESTAURANT_NOT_FOUND.getMessage());
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, Message.RESTAURANT_NOT_FOUND.getMessage().trim());
+        });
+        restaurantRepository.delete(restaurant);
+        loggingService.log(LogLevel.INFO, loggingMessage + Message.DELETE.getMessage() + restaurant.getName());
     }
 }
