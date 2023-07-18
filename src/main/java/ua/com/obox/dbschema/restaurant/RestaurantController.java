@@ -1,43 +1,43 @@
 package ua.com.obox.dbschema.restaurant;
 
-import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
-import ua.com.obox.dbschema.tenant.Tenant;
-import ua.com.obox.dbschema.tenant.TenantResponse;
-import ua.com.obox.dbschema.tenant.TenantResponseId;
+import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.logging.LoggingService;
 
-import java.util.NoSuchElementException;
 
-@Hidden
 @RestController
 @RequestMapping("/restaurant")
 @RequiredArgsConstructor
 public class RestaurantController {
     private final RestaurantService service;
+    private final LoggingService loggingService;
 
     @GetMapping("/{restaurantId}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
     public ResponseEntity<RestaurantResponse> getRestaurantById(@PathVariable String restaurantId) {
-        try {
-            RestaurantResponse restaurantResponse = service.getRestaurantById(restaurantId);
-            return ResponseEntity.ok(restaurantResponse);
-        } catch (NoSuchElementException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurant with id " + restaurantId + " not found", null);
-        }
+        RestaurantResponse restaurantResponse = service.getRestaurantById(restaurantId);
+        return ResponseEntity.ok(restaurantResponse);
     }
 
-//    @PostMapping("/")
-//    public ResponseEntity<TenantResponseId> createTenant(@RequestBody Tenant request) {
-//        if (request.getName() == null || request.getName().isEmpty())
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name field is required", null);
-//        if (request.getName().length() > 200)
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name field must contain from 1 to 200 characters", null);
-//        TenantResponseId response = service.createTenant(request);
-//        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-//    }
+    @PostMapping("/")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Success", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "Bad Request")
+    })
+    public ResponseEntity<RestaurantResponseId> createRestaurant(@RequestBody Restaurant request) {
+        Validator.validateName("createRestaurant", request.getName(), loggingService);
+        RestaurantResponseId response = service.createRestaurant(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 //
 //    @PatchMapping("{tenantId}")
 //    public ResponseEntity<Void> patchTenantById(@PathVariable String tenantId, @RequestBody Tenant request) {
