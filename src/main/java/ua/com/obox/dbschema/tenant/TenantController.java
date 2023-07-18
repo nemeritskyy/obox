@@ -8,12 +8,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.restaurant.RestaurantResponse;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 
 @RestController
@@ -23,6 +22,7 @@ import java.util.NoSuchElementException;
 @Tag(name = "Tenants")
 public class TenantController {
     private final TenantService service;
+    private final LoggingService loggingService;
 
     @GetMapping("/{tenantId}/restaurants")
     @ApiResponses(value = {
@@ -40,12 +40,8 @@ public class TenantController {
             @ApiResponse(responseCode = "404", description = "Not found")
     })
     public ResponseEntity<TenantResponse> getTenantById(@PathVariable String tenantId) {
-        try {
-            TenantResponse tenantResponse = service.getTenantById(tenantId);
-            return ResponseEntity.ok(tenantResponse);
-        } catch (NoSuchElementException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + " not found", null);
-        }
+        TenantResponse tenantResponse = service.getTenantById(tenantId);
+        return ResponseEntity.ok(tenantResponse);
     }
 
     @PostMapping("/")
@@ -54,7 +50,7 @@ public class TenantController {
             @ApiResponse(responseCode = "400", description = "Bad Request")
     })
     public ResponseEntity<TenantResponseId> createTenant(@RequestBody Tenant request) {
-        Validator.validateName(request.getName());
+        Validator.validateName("createTenant", request.getName(), loggingService);
         TenantResponseId response = service.createTenant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -65,13 +61,9 @@ public class TenantController {
             @ApiResponse(responseCode = "404", description = "Not found")
     })
     public ResponseEntity<Void> patchTenantById(@PathVariable String tenantId, @RequestBody Tenant request) {
-        try {
-            Validator.validateName(request.getName());
-            service.patchTenantById(tenantId, request);
-            return ResponseEntity.noContent().build();
-        } catch (NoSuchElementException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + " not found", null);
-        }
+        Validator.validateName("patchTenantById", request.getName(), loggingService);
+        service.patchTenantById(tenantId, request);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{tenantId}")
@@ -80,11 +72,7 @@ public class TenantController {
             @ApiResponse(responseCode = "404", description = "Not found")
     })
     public ResponseEntity<Void> deleteTenantById(@PathVariable String tenantId) {
-        try {
-            service.deleteTenantById(tenantId);
-            return ResponseEntity.noContent().build();
-        } catch (NoSuchElementException e) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + " not found", null);
-        }
+        service.deleteTenantById(tenantId);
+        return ResponseEntity.noContent().build();
     }
 }
