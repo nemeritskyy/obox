@@ -11,7 +11,8 @@ import ua.com.obox.dbschema.tools.logging.LoggingService;
 @RequiredArgsConstructor
 public class Validator {
     public static void validateName(String loggingMessage, String name, LoggingService loggingService) {
-        if (name == null || name.isEmpty()) {
+        name = name.trim(); // delete whitespaces
+        if (name.isEmpty()) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.REQUIRED.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.REQUIRED.getMessage().trim());
         }

@@ -62,7 +62,7 @@ public class TenantService {
     public TenantResponseId createTenant(Tenant request) {
         loggingMessage = ExceptionTools.generateLoggingMessage("createTenant", request.toString());
         Tenant tenant = Tenant.builder()
-                .name(request.getName())
+                .name(request.getName().trim()) // delete whitespaces
                 .build();
         tenantRepository.save(tenant);
         loggingService.log(LogLevel.INFO, loggingMessage + Message.CREATE.getMessage());
@@ -79,7 +79,7 @@ public class TenantService {
             return new ResponseStatusException(HttpStatus.NOT_FOUND, Message.NOT_FOUND.getMessage().trim());
         });
         String oldName = tenant.getName();
-        tenant.setName(request.getName());
+        tenant.setName(request.getName().trim()); // delete whitespaces
         tenantRepository.save(tenant);
         loggingService.log(LogLevel.INFO, loggingMessage + " OLD name=" + oldName + " NEW" + Message.UPDATE.getMessage() + tenant);
     }
