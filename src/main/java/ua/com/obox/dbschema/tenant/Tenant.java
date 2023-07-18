@@ -3,8 +3,10 @@ package ua.com.obox.dbschema.tenant;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
+import ua.com.obox.dbschema.restaurant.Restaurant;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Data
 @Builder
@@ -21,4 +23,7 @@ public class Tenant {
     @JsonIgnore
     private String tenantId;
     private String name;
+    @OneToMany(mappedBy = "tenant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Restaurant> restaurants;
 }

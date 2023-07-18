@@ -19,7 +19,7 @@ public class LogEntry {
 
     @Enumerated(EnumType.STRING)
     private LogLevel level;
-
+    @Column(length = 1000)
     private String message;
 
     public LogEntry(LogLevel level, String message) {
