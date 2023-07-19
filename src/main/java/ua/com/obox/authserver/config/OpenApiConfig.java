@@ -22,6 +22,10 @@ import io.swagger.v3.oas.annotations.servers.Server;
         ),
         servers = {
                 @Server(
+                        description = "Obox",
+                        url = "https://api.obox.com.ua"
+                ),
+                @Server(
                         description = "Local Server",
                         url = "http://localhost:8080"
                 ),

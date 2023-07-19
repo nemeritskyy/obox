@@ -20,14 +20,14 @@ public class TenantService {
     private final TenantRepository tenantRepository;
     private final RestaurantRepository restaurantRepository;
     private final LoggingService loggingService;
-    String loggingMessage;
+    private String loggingMessage;
 
     public List<RestaurantResponse> getAllRestaurantsByTenantId(String tenantId) {
         loggingMessage = ExceptionTools.generateLoggingMessage("getAllRestaurantsByTenantId", tenantId);
         List<Restaurant> restaurants = restaurantRepository.findAllByTenant_TenantId(tenantId);
         if (restaurants.isEmpty()) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, Message.NOT_FOUND.getMessage().trim(), null);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurants with Tenant id " + tenantId + Message.NOT_FOUND.getMessage(), null);
         }
         List<RestaurantResponse> responseList = new ArrayList<>();
 
@@ -50,9 +50,9 @@ public class TenantService {
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
         Tenant tenant = tenantInfo.orElseThrow(() -> {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, Message.NOT_FOUND.getMessage().trim());
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + Message.NOT_FOUND.getMessage());
         });
-        loggingService.log(LogLevel.INFO, loggingMessage + Message.GET_BY_ID.getMessage());
+        loggingService.log(LogLevel.INFO, loggingMessage);
         return TenantResponse.builder()
                 .tenantId(tenant.getTenantId())
                 .name(tenant.getName())
@@ -60,12 +60,12 @@ public class TenantService {
     }
 
     public TenantResponseId createTenant(Tenant request) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("createTenant", request.toString());
+        loggingMessage = ExceptionTools.generateLoggingMessage("createTenant", request.getName());
         Tenant tenant = Tenant.builder()
                 .name(request.getName().trim()) // delete whitespaces
                 .build();
         tenantRepository.save(tenant);
-        loggingService.log(LogLevel.INFO, loggingMessage + Message.CREATE.getMessage());
+        loggingService.log(LogLevel.INFO, loggingMessage + " id=" + tenant.getTenantId() + Message.CREATE.getMessage());
         return TenantResponseId.builder()
                 .tenantId(tenant.getTenantId())
                 .build();
@@ -76,12 +76,12 @@ public class TenantService {
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
         Tenant tenant = tenantInfo.orElseThrow(() -> {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, Message.NOT_FOUND.getMessage().trim());
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + Message.NOT_FOUND.getMessage());
         });
         String oldName = tenant.getName();
         tenant.setName(request.getName().trim()); // delete whitespaces
         tenantRepository.save(tenant);
-        loggingService.log(LogLevel.INFO, loggingMessage + " OLD name=" + oldName + " NEW" + Message.UPDATE.getMessage());
+        loggingService.log(LogLevel.INFO, loggingMessage + " OLD name=" + oldName + " NEW name=" + request.getName() + Message.UPDATE.getMessage());
     }
 
     public void deleteTenantById(String tenantId) {
@@ -89,10 +89,10 @@ public class TenantService {
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
         Tenant tenant = tenantInfo.orElseThrow(() -> {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, Message.NOT_FOUND.getMessage().trim());
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + Message.NOT_FOUND.getMessage());
         });
         tenantRepository.delete(tenant);
-        loggingService.log(LogLevel.INFO, loggingMessage + Message.DELETE.getMessage());
+        loggingService.log(LogLevel.INFO, loggingMessage + " name=" + tenant.getName() + Message.DELETE.getMessage());
     }
 
 }

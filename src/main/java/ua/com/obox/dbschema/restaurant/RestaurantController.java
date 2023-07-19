@@ -9,8 +9,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ua.com.obox.dbschema.menu.MenuResponse;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
+
+import java.util.List;
 
 
 @RestController
@@ -21,6 +24,16 @@ import ua.com.obox.dbschema.tools.logging.LoggingService;
 public class RestaurantController {
     private final RestaurantService service;
     private final LoggingService loggingService;
+
+    @GetMapping("/{restaurantId}/menus")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
+    public ResponseEntity<List<MenuResponse>> getAllMenusByTenantId(@PathVariable String restaurantId) {
+        List<MenuResponse> menuResponses = service.getAllMenusByRestaurantId(restaurantId);
+        return ResponseEntity.ok(menuResponses);
+    }
 
     @GetMapping("/{restaurantId}")
     @ApiResponses(value = {
