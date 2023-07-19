@@ -20,7 +20,7 @@ public class TenantService {
     private final TenantRepository tenantRepository;
     private final RestaurantRepository restaurantRepository;
     private final LoggingService loggingService;
-    String loggingMessage;
+    private String loggingMessage;
 
     public List<RestaurantResponse> getAllRestaurantsByTenantId(String tenantId) {
         loggingMessage = ExceptionTools.generateLoggingMessage("getAllRestaurantsByTenantId", tenantId);

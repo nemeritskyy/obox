@@ -1,27 +1,69 @@
 package ua.com.obox.dbschema.menu;
 
-import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import ua.com.obox.dbschema.menuitem.MenuItemResponse;
-import ua.com.obox.dbschema.menuitem.MenuItemService;
+import org.springframework.web.bind.annotation.*;
+import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.logging.LoggingService;
 
-import java.util.List;
-
-@Hidden
 @RestController
-@RequestMapping("/menu")
+@RequestMapping("/menus")
 @RequiredArgsConstructor
+@Tag(name = "Menus")
 public class MenuController {
 
-    private final MenuItemService service;
+    private final MenuService service;
+    private final LoggingService loggingService;
 
-    @GetMapping("/items/{tenantName}")
-    public ResponseEntity<List<MenuItemResponse>> getMenuItemsByTenantName(@PathVariable String tenantName) {
-        return ResponseEntity.ok(service.getAllItem(tenantName));
+    @GetMapping("/{menuId}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
+    public ResponseEntity<MenuResponse> getMenuById(@PathVariable String menuId) {
+        MenuResponse menuResponse = service.getMenuById(menuId);
+        return ResponseEntity.ok(menuResponse);
+    }
+
+    @PostMapping("/")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "201", description = "Success", content = @Content(mediaType = "application/json")),
+            @ApiResponse(responseCode = "400", description = "Bad Request")
+    })
+    public ResponseEntity<MenuResponseId> createMenu(@RequestBody Menu request) {
+        Validator.validateName("createMenu", request.getName(), loggingService);
+        MenuResponseId response = service.createMenu(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PatchMapping("{menuId}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "No Content"),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
+    public ResponseEntity<Void> patchMenuById(@PathVariable String menuId, @RequestBody
+    @Schema(example = "{\n" +
+            "  \"name\": \"string\"" +
+            "}")
+    Menu request) {
+        Validator.validateName("patchMenuById", request.getName(), loggingService);
+        service.patchMenuById(menuId, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{menuId}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "No Content"),
+            @ApiResponse(responseCode = "404", description = "Not found")
+    })
+    public ResponseEntity<Void> deleteMenuById(@PathVariable String menuId) {
+        service.deleteMenuById(menuId);
+        return ResponseEntity.noContent().build();
     }
 }

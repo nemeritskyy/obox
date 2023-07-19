@@ -17,7 +17,7 @@ public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final TenantRepository tenantRepository;
     private final LoggingService loggingService;
-    String loggingMessage;
+    private String loggingMessage;
 
     public RestaurantResponse getRestaurantById(String restaurantId) {
         loggingMessage = ExceptionTools.generateLoggingMessage("getRestaurantById", restaurantId);
