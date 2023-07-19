@@ -3,9 +3,6 @@ spring:
     url: jdbc:mysql://localhost:3306/my_db?useSSL=false
     username: root
     password: oboxroot
-    #    url: jdbc:mysql://91.203.4.26:3306/printclo_mp?useSSL=false
-    #    username: printclo_mp
-    #    password: APrZSdYj
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -29,6 +26,7 @@ spring:
 server:
   error:
     include-stacktrace: never
+    include-message: always
 application:
   url: https://api.obox.com.ua
   security:
