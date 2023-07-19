@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ua.com.obox.dbschema.menu.Menu;
+import ua.com.obox.dbschema.menu.MenuRepository;
+import ua.com.obox.dbschema.menu.MenuResponse;
 import ua.com.obox.dbschema.tenant.Tenant;
 import ua.com.obox.dbschema.tenant.TenantRepository;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
@@ -11,13 +14,39 @@ import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class RestaurantService {
     private final RestaurantRepository restaurantRepository;
     private final TenantRepository tenantRepository;
+    private final MenuRepository menuRepository;
     private final LoggingService loggingService;
     private String loggingMessage;
+
+    public List<MenuResponse> getAllMenusByRestaurantId(String restaurantId) {
+        loggingMessage = ExceptionTools.generateLoggingMessage("getAllMenusByRestaurantId", restaurantId);
+        List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantId(restaurantId);
+        if (menus.isEmpty()) {
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, Message.NOT_FOUND.getMessage().trim(), null);
+        }
+        List<MenuResponse> responseList = new ArrayList<>();
+
+        for (Menu menu : menus) {
+            MenuResponse response = MenuResponse.builder()
+                    .menuId(menu.getMenuId())
+                    .name(menu.getName())
+                    .restaurantId(menu.getRestaurant().getRestaurantId())
+                    .build();
+            responseList.add(response);
+        }
+
+        loggingService.log(LogLevel.INFO, loggingMessage + Message.FIND_COUNT.getMessage() + responseList.size());
+        return responseList;
+    }
 
     public RestaurantResponse getRestaurantById(String restaurantId) {
         loggingMessage = ExceptionTools.generateLoggingMessage("getRestaurantById", restaurantId);
