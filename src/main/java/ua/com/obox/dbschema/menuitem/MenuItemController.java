@@ -1,4 +1,4 @@
-package ua.com.obox.dbschema.restaurant;
+package ua.com.obox.dbschema.menuitem;
 
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -9,41 +9,27 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ua.com.obox.dbschema.menu.MenuResponse;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
-import java.util.List;
-
-
 @RestController
-@RequestMapping("/restaurants")
+@RequestMapping("/items")
 @RequiredArgsConstructor
-
-@Tag(name = "Restaurants")
-public class RestaurantController {
-    private final RestaurantService service;
+@Tag(name = "Items")
+public class MenuItemController {
+    private final MenuItemService service;
     private final LoggingService loggingService;
     private String loggingMessage;
 
-    @GetMapping("/{restaurantId}/menus")
+    @GetMapping("/{itemId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "404", description = "Not found")
     })
-    public ResponseEntity<List<MenuResponse>> getAllMenusByTenantId(@PathVariable String restaurantId) {
-        List<MenuResponse> menuResponses = service.getAllMenusByRestaurantId(restaurantId);
-        return ResponseEntity.ok(menuResponses);
-    }
-
-    @GetMapping("/{restaurantId}")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "404", description = "Not found")
-    })
-    public ResponseEntity<RestaurantResponse> getRestaurantById(@PathVariable String restaurantId) {
-        RestaurantResponse restaurantResponse = service.getRestaurantById(restaurantId);
-        return ResponseEntity.ok(restaurantResponse);
+    public ResponseEntity<MenuItemResponse> getItemById(@PathVariable String itemId) {
+        MenuItemResponse menuItemResponse = service.getItemById(itemId);
+        return ResponseEntity.ok(menuItemResponse);
     }
 
     @PostMapping("/")
@@ -51,39 +37,45 @@ public class RestaurantController {
             @ApiResponse(responseCode = "201", description = "Success", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "400", description = "Bad Request")
     })
-    public ResponseEntity<RestaurantResponseId> createRestaurant(@RequestBody Restaurant request) {
-        loggingMessage = "createRestaurant";
+    public ResponseEntity<MenuItemResponseId> createItem(@RequestBody MenuItem request) {
+        loggingMessage = ExceptionTools.generateLoggingMessage("createItem", request.getCategory_id());
         Validator.validateName(loggingMessage, request.getName(), loggingService);
-        Validator.validateVarchar(loggingMessage, "Address", request.getAddress(), loggingService);
-        RestaurantResponseId response = service.createRestaurant(request);
+        Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
+        Validator.checkPrice(loggingMessage, request.getPrice(), loggingService);
+        Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
+        MenuItemResponseId response = service.createItem(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping("{restaurantId}")
+    @PatchMapping("{itemId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "404", description = "Not found")
     })
-    public ResponseEntity<Void> patchRestaurantById(@PathVariable String restaurantId, @RequestBody
+    public ResponseEntity<Void> patchItemById(@PathVariable String itemId, @RequestBody
     @Schema(example = "{\n" +
             "  \"name\": \"string\",\n" +
-            "  \"address\": \"string\"" +
+            "  \"description\": \"string\",\n" +
+            "  \"price\": 0.0,\n" +
+            "  \"category_id\": \"c8e7375d-1dbf-4d40-ae65-81cd1e6e973f\",\n" +
+            "  \"visibility\": true\n" +
             "}")
-    Restaurant request) {
-        loggingMessage = "patchRestaurantById";
+    MenuItem request) {
+        loggingMessage = ExceptionTools.generateLoggingMessage("patchItemById", request.getCategory_id());
         Validator.validateName(loggingMessage, request.getName(), loggingService);
-        Validator.validateVarchar(loggingMessage, "Address", request.getAddress(), loggingService);
-        service.patchRestaurantById(restaurantId, request);
+        Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
+        Validator.checkPrice(loggingMessage, request.getPrice(), loggingService);
+        service.patchItemById(itemId, request);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{restaurantId}")
+    @DeleteMapping("/{itemId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "404", description = "Not found")
     })
-    public ResponseEntity<Void> deleteRestaurantById(@PathVariable String restaurantId) {
-        service.deleteRestaurantById(restaurantId);
+    public ResponseEntity<Void> deleteMenuById(@PathVariable String itemId) {
+        service.deleteItemById(itemId);
         return ResponseEntity.noContent().build();
     }
 }
