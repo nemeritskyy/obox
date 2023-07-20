@@ -24,6 +24,7 @@ import java.util.List;
 public class RestaurantController {
     private final RestaurantService service;
     private final LoggingService loggingService;
+    private String loggingMessage;
 
     @GetMapping("/{restaurantId}/menus")
     @ApiResponses(value = {
@@ -51,7 +52,9 @@ public class RestaurantController {
             @ApiResponse(responseCode = "400", description = "Bad Request")
     })
     public ResponseEntity<RestaurantResponseId> createRestaurant(@RequestBody Restaurant request) {
-        Validator.validateName("createRestaurant", request.getName(), loggingService);
+        loggingMessage = "createRestaurant";
+        Validator.validateName(loggingMessage, request.getName(), loggingService);
+        Validator.validateVarchar(loggingMessage, "Address", request.getAddress(), loggingService);
         RestaurantResponseId response = service.createRestaurant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -67,7 +70,9 @@ public class RestaurantController {
             "  \"address\": \"string\"" +
             "}")
     Restaurant request) {
-        Validator.validateName("patchRestaurantById", request.getName(), loggingService);
+        loggingMessage = "patchRestaurantById";
+        Validator.validateName(loggingMessage, request.getName(), loggingService);
+        Validator.validateVarchar(loggingMessage, "Address", request.getAddress(), loggingService);
         service.patchRestaurantById(restaurantId, request);
         return ResponseEntity.noContent().build();
     }

@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
-import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
@@ -46,9 +45,6 @@ public class MenuItemService {
 
     public MenuItemResponseId createItem(MenuItem request) {
         loggingMessage = ExceptionTools.generateLoggingMessage("createItem", request.getCategory_id());
-        Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
-        Validator.checkPrice(loggingMessage, request.getPrice(), loggingService);
-        Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
         request.setCategoryIdForMenuItem(request.getCategory_id());
         Category category = categoryRepository.findByCategoryId(request.getCategory().getCategoryId()).orElseThrow(() -> {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.CATEGORY_NOT_FOUND.getMessage());
@@ -76,9 +72,6 @@ public class MenuItemService {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Item with id " + itemId + Message.NOT_FOUND.getMessage());
         });
-        Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
-        Validator.checkPrice(loggingMessage, request.getPrice(), loggingService);
-        Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
         if (visibility == null) {
             visibility = item.getVisibility();
         }

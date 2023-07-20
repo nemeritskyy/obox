@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 @RestController
@@ -19,6 +20,7 @@ import ua.com.obox.dbschema.tools.logging.LoggingService;
 public class MenuItemController {
     private final MenuItemService service;
     private final LoggingService loggingService;
+    private String loggingMessage;
 
     @GetMapping("/{itemId}")
     @ApiResponses(value = {
@@ -36,7 +38,11 @@ public class MenuItemController {
             @ApiResponse(responseCode = "400", description = "Bad Request")
     })
     public ResponseEntity<MenuItemResponseId> createItem(@RequestBody MenuItem request) {
-        Validator.validateName("createItem", request.getName(), loggingService);
+        loggingMessage = ExceptionTools.generateLoggingMessage("createItem", request.getCategory_id());
+        Validator.validateName(loggingMessage, request.getName(), loggingService);
+        Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
+        Validator.checkPrice(loggingMessage, request.getPrice(), loggingService);
+        Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
         MenuItemResponseId response = service.createItem(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -55,7 +61,10 @@ public class MenuItemController {
             "  \"visibility\": true\n" +
             "}")
     MenuItem request) {
-        Validator.validateName("patchItemById", request.getName(), loggingService);
+        loggingMessage = ExceptionTools.generateLoggingMessage("patchItemById", request.getCategory_id());
+        Validator.validateName(loggingMessage, request.getName(), loggingService);
+        Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
+        Validator.checkPrice(loggingMessage, request.getPrice(), loggingService);
         service.patchItemById(itemId, request);
         return ResponseEntity.noContent().build();
     }
