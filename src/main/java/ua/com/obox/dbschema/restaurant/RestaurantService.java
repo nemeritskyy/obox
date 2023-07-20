@@ -50,8 +50,8 @@ public class RestaurantService {
 
     public RestaurantResponse getRestaurantById(String restaurantId) {
         loggingMessage = ExceptionTools.generateLoggingMessage("getRestaurantById", restaurantId);
-        var tenantInfo = restaurantRepository.findByRestaurantId(restaurantId);
-        Restaurant restaurant = tenantInfo.orElseThrow(() -> {
+        var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
+        Restaurant restaurant = restaurantInfo.orElseThrow(() -> {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurant with id " + restaurantId + Message.NOT_FOUND.getMessage());
         });

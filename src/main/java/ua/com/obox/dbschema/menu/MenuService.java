@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ua.com.obox.dbschema.category.Category;
+import ua.com.obox.dbschema.category.CategoryRepository;
+import ua.com.obox.dbschema.category.CategoryResponse;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
@@ -11,18 +14,44 @@ import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class MenuService {
     private final MenuRepository menuRepository;
     private final RestaurantRepository restaurantRepository;
+    private final CategoryRepository categoryRepository;
     private final LoggingService loggingService;
     private String loggingMessage;
 
+    public List<CategoryResponse> getAllCategoriesByMenuId(String menuId) {
+        loggingMessage = ExceptionTools.generateLoggingMessage("getAllCategoriesByMenuId", menuId);
+        List<Category> categories = categoryRepository.findAllByMenu_MenuId(menuId);
+        if (categories.isEmpty()) {
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Categories with Menu id " + menuId + Message.NOT_FOUND.getMessage().trim(), null);
+        }
+        List<CategoryResponse> responseList = new ArrayList<>();
+
+        for (Category category : categories) {
+            CategoryResponse response = CategoryResponse.builder()
+                    .categoryId(category.getCategoryId())
+                    .name(category.getName())
+                    .menuId(category.getMenu().getMenuId())
+                    .build();
+            responseList.add(response);
+        }
+
+        loggingService.log(LogLevel.INFO, loggingMessage + Message.FIND_COUNT.getMessage() + responseList.size());
+        return responseList;
+    }
+
     public MenuResponse getMenuById(String menuId) {
         loggingMessage = ExceptionTools.generateLoggingMessage("getMenuById", menuId);
-        var tenantInfo = menuRepository.findByMenuId(menuId);
-        Menu menu = tenantInfo.orElseThrow(() -> {
+        var menuInfo = menuRepository.findByMenuId(menuId);
+        Menu menu = menuInfo.orElseThrow(() -> {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Menu with id " + menuId + Message.NOT_FOUND.getMessage());
         });
