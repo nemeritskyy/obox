@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 @Data
 @Builder
 @AllArgsConstructor
@@ -23,4 +21,6 @@ public class MenuItemResponse {
     private Double price;
     @JsonProperty("category_id")
     private String categoryId;
+    @JsonProperty("visibility")
+    private Boolean visibility;
 }
