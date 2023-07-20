@@ -3,9 +3,11 @@ package ua.com.obox.dbschema.menu;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
+import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Data
 @Builder
@@ -28,6 +30,9 @@ public class Menu {
     private String name;
     @Transient
     private String restaurant_id;
+    @OneToMany(mappedBy = "menu", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Category> categories;
 
     @JsonIgnore
     public void setRestaurantIdForMenu(String restaurant_id) {

@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
 
 import javax.persistence.*;
+import java.util.Date;
 
 @Data
 @NoArgsConstructor
@@ -21,6 +22,9 @@ public class LogEntry {
     private LogLevel level;
     @Column(length = 1000)
     private String message;
+
+    @Column(name = "query_time")
+    private Date queryTime = new Date();
 
     public LogEntry(LogLevel level, String message) {
         this.level = level;

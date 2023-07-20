@@ -1,4 +1,4 @@
-package ua.com.obox.dbschema.menu;
+package ua.com.obox.dbschema.category;
 
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -9,39 +9,25 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ua.com.obox.dbschema.category.CategoryResponse;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
-import java.util.List;
-
 @RestController
-@RequestMapping("/menus")
+@RequestMapping("/categories")
 @RequiredArgsConstructor
-@Tag(name = "Menus")
-public class MenuController {
-
-    private final MenuService service;
+@Tag(name = "Categories")
+public class CategoryController {
+    private final CategoryService service;
     private final LoggingService loggingService;
 
-    @GetMapping("/{menuId}/categories")
+    @GetMapping("/{categoryId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "404", description = "Not found")
     })
-    public ResponseEntity<List<CategoryResponse>> getAllCategoriesByMenuId(@PathVariable String menuId) {
-        List<CategoryResponse> categoryResponses = service.getAllCategoriesByMenuId(menuId);
-        return ResponseEntity.ok(categoryResponses);
-    }
-
-    @GetMapping("/{menuId}")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json")),
-            @ApiResponse(responseCode = "404", description = "Not found")
-    })
-    public ResponseEntity<MenuResponse> getMenuById(@PathVariable String menuId) {
-        MenuResponse menuResponse = service.getMenuById(menuId);
-        return ResponseEntity.ok(menuResponse);
+    public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable String categoryId) {
+        CategoryResponse categoryResponse = service.getCategoryById(categoryId);
+        return ResponseEntity.ok(categoryResponse);
     }
 
     @PostMapping("/")
@@ -49,34 +35,35 @@ public class MenuController {
             @ApiResponse(responseCode = "201", description = "Success", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "400", description = "Bad Request")
     })
-    public ResponseEntity<MenuResponseId> createMenu(@RequestBody Menu request) {
-        Validator.validateName("createMenu", request.getName(), loggingService);
-        MenuResponseId response = service.createMenu(request);
+    public ResponseEntity<CategoryResponseId> createCategory(@RequestBody Category request) {
+        Validator.validateName("createCategory", request.getName(), loggingService);
+        CategoryResponseId response = service.createCategory(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping("{menuId}")
+    @PatchMapping("{categoryId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "404", description = "Not found")
     })
-    public ResponseEntity<Void> patchMenuById(@PathVariable String menuId, @RequestBody
+    public ResponseEntity<Void> patchCategoryById(@PathVariable String categoryId, @RequestBody
     @Schema(example = "{\n" +
             "  \"name\": \"string\"" +
             "}")
-    Menu request) {
-        Validator.validateName("patchMenuById", request.getName(), loggingService);
-        service.patchMenuById(menuId, request);
+    Category request) {
+        Validator.validateName("patchCategoryById", request.getName(), loggingService);
+        service.patchCategoryById(categoryId, request);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{menuId}")
+    @DeleteMapping("/{categoryId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "404", description = "Not found")
     })
-    public ResponseEntity<Void> deleteMenuById(@PathVariable String menuId) {
-        service.deleteMenuById(menuId);
+    public ResponseEntity<Void> deleteCategoryById(@PathVariable String categoryId) {
+        service.deleteCategoryById(categoryId);
         return ResponseEntity.noContent().build();
     }
+
 }
