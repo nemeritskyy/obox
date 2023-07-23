@@ -90,14 +90,19 @@ public class TenantService {
         loggingService.log(LogLevel.INFO, loggingMessage + " OLD name=" + oldName + " NEW name=" + request.getName() + Message.UPDATE.getMessage());
     }
 
-    public void deleteTenantById(String tenantId) {
+    public void deleteTenantById(String tenantId, boolean forceDelete) {
         loggingMessage = ExceptionTools.generateLoggingMessage("deleteTenantById", tenantId);
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
         Tenant tenant = tenantInfo.orElseThrow(() -> {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + Message.NOT_FOUND.getMessage());
         });
-        tenantRepository.delete(tenant);
+        if (!forceDelete) {
+            tenant.setState(State.DISABLE);
+            tenantRepository.save(tenant);
+        } else {
+            tenantRepository.delete(tenant);
+        }
         loggingService.log(LogLevel.INFO, loggingMessage + " name=" + tenant.getName() + Message.DELETE.getMessage());
     }
 
