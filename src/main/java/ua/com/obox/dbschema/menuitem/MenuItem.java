@@ -30,9 +30,10 @@ public class MenuItem {
     private String description;
     @JsonIgnore
     private Boolean visibility;
-
     @Transient
     private String category_id;
+    @Transient
+    private String image;
 
     @JsonIgnore
     public void setCategoryIdForMenuItem(String category_id) {

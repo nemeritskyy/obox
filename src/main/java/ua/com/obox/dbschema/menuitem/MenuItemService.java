@@ -10,6 +10,9 @@ import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
+import ua.com.obox.dbschema.tools.logging.UploadItemImageFTP;
+
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -40,10 +43,11 @@ public class MenuItemService {
                 .name(item.getName())
                 .price(item.getPrice())
                 .categoryId(item.getCategory().getCategoryId())
+                .visibility(item.getVisibility())
                 .build();
     }
 
-    public MenuItemResponseId createItem(MenuItem request) {
+    public MenuItemResponseId createItem(MenuItem request) throws IOException {
         loggingMessage = ExceptionTools.generateLoggingMessage("createItem", request.getCategory_id());
         request.setCategoryIdForMenuItem(request.getCategory_id());
         Category category = categoryRepository.findByCategoryId(request.getCategory().getCategoryId()).orElseThrow(() -> {
@@ -58,6 +62,10 @@ public class MenuItemService {
                 .visibility(true)
                 .build();
         itemRepository.save(item);
+        if (!request.getImage().isEmpty()) {
+            UploadItemImageFTP itemImageFTP = new UploadItemImageFTP();
+            itemImageFTP.uploadImage(request.getImage(), item.getItemId(), loggingService);
+        }
         loggingService.log(LogLevel.INFO, loggingMessage + " id=" + item.getItemId() + Message.CREATE.getMessage());
         return MenuItemResponseId.builder()
                 .itemId(item.getItemId())

@@ -13,6 +13,8 @@ import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/items")
 @RequiredArgsConstructor
@@ -37,7 +39,7 @@ public class MenuItemController {
             @ApiResponse(responseCode = "201", description = "Success", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "400", description = "Bad Request")
     })
-    public ResponseEntity<MenuItemResponseId> createItem(@RequestBody MenuItem request) {
+    public ResponseEntity<MenuItemResponseId> createItem(@RequestBody MenuItem request) throws IOException {
         loggingMessage = ExceptionTools.generateLoggingMessage("createItem", request.getCategory_id());
         Validator.validateName(loggingMessage, request.getName(), loggingService);
         Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
