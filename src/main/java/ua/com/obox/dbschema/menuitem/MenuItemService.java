@@ -37,12 +37,14 @@ public class MenuItemService {
         }
 
         loggingService.log(LogLevel.INFO, loggingMessage);
+        String imageServerDns = "https://img.obox.com.ua/";
         return MenuItemResponse.builder()
                 .itemId(item.getItemId())
-                .description(item.getDescription())
-                .name(item.getName())
-                .price(item.getPrice())
                 .categoryId(item.getCategory().getCategoryId())
+                .name(item.getName())
+                .description(item.getDescription())
+                .price(item.getPrice())
+                .imageUrl(imageServerDns + item.getImageUrl())
                 .visibility(item.getVisibility())
                 .build();
     }
