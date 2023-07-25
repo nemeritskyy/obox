@@ -1,24 +1,25 @@
-package ua.com.obox.dbschema.tools.logging;
+package ua.com.obox.dbschema.tools.ftp;
 
 import java.io.*;
 import java.util.Base64;
 
 import org.apache.commons.net.ftp.FTPSClient;
 import org.apache.commons.net.util.TrustManagerUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.logging.LogLevel;
+import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 @Service
 public class UploadItemImageFTP {
     private static String loggingMessage;
-    //    @Value("${ftp.server}")
-    private static String server = "obox.com.ua";
-    //    @Value("${ftp.port}")
-    private static int port = 21;
-    //    @Value("${ftp.username}")
-    private static String user = "boss@obox.com.ua";
-    //    @Value("${ftp.password}")
-    private static String pass = "Jlq6QX1J7";
+    private final FTPConfiguration ftpConfiguration;
+
+    @Autowired
+    public UploadItemImageFTP(FTPConfiguration ftpConfiguration) {
+        this.ftpConfiguration = ftpConfiguration;
+    }
 
     public String uploadImage(String image, String uuid, LoggingService loggingService) {
         byte[] imageData = Base64.getDecoder().decode(image);
@@ -29,9 +30,9 @@ public class UploadItemImageFTP {
         ftpClient.setTrustManager(TrustManagerUtils.getAcceptAllTrustManager());
         try {
             loggingMessage = "Before connecting to FTP server";
-            ftpClient.connect(server, port);
+            ftpClient.connect(ftpConfiguration.getServer(), ftpConfiguration.getPort());
             loggingMessage = "Logging in to FTP server";
-            ftpClient.login(user, pass);
+            ftpClient.login(ftpConfiguration.getUser(), ftpConfiguration.getPass());
             loggingMessage = "Logged in to FTP server";
 
             ftpClient.setFileType(ftpClient.BINARY_FILE_TYPE);

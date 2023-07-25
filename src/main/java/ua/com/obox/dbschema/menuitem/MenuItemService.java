@@ -11,7 +11,7 @@ import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
-import ua.com.obox.dbschema.tools.logging.UploadItemImageFTP;
+import ua.com.obox.dbschema.tools.ftp.UploadItemImageFTP;
 
 @Service
 @RequiredArgsConstructor

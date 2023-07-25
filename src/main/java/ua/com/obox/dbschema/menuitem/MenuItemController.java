@@ -13,8 +13,6 @@ import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
-import java.io.IOException;
-
 @RestController
 @RequestMapping("/items")
 @RequiredArgsConstructor
@@ -49,10 +47,9 @@ public class MenuItemController {
                                                                  "  \"calories\": 0,\n" +
                                                                  "  \"image\": \"Base64 only JPG and PNG (not necessary)\"\n" +
                                                                  "}")
-                                                         MenuItem request) throws IOException {
+                                                         MenuItem request) {
         loggingMessage = ExceptionTools.generateLoggingMessage("createItem", request.getCategory_id());
         requestValidation(request);
-        Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
         MenuItemResponseId response = service.createItem(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -88,8 +85,9 @@ public class MenuItemController {
     }
 
     private void requestValidation(MenuItem request) {
-        Validator.validateName(loggingMessage, request.getName(), loggingService);
         Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
+        Validator.validateName(loggingMessage, request.getName(), loggingService);
+        Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
         Validator.positiveInteger("Price", request.getPrice().intValue(), 100000, loggingService); // validate price
         Validator.positiveInteger("Calories", request.getCalories(), 30000, loggingService); // validate calories
         Validator.positiveInteger("Weight", request.getWeight(), 100000, loggingService); // validate weight
