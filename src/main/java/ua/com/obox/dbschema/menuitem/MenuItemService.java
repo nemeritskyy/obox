@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
+import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
@@ -31,25 +32,25 @@ public class MenuItemService {
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Item with id " + itemId + Message.NOT_FOUND.getMessage());
         });
 
-        if (!item.getVisibility()) {
+        if (item.getState().equals(State.DISABLE)) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.HIDDEN.getMessage());
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Item with id " + itemId + Message.HIDDEN.getMessage());
         }
 
         loggingService.log(LogLevel.INFO, loggingMessage);
-        String imageServerDns = "https://img.obox.com.ua/";
         return MenuItemResponse.builder()
                 .itemId(item.getItemId())
                 .categoryId(item.getCategory().getCategoryId())
                 .name(item.getName())
                 .description(item.getDescription())
                 .price(item.getPrice())
-                .imageUrl(imageServerDns + item.getImageUrl())
-                .visibility(item.getVisibility())
+                .imageUrl(item.getImageUrl())
+                .state(item.getState())
                 .build();
     }
 
     public MenuItemResponseId createItem(MenuItem request) {
+        String imageServerDns = "https://img.obox.com.ua/";
         String image = "";
         if (request.getImage() != null) {
             image = request.getImage();
@@ -65,11 +66,13 @@ public class MenuItemService {
                 .description(request.getDescription().trim())
                 .price(request.getPrice())
                 .category(category)
-                .visibility(true)
+                .calories(request.getCalories())
+                .weight(request.getWeight())
+                .state(request.getState())
                 .build();
         itemRepository.save(item);
         if (!image.isEmpty() && Validator.validateImage(image, loggingService)) {
-            item.setImageUrl(itemImageFTP.uploadImage(request.getImage(), item.getItemId(), loggingService));
+            item.setImageUrl(imageServerDns + itemImageFTP.uploadImage(request.getImage(), item.getItemId(), loggingService));
             itemRepository.save(item);
         }
         loggingService.log(LogLevel.INFO, loggingMessage + " id=" + item.getItemId() + Message.CREATE.getMessage());
@@ -79,23 +82,32 @@ public class MenuItemService {
     }
 
     public void patchItemById(String itemId, MenuItem request) {
-        Boolean visibility = request.getVisibility();
+        String image = "";
+        System.out.println("input state" + request.getState());
+        if (request.getImage() != null) {
+            image = request.getImage();
+        }
         loggingMessage = ExceptionTools.generateLoggingMessage("patchItemById", itemId);
         var itemInfo = itemRepository.findByItemId(itemId);
         MenuItem item = itemInfo.orElseThrow(() -> {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Item with id " + itemId + Message.NOT_FOUND.getMessage());
         });
-        if (visibility == null) {
-            visibility = item.getVisibility();
-        }
 
+        if (!image.isEmpty() && Validator.validateImage(image, loggingService)) {
+            itemImageFTP.deleteImage(item.getImageUrl(), loggingService); // delete old image
+            item.setImageUrl(itemImageFTP.uploadImage(request.getImage(), item.getItemId(), loggingService)); // upload new image
+        }
         item.setCategoryIdForMenuItem(request.getCategory_id()); // set new category id;
         item.setName(request.getName().trim()); // delete whitespaces
         item.setDescription(request.getDescription().trim());
         item.setPrice(request.getPrice());
+        item.setCalories(request.getCalories());
+        item.setWeight(request.getWeight());
         item.setCategory(item.getCategory());
-        item.setVisibility(visibility);
+        if (!request.getState().equals(item.getState())) {
+            item.setState(request.getState());
+        }
         itemRepository.save(item);
         loggingService.log(LogLevel.INFO, loggingMessage + Message.UPDATE.getMessage());
     }

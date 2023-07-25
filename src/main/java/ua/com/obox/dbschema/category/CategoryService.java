@@ -42,7 +42,7 @@ public class CategoryService {
                     .name(item.getName())
                     .price(item.getPrice())
                     .categoryId(item.getCategory().getCategoryId())
-                    .visibility(item.getVisibility())
+                    .state(item.getState())
                     .build();
             responseList.add(response);
         }

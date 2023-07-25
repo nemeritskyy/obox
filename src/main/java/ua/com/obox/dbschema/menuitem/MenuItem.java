@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.category.Category;
+import ua.com.obox.dbschema.tools.State;
 
 import javax.persistence.*;
 
@@ -33,8 +34,8 @@ public class MenuItem {
     private Integer weight;
     @JsonIgnore
     private String imageUrl;
-    @JsonIgnore
-    private Boolean visibility;
+    @Column(columnDefinition = "VARCHAR(7) DEFAULT '" + State.ENABLE + "'")
+    private String state;
     @Transient
     private String category_id;
     @Transient

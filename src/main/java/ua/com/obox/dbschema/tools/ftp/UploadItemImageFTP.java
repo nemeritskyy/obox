@@ -66,5 +66,37 @@ public class UploadItemImageFTP {
         return fileName;
     }
 
+    public void deleteImage(String fileName, LoggingService loggingService) {
+        FTPSClient ftpClient = new FTPSClient();
+        ftpClient.setTrustManager(TrustManagerUtils.getAcceptAllTrustManager());
+        try {
+            loggingMessage = "Before connecting to FTP server";
+            ftpClient.connect(ftpConfiguration.getServer(), ftpConfiguration.getPort());
+            loggingMessage = "Logging in to FTP server";
+            ftpClient.login(ftpConfiguration.getUser(), ftpConfiguration.getPass());
+            loggingMessage = "Start deleting file: " + fileName;
+            boolean deleted = ftpClient.deleteFile(fileName);
+            if (deleted) {
+                loggingMessage = "The file " + fileName + " is deleted successfully.";
+            } else {
+                loggingMessage = "Failed to delete the file " + fileName;
+            }
+        } catch (IOException ex) {
+            loggingMessage = "Error: " + ex.getMessage();
+            ex.printStackTrace();
+        } finally {
+            loggingService.log(LogLevel.INFO, loggingMessage);
+            try {
+                if (ftpClient.isConnected()) {
+                    ftpClient.logout();
+                    ftpClient.disconnect();
+                }
+            } catch (IOException ex) {
+                loggingService.log(LogLevel.ERROR, ex.toString());
+                ex.printStackTrace();
+            }
+        }
+    }
+
 
 }

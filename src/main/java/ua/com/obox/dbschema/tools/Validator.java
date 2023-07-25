@@ -14,11 +14,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class Validator {
     public static void validateName(String loggingMessage, String name, LoggingService loggingService) {
-        name = name.trim(); // delete whitespaces
-        if (name.isEmpty()) {
+        if (name == null || name.trim().isEmpty()) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.REQUIRED.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.REQUIRED.getMessage().trim());
         }
+        name = name.trim(); // delete whitespaces
         if (name.length() > 200) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.LIMIT_200.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.LIMIT_200.getMessage().trim());
@@ -26,8 +26,7 @@ public class Validator {
     }
 
     public static void validateVarchar(String loggingMessage, String fieldName, String str, LoggingService loggingService) {
-        str = str.trim(); // delete whitespaces
-        if (str.length() > 255) {
+        if (str == null || str.length() > 255) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.LIMIT_255.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, fieldName + Message.LIMIT_255.getMessage());
         }
@@ -35,17 +34,28 @@ public class Validator {
 
     public static void checkUUID(String loggingMessage, String uuid, LoggingService loggingService) {
         try {
+            if (uuid == null) {
+                throw new IllegalArgumentException("UUID cannot be null");
+            }
+
             UUID.fromString(uuid);
         } catch (IllegalArgumentException e) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.BAD_UUID.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, loggingMessage + " uuid=" + uuid + Message.BAD_UUID.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, uuid + Message.BAD_UUID.getMessage());
         }
     }
 
-    public static void positiveInteger(String loggingMessage, Integer inputInteger, int maxInteger, LoggingService loggingService) {
-        if (inputInteger < 0 || inputInteger > maxInteger) {
+    public static void positiveInteger(String loggingMessage, Number inputInteger, int maxInteger, LoggingService loggingService) {
+        if (inputInteger == null || inputInteger.doubleValue() < 0 || inputInteger.doubleValue() > maxInteger) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.LIMIT.getMessage() + maxInteger);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, loggingMessage + Message.LIMIT.getMessage() + maxInteger);
+        }
+    }
+
+    public static void validateState(String loggingMessage, String state, LoggingService loggingService) {
+        if (state == null || !state.equals(State.ENABLE) && !state.equals(State.DISABLE)) {
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.BAD_STATE.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.ERROR.getMessage().trim() + Message.BAD_STATE.getMessage());
         }
     }
 

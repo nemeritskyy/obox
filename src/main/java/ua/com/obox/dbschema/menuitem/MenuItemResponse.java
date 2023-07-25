@@ -35,6 +35,6 @@ public class MenuItemResponse {
     @JsonProperty("image_url")
     private String imageUrl;
 
-    @JsonProperty("visibility")
-    private Boolean visibility;
+    @JsonProperty("state")
+    private String state;
 }
