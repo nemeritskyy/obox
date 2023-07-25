@@ -1,6 +1,7 @@
 package ua.com.obox.dbschema.menuitem;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.category.Category;
@@ -28,11 +29,16 @@ public class MenuItem {
     private String name;
     private Double price;
     private String description;
+    private Integer calories;
+    private Integer weight;
+    @JsonIgnore
+    private String imageUrl;
     @JsonIgnore
     private Boolean visibility;
     @Transient
     private String category_id;
     @Transient
+    @Schema(description = "Dish picture")
     private String image;
 
     @JsonIgnore

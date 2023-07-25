@@ -6,13 +6,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
+import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.logging.UploadItemImageFTP;
-
-import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +20,7 @@ public class MenuItemService {
     private final MenuItemRepository itemRepository;
     private final CategoryRepository categoryRepository;
     private final LoggingService loggingService;
+    private final UploadItemImageFTP itemImageFTP;
     private String loggingMessage;
 
     public MenuItemResponse getItemById(String itemId) {
@@ -47,7 +47,11 @@ public class MenuItemService {
                 .build();
     }
 
-    public MenuItemResponseId createItem(MenuItem request) throws IOException {
+    public MenuItemResponseId createItem(MenuItem request) {
+        String image = "";
+        if (request.getImage() != null) {
+            image = request.getImage();
+        }
         loggingMessage = ExceptionTools.generateLoggingMessage("createItem", request.getCategory_id());
         request.setCategoryIdForMenuItem(request.getCategory_id());
         Category category = categoryRepository.findByCategoryId(request.getCategory().getCategoryId()).orElseThrow(() -> {
@@ -62,9 +66,9 @@ public class MenuItemService {
                 .visibility(true)
                 .build();
         itemRepository.save(item);
-        if (!request.getImage().isEmpty()) {
-            UploadItemImageFTP itemImageFTP = new UploadItemImageFTP();
-            itemImageFTP.uploadImage(request.getImage(), item.getItemId(), loggingService);
+        if (!image.isEmpty() && Validator.validateImage(image, loggingService)) {
+            item.setImageUrl(itemImageFTP.uploadImage(request.getImage(), item.getItemId(), loggingService));
+            itemRepository.save(item);
         }
         loggingService.log(LogLevel.INFO, loggingMessage + " id=" + item.getItemId() + Message.CREATE.getMessage());
         return MenuItemResponseId.builder()

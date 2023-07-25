@@ -5,8 +5,10 @@ import java.util.Base64;
 
 import org.apache.commons.net.ftp.FTPSClient;
 import org.apache.commons.net.util.TrustManagerUtils;
+import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.tools.Validator;
 
+@Service
 public class UploadItemImageFTP {
     private static String loggingMessage;
     //    @Value("${ftp.server}")
@@ -16,11 +18,11 @@ public class UploadItemImageFTP {
     //    @Value("${ftp.username}")
     private static String user = "boss@obox.com.ua";
     //    @Value("${ftp.password}")
-    private static String pass = "";
+    private static String pass = "Jlq6QX1J7";
 
-    public void uploadImage(String image, String uuid, LoggingService loggingService) throws IOException {
+    public String uploadImage(String image, String uuid, LoggingService loggingService) {
         byte[] imageData = Base64.getDecoder().decode(image);
-        String fileType = Validator.detectImageType(imageData);
+        String fileType = Validator.detectImageType(imageData, loggingService);
         String fileName = uuid + fileType;
 
         FTPSClient ftpClient = new FTPSClient();
@@ -56,9 +58,11 @@ public class UploadItemImageFTP {
                     ftpClient.disconnect();
                 }
             } catch (IOException ex) {
+                loggingService.log(LogLevel.ERROR, ex + " uuid=" + uuid);
                 ex.printStackTrace();
             }
         }
+        return fileName;
     }
 
 

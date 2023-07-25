@@ -1,6 +1,8 @@
 package ua.com.obox.dbschema.menuitem;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,14 +15,24 @@ import lombok.NoArgsConstructor;
 public class MenuItemResponse {
     @JsonProperty("item_id")
     private String itemId;
-    @JsonProperty("description")
-    private String description;
-    @JsonProperty("name")
-    private String name;
-    @JsonProperty("price")
-    private Double price;
     @JsonProperty("category_id")
     private String categoryId;
+    @JsonProperty("name")
+    private String name;
+    @JsonProperty("description")
+    private String description;
+    @JsonProperty("price")
+    private Double price;
+    @JsonProperty("weight")
+    private Integer weight;
+    @JsonProperty("calories")
+    private Integer calories;
+
+    @Schema(description = "Ссылка на изображение")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("image_url")
+    private String imageUrl;
+
     @JsonProperty("visibility")
     private Boolean visibility;
 }

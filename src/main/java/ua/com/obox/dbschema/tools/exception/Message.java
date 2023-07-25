@@ -20,6 +20,7 @@ public enum Message {
     LIMIT_255(" field must contain from 1 to 255 characters"),
     BOOLEAN(" must be false or true"),
     CHECK_PRICE(" the price should be in the range of 0 to 100000"),
+    LIMIT(" must be in the range of 0 to "),
     HIDDEN(" is hidden"),
     BAD_UUID(" uuid is incorrect"),
     ERROR(" Error"),

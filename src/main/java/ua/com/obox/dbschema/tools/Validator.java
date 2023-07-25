@@ -7,6 +7,7 @@ import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
+import java.util.Base64;
 import java.util.UUID;
 
 
@@ -41,17 +42,27 @@ public class Validator {
         }
     }
 
-    public static void checkPrice(String loggingMessage, Double price, LoggingService loggingService) {
-        if (price < 0 || price > 100000) {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.CHECK_PRICE.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.CHECK_PRICE.getMessage().trim());
+    public static void positiveInteger(String loggingMessage, Integer inputInteger, int maxInteger, LoggingService loggingService) {
+        if (inputInteger < 0 || inputInteger > maxInteger) {
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.LIMIT.getMessage() + maxInteger);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, loggingMessage + Message.LIMIT.getMessage() + maxInteger);
         }
     }
 
-    public static String detectImageType(byte[] imageData){
+    public static boolean validateImage(String image, LoggingService loggingService) {
+        byte[] imageData = new byte[0];
+        try {
+            imageData = Base64.getDecoder().decode(image);
+        } catch (Exception exception) {
+            System.out.println("Incorrect file");
+        }
+        return detectImageType(imageData, loggingService) != null && image.length() > 30000;
+    }
+
+    public static String detectImageType(byte[] imageData, LoggingService loggingService) {
         if (imageData.length >= 8) {
-            byte[] jpegSignature = { (byte) 0xFF, (byte) 0xD8 };
-            byte[] pngSignature = { (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+            byte[] jpegSignature = {(byte) 0xFF, (byte) 0xD8};
+            byte[] pngSignature = {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
 
             if (startsWith(imageData, jpegSignature)) {
                 return ".jpg";
@@ -59,6 +70,7 @@ public class Validator {
                 return ".png";
             }
         }
+        loggingService.log(LogLevel.ERROR, "Bad type of upload image support only JPG and PNG");
         return null;
     }
 
