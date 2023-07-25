@@ -135,6 +135,9 @@ public class MenuItemService {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Item with id " + itemId + Message.NOT_FOUND.getMessage());
         });
+        if (item.getImageUrl() != null) {
+            itemImageFTP.deleteImage(item.getImageUrl(), loggingService);
+        }
         itemRepository.delete(item);
         loggingService.log(LogLevel.INFO, loggingMessage + " name=" + item.getName() + Message.DELETE.getMessage());
     }
