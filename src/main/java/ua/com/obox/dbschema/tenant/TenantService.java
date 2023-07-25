@@ -7,6 +7,7 @@ import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.restaurant.RestaurantResponse;
+import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
@@ -52,6 +53,10 @@ public class TenantService {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + Message.NOT_FOUND.getMessage());
         });
+        if (tenant.getState().equals(State.DISABLE)) {
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.FORBIDDEN.getMessage());
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tenant with id " + tenantId + Message.FORBIDDEN.getMessage());
+        }
         loggingService.log(LogLevel.INFO, loggingMessage);
         return TenantResponse.builder()
                 .tenantId(tenant.getTenantId())
@@ -63,6 +68,7 @@ public class TenantService {
         loggingMessage = ExceptionTools.generateLoggingMessage("createTenant", request.getName());
         Tenant tenant = Tenant.builder()
                 .name(request.getName().trim()) // delete whitespaces
+                .state(State.ENABLE)
                 .build();
         tenantRepository.save(tenant);
         loggingService.log(LogLevel.INFO, loggingMessage + " id=" + tenant.getTenantId() + Message.CREATE.getMessage());
@@ -84,14 +90,19 @@ public class TenantService {
         loggingService.log(LogLevel.INFO, loggingMessage + " OLD name=" + oldName + " NEW name=" + request.getName() + Message.UPDATE.getMessage());
     }
 
-    public void deleteTenantById(String tenantId) {
+    public void deleteTenantById(String tenantId, boolean forceDelete) {
         loggingMessage = ExceptionTools.generateLoggingMessage("deleteTenantById", tenantId);
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
         Tenant tenant = tenantInfo.orElseThrow(() -> {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + Message.NOT_FOUND.getMessage());
         });
-        tenantRepository.delete(tenant);
+        if (!forceDelete) {
+            tenant.setState(State.DISABLE);
+            tenantRepository.save(tenant);
+        } else {
+            tenantRepository.delete(tenant);
+        }
         loggingService.log(LogLevel.INFO, loggingMessage + " name=" + tenant.getName() + Message.DELETE.getMessage());
     }
 

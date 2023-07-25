@@ -71,8 +71,8 @@ public class TenantController {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "404", description = "Not found")
     })
-    public ResponseEntity<Void> deleteTenantById(@PathVariable String tenantId) {
-        service.deleteTenantById(tenantId);
+    public ResponseEntity<Void> deleteTenantById(@PathVariable String tenantId, @RequestParam(required = false) boolean forceDelete) {
+        service.deleteTenantById(tenantId, forceDelete);
         return ResponseEntity.noContent().build();
     }
 }

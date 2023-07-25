@@ -23,7 +23,8 @@ public enum Message {
     HIDDEN(" is hidden"),
     BAD_UUID(" uuid is incorrect"),
     ERROR(" Error"),
-    DELETE(" deleted");
+    DELETE(" deleted"),
+    FORBIDDEN(" forbidden");
 
     private final String message;
 }

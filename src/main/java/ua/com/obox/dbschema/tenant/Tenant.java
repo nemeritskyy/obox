@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.restaurant.Restaurant;
+import ua.com.obox.dbschema.tools.State;
 
 import javax.persistence.*;
 import java.util.List;
@@ -26,4 +27,7 @@ public class Tenant {
     @OneToMany(mappedBy = "tenant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Restaurant> restaurants;
+    @Column(columnDefinition = "VARCHAR(7) DEFAULT '" + State.ENABLE + "'")
+    @JsonIgnore
+    private String state;
 }
