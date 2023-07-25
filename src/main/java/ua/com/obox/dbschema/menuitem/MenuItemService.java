@@ -36,7 +36,6 @@ public class MenuItemService {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.HIDDEN.getMessage());
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Item with id " + itemId + Message.HIDDEN.getMessage());
         }
-
         loggingService.log(LogLevel.INFO, loggingMessage);
         return MenuItemResponse.builder()
                 .itemId(item.getItemId())
@@ -50,7 +49,6 @@ public class MenuItemService {
     }
 
     public MenuItemResponseId createItem(MenuItem request) {
-        String imageServerDns = "https://img.obox.com.ua/";
         String image = "";
         if (request.getImage() != null) {
             image = request.getImage();
@@ -72,7 +70,7 @@ public class MenuItemService {
                 .build();
         itemRepository.save(item);
         if (!image.isEmpty() && Validator.validateImage(image, loggingService)) {
-            item.setImageUrl(imageServerDns + itemImageFTP.uploadImage(request.getImage(), item.getItemId(), loggingService));
+            item.setImageUrl(itemImageFTP.uploadImage(request.getImage(), item.getItemId(), loggingService));
             itemRepository.save(item);
         }
         loggingService.log(LogLevel.INFO, loggingMessage + " id=" + item.getItemId() + Message.CREATE.getMessage());
@@ -83,7 +81,6 @@ public class MenuItemService {
 
     public void patchItemById(String itemId, MenuItem request) {
         String image = "";
-        System.out.println("input state" + request.getState());
         if (request.getImage() != null) {
             image = request.getImage();
         }
@@ -98,14 +95,33 @@ public class MenuItemService {
             itemImageFTP.deleteImage(item.getImageUrl(), loggingService); // delete old image
             item.setImageUrl(itemImageFTP.uploadImage(request.getImage(), item.getItemId(), loggingService)); // upload new image
         }
-        item.setCategoryIdForMenuItem(request.getCategory_id()); // set new category id;
-        item.setName(request.getName().trim()); // delete whitespaces
-        item.setDescription(request.getDescription().trim());
-        item.setPrice(request.getPrice());
-        item.setCalories(request.getCalories());
-        item.setWeight(request.getWeight());
-        item.setCategory(item.getCategory());
-        if (!request.getState().equals(item.getState())) {
+        if (request.getName() != null) {
+            Validator.validateName(loggingMessage, request.getName(), loggingService);
+            item.setName(request.getName().trim()); // delete whitespaces
+        }
+        if (request.getDescription() != null) {
+            Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
+            item.setDescription(request.getDescription().trim());
+        }
+        if (request.getPrice() != null) {
+            Validator.positiveInteger("Price", request.getPrice(), 100000, loggingService); // validate price
+            item.setPrice(request.getPrice());
+        }
+        if (request.getCalories() != null) {
+            Validator.positiveInteger("Calories", request.getCalories(), 30000, loggingService); // validate calories
+            item.setCalories(request.getCalories());
+        }
+        if (request.getWeight() != null) {
+            Validator.positiveInteger("Weight", request.getWeight(), 100000, loggingService); // validate weight
+            item.setWeight(request.getWeight());
+        }
+        if (request.getCategory_id() != null) {
+            Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
+            item.setCategoryIdForMenuItem(request.getCategory_id()); // set new category id;
+            item.setCategory(item.getCategory());
+        }
+        if (request.getState() != null) {
+            Validator.validateState(loggingMessage, request.getState(), loggingService); // validate state
             item.setState(request.getState());
         }
         itemRepository.save(item);

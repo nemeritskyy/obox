@@ -71,7 +71,6 @@ public class MenuItemController {
 
     MenuItem request) {
         loggingMessage = ExceptionTools.generateLoggingMessage("patchItemById", request.getCategory_id());
-//        requestValidation(request, loggingMessage);
         service.patchItemById(itemId, request);
         return ResponseEntity.noContent().build();
     }
@@ -85,6 +84,4 @@ public class MenuItemController {
         service.deleteItemById(itemId);
         return ResponseEntity.noContent().build();
     }
-
-
 }
