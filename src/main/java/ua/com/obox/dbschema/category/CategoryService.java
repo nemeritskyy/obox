@@ -38,10 +38,13 @@ public class CategoryService {
         for (MenuItem item : items) {
             MenuItemResponse response = MenuItemResponse.builder()
                     .itemId(item.getItemId())
-                    .description(item.getDescription())
-                    .name(item.getName())
-                    .price(item.getPrice())
                     .categoryId(item.getCategory().getCategoryId())
+                    .name(item.getName())
+                    .description(item.getDescription())
+                    .price(item.getPrice())
+                    .weight(item.getWeight())
+                    .calories(item.getCalories())
+                    .imageUrl(item.getImageUrl())
                     .state(item.getState())
                     .build();
             responseList.add(response);

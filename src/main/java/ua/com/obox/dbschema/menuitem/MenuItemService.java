@@ -43,6 +43,8 @@ public class MenuItemService {
                 .name(item.getName())
                 .description(item.getDescription())
                 .price(item.getPrice())
+                .weight(item.getWeight())
+                .calories(item.getCalories())
                 .imageUrl(item.getImageUrl())
                 .state(item.getState())
                 .build();
