@@ -32,7 +32,7 @@ public class DishService {
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Dish with id " + dishId + Message.NOT_FOUND.getMessage());
         });
 
-        if (dish.getState().equals(State.DISABLE)) {
+        if (dish.getState().equals(State.DISABLED)) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.HIDDEN.getMessage());
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Dish with id " + dishId + Message.HIDDEN.getMessage());
         }

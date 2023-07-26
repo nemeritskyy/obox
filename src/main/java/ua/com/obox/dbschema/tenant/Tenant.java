@@ -27,7 +27,7 @@ public class Tenant {
     @OneToMany(mappedBy = "tenant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Restaurant> restaurants;
-    @Column(columnDefinition = "VARCHAR(7) DEFAULT '" + State.ENABLE + "'")
+    @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
     @JsonIgnore
     private String state;
 }

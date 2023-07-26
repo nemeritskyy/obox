@@ -34,7 +34,7 @@ public class Dish {
     private Integer weight;
     @JsonIgnore
     private String imageUrl;
-    @Column(columnDefinition = "VARCHAR(7) DEFAULT '" + State.ENABLE + "'")
+    @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
     private String state;
     @Transient
     private String category_id;

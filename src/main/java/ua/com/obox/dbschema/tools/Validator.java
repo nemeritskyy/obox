@@ -53,7 +53,7 @@ public class Validator {
     }
 
     public static void validateState(String loggingMessage, String state, LoggingService loggingService) {
-        if (state == null || !state.equals(State.ENABLE) && !state.equals(State.DISABLE)) {
+        if (state == null || !state.equals(State.ENABLED) && !state.equals(State.DISABLED)) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.BAD_STATE.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.ERROR.getMessage().trim() + Message.BAD_STATE.getMessage());
         }

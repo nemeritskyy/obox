@@ -45,7 +45,7 @@ public class DishController {
                                                                  "  \"price\": 0,\n" +
                                                                  "  \"weight\": 0,\n" +
                                                                  "  \"calories\": 0,\n" +
-                                                                 "  \"state\": \"ENABLE or DISABLE\",\n" +
+                                                                 "  \"state\": \"ENABLED or DISABLED\",\n" +
                                                                  "  \"image\": \"Base64 only JPG and PNG (not necessary)\"\n" +
                                                                  "}")
                                                              Dish request) {
