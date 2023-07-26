@@ -1,4 +1,4 @@
-package ua.com.obox.dbschema.menuitem;
+package ua.com.obox.dbschema.dish;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class MenuItemResponse {
-    @JsonProperty("item_id")
-    private String itemId;
+public class DishResponse {
+    @JsonProperty("dish_id")
+    private String dishId;
     @JsonProperty("category_id")
     private String categoryId;
     @JsonProperty("name")

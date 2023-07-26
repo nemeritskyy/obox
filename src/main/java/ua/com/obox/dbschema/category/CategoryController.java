@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ua.com.obox.dbschema.menuitem.MenuItemResponse;
+import ua.com.obox.dbschema.dish.DishResponse;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
@@ -23,13 +23,13 @@ public class CategoryController {
     private final CategoryService service;
     private final LoggingService loggingService;
 
-    @GetMapping("/{categoryId}/items")
+    @GetMapping("/{categoryId}/dishes")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "404", description = "Not found")
     })
-    public ResponseEntity<List<MenuItemResponse>> getAllItemsByCategoryId(@PathVariable String categoryId) {
-        List<MenuItemResponse> categoryResponses = service.getAllItemsByCategoryId(categoryId);
+    public ResponseEntity<List<DishResponse>> getAllDishesByCategoryId(@PathVariable String categoryId) {
+        List<DishResponse> categoryResponses = service.getAllDishesByCategoryId(categoryId);
         return ResponseEntity.ok(categoryResponses);
     }
 

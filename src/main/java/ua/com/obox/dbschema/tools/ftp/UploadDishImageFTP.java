@@ -12,12 +12,12 @@ import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 @Service
-public class UploadItemImageFTP {
+public class UploadDishImageFTP {
     private static String loggingMessage;
     private final FTPConfiguration ftpConfiguration;
 
     @Autowired
-    public UploadItemImageFTP(FTPConfiguration ftpConfiguration) {
+    public UploadDishImageFTP(FTPConfiguration ftpConfiguration) {
         this.ftpConfiguration = ftpConfiguration;
     }
 
