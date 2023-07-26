@@ -1,9 +1,11 @@
 package ua.com.obox.dbschema.menuitem;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.category.Category;
+import ua.com.obox.dbschema.tools.State;
 
 import javax.persistence.*;
 
@@ -28,11 +30,17 @@ public class MenuItem {
     private String name;
     private Double price;
     private String description;
+    private Integer calories;
+    private Integer weight;
     @JsonIgnore
-    private Boolean visibility;
-
+    private String imageUrl;
+    @Column(columnDefinition = "VARCHAR(7) DEFAULT '" + State.ENABLE + "'")
+    private String state;
     @Transient
     private String category_id;
+    @Transient
+    @Schema(description = "Dish picture")
+    private String image;
 
     @JsonIgnore
     public void setCategoryIdForMenuItem(String category_id) {

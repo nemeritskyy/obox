@@ -37,12 +37,27 @@ public class MenuItemController {
             @ApiResponse(responseCode = "201", description = "Success", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "400", description = "Bad Request")
     })
-    public ResponseEntity<MenuItemResponseId> createItem(@RequestBody MenuItem request) {
+    public ResponseEntity<MenuItemResponseId> createItem(@RequestBody
+                                                         @Schema(example = "{\n" +
+                                                                 "  \"category_id\": \"uuid\",\n" +
+                                                                 "  \"name\": \"string\",\n" +
+                                                                 "  \"description\": \"string\",\n" +
+                                                                 "  \"price\": 0,\n" +
+                                                                 "  \"weight\": 0,\n" +
+                                                                 "  \"calories\": 0,\n" +
+                                                                 "  \"state\": \"ENABLE or DISABLE\",\n" +
+                                                                 "  \"image\": \"Base64 only JPG and PNG (not necessary)\"\n" +
+                                                                 "}")
+                                                         MenuItem request) {
         loggingMessage = ExceptionTools.generateLoggingMessage("createItem", request.getCategory_id());
-        Validator.validateName(loggingMessage, request.getName(), loggingService);
         Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
-        Validator.checkPrice(loggingMessage, request.getPrice(), loggingService);
+        Validator.validateName(loggingMessage, request.getName(), loggingService);
         Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
+        Validator.validateState(loggingMessage, request.getState(), loggingService); // validate state
+        Validator.positiveInteger("Price", request.getPrice(), 100000, loggingService); // validate price
+        Validator.positiveInteger("Calories", request.getCalories(), 30000, loggingService); // validate calories
+        Validator.positiveInteger("Weight", request.getWeight(), 100000, loggingService); // validate weight
+
         MenuItemResponseId response = service.createItem(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -53,18 +68,9 @@ public class MenuItemController {
             @ApiResponse(responseCode = "404", description = "Not found")
     })
     public ResponseEntity<Void> patchItemById(@PathVariable String itemId, @RequestBody
-    @Schema(example = "{\n" +
-            "  \"name\": \"string\",\n" +
-            "  \"description\": \"string\",\n" +
-            "  \"price\": 0.0,\n" +
-            "  \"category_id\": \"c8e7375d-1dbf-4d40-ae65-81cd1e6e973f\",\n" +
-            "  \"visibility\": true\n" +
-            "}")
+
     MenuItem request) {
         loggingMessage = ExceptionTools.generateLoggingMessage("patchItemById", request.getCategory_id());
-        Validator.validateName(loggingMessage, request.getName(), loggingService);
-        Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
-        Validator.checkPrice(loggingMessage, request.getPrice(), loggingService);
         service.patchItemById(itemId, request);
         return ResponseEntity.noContent().build();
     }

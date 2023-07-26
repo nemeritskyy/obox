@@ -31,7 +31,7 @@ public class MenuService {
         List<Category> categories = categoryRepository.findAllByMenu_MenuId(menuId);
         if (categories.isEmpty()) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Categories with Menu id " + menuId + Message.NOT_FOUND.getMessage().trim(), null);
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Categories with Menu id " + menuId + Message.NOT_FOUND.getMessage(), null);
         }
         List<CategoryResponse> responseList = new ArrayList<>();
 

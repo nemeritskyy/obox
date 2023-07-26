@@ -7,17 +7,18 @@ import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
+import java.util.Base64;
 import java.util.UUID;
 
 
 @RequiredArgsConstructor
 public class Validator {
     public static void validateName(String loggingMessage, String name, LoggingService loggingService) {
-        name = name.trim(); // delete whitespaces
-        if (name.isEmpty()) {
+        if (name == null || name.trim().isEmpty()) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.REQUIRED.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.REQUIRED.getMessage().trim());
         }
+        name = name.trim(); // delete whitespaces
         if (name.length() > 200) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.LIMIT_200.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.LIMIT_200.getMessage().trim());
@@ -25,8 +26,7 @@ public class Validator {
     }
 
     public static void validateVarchar(String loggingMessage, String fieldName, String str, LoggingService loggingService) {
-        str = str.trim(); // delete whitespaces
-        if (str.length() > 255) {
+        if (str == null || str.length() > 255) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.LIMIT_255.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, fieldName + Message.LIMIT_255.getMessage());
         }
@@ -34,17 +34,65 @@ public class Validator {
 
     public static void checkUUID(String loggingMessage, String uuid, LoggingService loggingService) {
         try {
+            if (uuid == null) {
+                throw new IllegalArgumentException("UUID cannot be null");
+            }
+
             UUID.fromString(uuid);
         } catch (IllegalArgumentException e) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.BAD_UUID.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, loggingMessage + " uuid=" + uuid + Message.BAD_UUID.getMessage().trim());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, uuid + Message.BAD_UUID.getMessage());
         }
     }
 
-    public static void checkPrice(String loggingMessage, Double price, LoggingService loggingService) {
-        if (price < 0 || price > 100000) {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.CHECK_PRICE.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.CHECK_PRICE.getMessage().trim());
+    public static void positiveInteger(String loggingMessage, Number inputInteger, int maxInteger, LoggingService loggingService) {
+        if (inputInteger == null || inputInteger.doubleValue() < 0 || inputInteger.doubleValue() > maxInteger) {
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.LIMIT.getMessage() + maxInteger);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, loggingMessage + Message.LIMIT.getMessage() + maxInteger);
         }
+    }
+
+    public static void validateState(String loggingMessage, String state, LoggingService loggingService) {
+        if (state == null || !state.equals(State.ENABLE) && !state.equals(State.DISABLE)) {
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.BAD_STATE.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.ERROR.getMessage().trim() + Message.BAD_STATE.getMessage());
+        }
+    }
+
+    public static boolean validateImage(String image, LoggingService loggingService) {
+        byte[] imageData = new byte[0];
+        try {
+            imageData = Base64.getDecoder().decode(image);
+        } catch (Exception exception) {
+            System.out.println("Incorrect file");
+        }
+        return detectImageType(imageData, loggingService) != null && image.length() > 30000;
+    }
+
+    public static String detectImageType(byte[] imageData, LoggingService loggingService) {
+        if (imageData.length >= 8) {
+            byte[] jpegSignature = {(byte) 0xFF, (byte) 0xD8};
+            byte[] pngSignature = {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+
+            if (startsWith(imageData, jpegSignature)) {
+                return ".jpg";
+            } else if (startsWith(imageData, pngSignature)) {
+                return ".png";
+            }
+        }
+        loggingService.log(LogLevel.ERROR, "Bad type of upload image support only JPG and PNG");
+        return null;
+    }
+
+    private static boolean startsWith(byte[] array, byte[] prefix) {
+        if (array.length < prefix.length) {
+            return false;
+        }
+        for (int i = 0; i < prefix.length; i++) {
+            if (array[i] != prefix[i]) {
+                return false;
+            }
+        }
+        return true;
     }
 }
