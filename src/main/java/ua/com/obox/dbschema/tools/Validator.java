@@ -26,7 +26,7 @@ public class Validator {
     }
 
     public static void validateVarchar(String loggingMessage, String fieldName, String str, LoggingService loggingService) {
-        if (str == null || str.length() > 255) {
+        if (str != null && str.length() == 0 || str != null && str.length() > 255) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.LIMIT_255.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, fieldName + Message.LIMIT_255.getMessage());
         }
@@ -34,11 +34,9 @@ public class Validator {
 
     public static void checkUUID(String loggingMessage, String uuid, LoggingService loggingService) {
         try {
-            if (uuid == null) {
-                throw new IllegalArgumentException("UUID cannot be null");
+            if (uuid != null) {
+                UUID.fromString(uuid);
             }
-
-            UUID.fromString(uuid);
         } catch (IllegalArgumentException e) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.BAD_UUID.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, uuid + Message.BAD_UUID.getMessage());
@@ -46,7 +44,7 @@ public class Validator {
     }
 
     public static void positiveInteger(String loggingMessage, Number inputInteger, int maxInteger, LoggingService loggingService) {
-        if (inputInteger == null || inputInteger.doubleValue() < 0 || inputInteger.doubleValue() > maxInteger) {
+        if (inputInteger != null && inputInteger.doubleValue() < 0 || inputInteger != null && inputInteger.doubleValue() > maxInteger) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.LIMIT.getMessage() + maxInteger);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, loggingMessage + Message.LIMIT.getMessage() + maxInteger);
         }
@@ -55,7 +53,7 @@ public class Validator {
     public static void validateState(String loggingMessage, String state, LoggingService loggingService) {
         if (state == null || !state.equals(State.ENABLED) && !state.equals(State.DISABLED)) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.BAD_STATE.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.ERROR.getMessage().trim() + Message.BAD_STATE.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.BAD_STATE.getMessage());
         }
     }
 

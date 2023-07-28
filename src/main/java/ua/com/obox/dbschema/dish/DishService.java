@@ -6,7 +6,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
-import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
@@ -26,20 +25,24 @@ public class DishService {
 
     public DishResponse getDishById(String dishId) {
         loggingMessage = ExceptionTools.generateLoggingMessage("getDishById", dishId);
+        String categoryUUID = null;
         var dishInfo = dishRepository.findByDishId(dishId);
         Dish dish = dishInfo.orElseThrow(() -> {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Dish with id " + dishId + Message.NOT_FOUND.getMessage());
         });
-
-        if (dish.getState().equals(State.DISABLED)) {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.HIDDEN.getMessage());
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Dish with id " + dishId + Message.HIDDEN.getMessage());
+        if (dish.getCategory() != null){
+            categoryUUID = dish.getCategory().getCategoryId();
         }
+
+//        if (dish.getState().equals(State.DISABLED)) {
+//            loggingService.log(LogLevel.ERROR, loggingMessage + Message.HIDDEN.getMessage());
+//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Dish with id " + dishId + Message.HIDDEN.getMessage());
+//        }
         loggingService.log(LogLevel.INFO, loggingMessage);
         return DishResponse.builder()
                 .dishId(dish.getDishId())
-                .categoryId(dish.getCategory().getCategoryId())
+                .categoryId(categoryUUID)
                 .name(dish.getName())
                 .description(dish.getDescription())
                 .price(dish.getPrice())
@@ -52,18 +55,25 @@ public class DishService {
 
     public DishResponseId createDish(Dish request) {
         String image = "";
+        Category category = null;
+        String description = null;
         if (request.getImage() != null) {
             image = request.getImage();
         }
         loggingMessage = ExceptionTools.generateLoggingMessage("createDish", request.getCategory_id());
         request.setCategoryIdForDish(request.getCategory_id());
-        Category category = categoryRepository.findByCategoryId(request.getCategory().getCategoryId()).orElseThrow(() -> {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.CATEGORY_NOT_FOUND.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category with id " + request.getCategory().getCategoryId() + Message.NOT_FOUND.getMessage(), null);
-        });
+        if (request.getCategory_id() != null) {
+            category = categoryRepository.findByCategoryId(request.getCategory().getCategoryId()).orElseThrow(() -> {
+                loggingService.log(LogLevel.ERROR, loggingMessage + Message.CATEGORY_NOT_FOUND.getMessage());
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category with id " + request.getCategory().getCategoryId() + Message.NOT_FOUND.getMessage(), null);
+            });
+        }
+        if (request.getDescription() != null) {
+            description = request.getDescription().trim();
+        }
         Dish dish = Dish.builder()
                 .name(request.getName().trim()) // delete whitespaces
-                .description(request.getDescription().trim())
+                .description(description)
                 .price(request.getPrice())
                 .category(category)
                 .calories(request.getCalories())

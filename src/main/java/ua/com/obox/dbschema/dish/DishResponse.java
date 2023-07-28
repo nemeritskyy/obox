@@ -14,27 +14,25 @@ import lombok.NoArgsConstructor;
 public class DishResponse {
     @JsonProperty("dish_id")
     private String dishId;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("category_id")
     private String categoryId;
     @JsonProperty("name")
     private String name;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("description")
     private String description;
     @JsonProperty("price")
     private Double price;
-
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("weight")
     private Integer weight;
-
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("calories")
     private Integer calories;
-
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("image_url")
     private String imageUrl;
-
     @JsonProperty("state")
     private String state;
 }
