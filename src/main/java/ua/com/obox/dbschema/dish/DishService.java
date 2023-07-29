@@ -54,23 +54,24 @@ public class DishService {
     }
 
     public DishResponseId createDish(Dish request) {
-        String image = "";
+        String image = (request.getImage() != null) ? request.getImage() : "";
+        String description = (request.getDescription() != null) ? request.getDescription().trim() : null;
         Category category = null;
-        String description = null;
-        if (request.getImage() != null) {
-            image = request.getImage();
-        }
+
         loggingMessage = ExceptionTools.generateLoggingMessage("createDish", request.getCategory_id());
         request.setCategoryIdForDish(request.getCategory_id());
+        if (request.getPrice() == null) {
+            loggingService.log(LogLevel.ERROR, loggingMessage + " The price cannot be an empty");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The price cannot be an empty");
+        }
+
         if (request.getCategory_id() != null) {
             category = categoryRepository.findByCategoryId(request.getCategory().getCategoryId()).orElseThrow(() -> {
                 loggingService.log(LogLevel.ERROR, loggingMessage + Message.CATEGORY_NOT_FOUND.getMessage());
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category with id " + request.getCategory().getCategoryId() + Message.NOT_FOUND.getMessage(), null);
             });
         }
-        if (request.getDescription() != null) {
-            description = request.getDescription().trim();
-        }
+
         Dish dish = Dish.builder()
                 .name(request.getName().trim()) // delete whitespaces
                 .description(description)
@@ -92,10 +93,7 @@ public class DishService {
     }
 
     public void patchDishById(String dishId, Dish request) {
-        String image = "";
-        if (request.getImage() != null) {
-            image = request.getImage();
-        }
+        String image = (request.getImage() != null) ? request.getImage() : "";
         loggingMessage = ExceptionTools.generateLoggingMessage("patchDishById", dishId);
         var dishInfo = dishRepository.findByDishId(dishId);
         Dish dish = dishInfo.orElseThrow(() -> {
