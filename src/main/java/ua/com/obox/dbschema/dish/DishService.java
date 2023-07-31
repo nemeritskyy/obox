@@ -20,8 +20,6 @@ public class DishService {
 
     private final DishRepository dishRepository;
     private final CategoryRepository categoryRepository;
-
-    private final RestaurantAssociatedDataRepository dataRepository;
     private final LoggingService loggingService;
     private final UploadDishImageFTP dishImageFTP;
     private final DishServiceHelper serviceHelper;
@@ -39,10 +37,6 @@ public class DishService {
             categoryUUID = dish.getCategory().getCategoryId();
         }
 
-//        if (dish.getState().equals(State.DISABLED)) {
-//            loggingService.log(LogLevel.ERROR, loggingMessage + Message.HIDDEN.getMessage());
-//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Dish with id " + dishId + Message.HIDDEN.getMessage());
-//        }
         loggingService.log(LogLevel.INFO, loggingMessage);
         return DishResponse.builder()
                 .dishId(dish.getDishId())
@@ -54,8 +48,8 @@ public class DishService {
                 .calories(dish.getCalories())
                 .imageUrl(dish.getImageUrl())
                 .state(dish.getState())
-                .inputAllergens(dish.getAllergens())
-                .dataRepository(dataRepository)
+                .allergens(dish.getAllergens())
+                .tags(dish.getTags())
                 .associatedId(dish.getAssociatedId())
                 .build();
     }
@@ -124,8 +118,12 @@ public class DishService {
             dish.setName(request.getName().trim()); // delete whitespaces
         }
         if (request.getDescription() != null) {
-            Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
-            dish.setDescription(request.getDescription().trim());
+            if (!request.getDescription().trim().isEmpty()) {
+                Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
+                dish.setDescription(request.getDescription().trim());
+            } else {
+                dish.setDescription(null);
+            }
         }
         if (request.getAllergens() != null) {
             Validator.validateVarchar(loggingMessage, "Allergens", request.getAllergens(), loggingService);
@@ -140,13 +138,23 @@ public class DishService {
             dish.setPrice(request.getPrice());
         }
         if (request.getCalories() != null) {
-            Validator.positiveInteger("Calories", request.getCalories(), 30000, loggingService); // validate calories
-            dish.setCalories(request.getCalories());
+            if (request.getCalories() == 0) {
+                dish.setCalories(null);
+            } else {
+                Validator.positiveInteger("Calories", request.getCalories(), 30000, loggingService); // validate calories
+                dish.setCalories(request.getCalories());
+            }
         }
         if (request.getWeight() != null) {
-            Validator.positiveInteger("Weight", request.getWeight(), 100000, loggingService); // validate weight
-            dish.setWeight(request.getWeight());
+            if (request.getWeight() == 0) {
+                dish.setWeight(null);
+            } else {
+                Validator.positiveInteger("Weight", request.getWeight(), 100000, loggingService); // validate weight
+                dish.setWeight(request.getWeight());
+            }
         }
+
+
         if (request.getCategory_id() != null) {
             Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
             dish.setCategoryIdForDish(request.getCategory_id()); // set new category id;
