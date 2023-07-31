@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-import ua.com.obox.dbschema.associateddata.RestaurantAssociatedDataRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.tools.Validator;
@@ -108,7 +107,10 @@ public class DishService {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Dish with id " + dishId + Message.NOT_FOUND.getMessage());
         });
-
+        if (image.equals("empty")) {
+            loggingService.log(LogLevel.ERROR, loggingMessage + " Image" + Message.NOT_EMPTY.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Image" + Message.NOT_EMPTY.getMessage());
+        }
         if (!image.isEmpty() && Validator.validateImage(image, loggingService)) {
             dishImageFTP.deleteImage(dish.getImageUrl(), loggingService); // delete old image
             dish.setImageUrl(dishImageFTP.uploadImage(request.getImage(), dish.getDishId(), loggingService)); // upload new image

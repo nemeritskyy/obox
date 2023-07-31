@@ -8,6 +8,7 @@ import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.EmptyIntegerDeserializer;
+import ua.com.obox.dbschema.tools.logging.EmptyStringDeserializer;
 
 import javax.persistence.*;
 
@@ -47,6 +48,7 @@ public class Dish {
     private String category_id;
     @Transient
     @Schema(description = "Dish picture")
+    @JsonDeserialize(using = EmptyStringDeserializer.class)
     private String image;
 
     @JsonIgnore

@@ -7,6 +7,7 @@ import lombok.Getter;
 @Getter
 public enum Message {
     NOT_FOUND(" not found"),
+    NOT_EMPTY(" cannot be empty"),
     TENANT_NOT_FOUND(" tenant not found"),
     RESTAURANT_NOT_FOUND(" restaurant not found"),
     MENU_NOT_FOUND(" Menu not found"),
