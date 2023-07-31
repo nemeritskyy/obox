@@ -3,6 +3,8 @@ package ua.com.obox.dbschema.menu;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
+import ua.com.obox.dbschema.associateddata.RestaurantAssociatedData;
+import ua.com.obox.dbschema.associateddata.RestaurantAssociatedDataRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 
@@ -33,11 +35,16 @@ public class Menu {
     @OneToMany(mappedBy = "menu", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Category> categories;
+    private String language_code;
 
     @JsonIgnore
-    public void setRestaurantIdForMenu(String restaurant_id) {
+    public void setRestaurantIdForMenu(String restaurant_id, String languageCode, RestaurantAssociatedDataRepository dataRepository) {
         Restaurant restaurant = new Restaurant();
         restaurant.setRestaurantId(restaurant_id);
+        if (dataRepository.findByRestaurantIdAndLanguageCode(restaurant_id,languageCode).isEmpty()) {
+            RestaurantAssociatedData associatedData = new RestaurantAssociatedData(languageCode, restaurant_id);
+            dataRepository.save(associatedData);
+        }
         this.restaurant = restaurant;
     }
 }

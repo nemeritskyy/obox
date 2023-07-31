@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ua.com.obox.dbschema.associateddata.RestaurantAssociatedDataRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.tools.Validator;
@@ -19,8 +20,11 @@ public class DishService {
 
     private final DishRepository dishRepository;
     private final CategoryRepository categoryRepository;
+
+    private final RestaurantAssociatedDataRepository dataRepository;
     private final LoggingService loggingService;
     private final UploadDishImageFTP dishImageFTP;
+    private final DishServiceHelper serviceHelper;
     private String loggingMessage;
 
     public DishResponse getDishById(String dishId) {
@@ -31,7 +35,7 @@ public class DishService {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Dish with id " + dishId + Message.NOT_FOUND.getMessage());
         });
-        if (dish.getCategory() != null){
+        if (dish.getCategory() != null) {
             categoryUUID = dish.getCategory().getCategoryId();
         }
 
@@ -50,12 +54,17 @@ public class DishService {
                 .calories(dish.getCalories())
                 .imageUrl(dish.getImageUrl())
                 .state(dish.getState())
+                .inputAllergens(dish.getAllergens())
+                .dataRepository(dataRepository)
+                .associatedId(dish.getAssociatedId())
                 .build();
     }
 
     public DishResponseId createDish(Dish request) {
         String image = (request.getImage() != null) ? request.getImage() : "";
         String description = (request.getDescription() != null) ? request.getDescription().trim() : null;
+        String allergens = (request.getAllergens() != null) ? request.getAllergens().trim() : null;
+        String tags = (request.getTags() != null) ? request.getTags().trim() : null;
         Category category = null;
 
         loggingMessage = ExceptionTools.generateLoggingMessage("createDish", request.getCategory_id());
@@ -72,13 +81,18 @@ public class DishService {
             });
         }
 
+        String associatedId = serviceHelper.getAssociatedIdForDish(request.getCategory_id(), dishRepository, loggingService);
+
         Dish dish = Dish.builder()
                 .name(request.getName().trim()) // delete whitespaces
                 .description(description)
+                .associatedId(associatedId)
                 .price(request.getPrice())
                 .category(category)
                 .calories(request.getCalories())
                 .weight(request.getWeight())
+                .allergens(allergens)
+                .tags(tags)
                 .state(request.getState())
                 .build();
         dishRepository.save(dish);
@@ -112,6 +126,14 @@ public class DishService {
         if (request.getDescription() != null) {
             Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
             dish.setDescription(request.getDescription().trim());
+        }
+        if (request.getAllergens() != null) {
+            Validator.validateVarchar(loggingMessage, "Allergens", request.getAllergens(), loggingService);
+            dish.setAllergens(request.getAllergens().trim());
+        }
+        if (request.getTags() != null) {
+            Validator.validateVarchar(loggingMessage, "Tags", request.getTags(), loggingService);
+            dish.setTags(request.getTags().trim());
         }
         if (request.getPrice() != null) {
             Validator.positiveInteger("Price", request.getPrice(), 100000, loggingService); // validate price

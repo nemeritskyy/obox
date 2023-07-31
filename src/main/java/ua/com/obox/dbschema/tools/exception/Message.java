@@ -26,6 +26,7 @@ public enum Message {
     BAD_STATE("The state is incorrect"),
     ERROR(" Error"),
     DELETE(" deleted"),
+    LANGUAGE(" Bad language code must contain from 2 to 3 characters"),
     FORBIDDEN(" forbidden");
 
     private final String message;

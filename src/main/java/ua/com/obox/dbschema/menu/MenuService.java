@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ua.com.obox.dbschema.associateddata.RestaurantAssociatedDataRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.category.CategoryResponse;
@@ -24,6 +25,8 @@ public class MenuService {
     private final RestaurantRepository restaurantRepository;
     private final CategoryRepository categoryRepository;
     private final LoggingService loggingService;
+
+    private final RestaurantAssociatedDataRepository dataRepository;
     private String loggingMessage;
 
     public List<CategoryResponse> getAllCategoriesByMenuId(String menuId) {
@@ -60,12 +63,13 @@ public class MenuService {
                 .menuId(menu.getMenuId())
                 .name(menu.getName())
                 .restaurantId(menu.getRestaurant().getRestaurantId())
+                .language(menu.getLanguage_code())
                 .build();
     }
 
     public MenuResponseId createMenu(Menu request) {
         loggingMessage = ExceptionTools.generateLoggingMessage("createMenu", request.getRestaurant_id());
-        request.setRestaurantIdForMenu(request.getRestaurant_id());
+        request.setRestaurantIdForMenu(request.getRestaurant_id(),request.getLanguage_code(), dataRepository);
         Restaurant restaurant = restaurantRepository.findByRestaurantId(request.getRestaurant().getRestaurantId()).orElseThrow(() -> {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.RESTAURANT_NOT_FOUND.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Restaurant with id " + request.getRestaurant().getRestaurantId() + Message.NOT_FOUND.getMessage(), null);
@@ -73,6 +77,7 @@ public class MenuService {
         Menu menu = Menu.builder()
                 .name(request.getName().trim()) // delete whitespaces
                 .restaurant(restaurant)
+                .language_code(request.getLanguage_code())
                 .build();
         menuRepository.save(menu);
         loggingService.log(LogLevel.INFO, loggingMessage + " id=" + menu.getMenuId() + Message.CREATE.getMessage());

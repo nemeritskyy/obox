@@ -17,4 +17,6 @@ public class MenuResponse {
     private String name;
     @JsonProperty("restaurant_id")
     private String restaurantId;
+    @JsonProperty("language_code")
+    private String language;
 }
