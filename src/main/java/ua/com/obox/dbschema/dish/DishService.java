@@ -119,43 +119,13 @@ public class DishService {
             Validator.validateName(loggingMessage, request.getName(), loggingService);
             dish.setName(request.getName().trim()); // delete whitespaces
         }
-        if (request.getDescription() != null) {
-            if (!request.getDescription().trim().isEmpty()) {
-                Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
-                dish.setDescription(request.getDescription().trim());
-            } else {
-                dish.setDescription(null);
-            }
-        }
-        if (request.getAllergens() != null) {
-            Validator.validateVarchar(loggingMessage, "Allergens", request.getAllergens(), loggingService);
-            dish.setAllergens(request.getAllergens().trim());
-        }
-        if (request.getTags() != null) {
-            Validator.validateVarchar(loggingMessage, "Tags", request.getTags(), loggingService);
-            dish.setTags(request.getTags().trim());
-        }
+
+        serviceHelper.updateDishFromRequestNullEnable(dish, request, loggingMessage, loggingService);
+
         if (request.getPrice() != null) {
             Validator.positiveInteger("Price", request.getPrice(), 100000, loggingService); // validate price
             dish.setPrice(request.getPrice());
         }
-        if (request.getCalories() != null) {
-            if (request.getCalories() == 0) {
-                dish.setCalories(null);
-            } else {
-                Validator.positiveInteger("Calories", request.getCalories(), 30000, loggingService); // validate calories
-                dish.setCalories(request.getCalories());
-            }
-        }
-        if (request.getWeight() != null) {
-            if (request.getWeight() == 0) {
-                dish.setWeight(null);
-            } else {
-                Validator.positiveInteger("Weight", request.getWeight(), 100000, loggingService); // validate weight
-                dish.setWeight(request.getWeight());
-            }
-        }
-
 
         if (request.getCategory_id() != null) {
             Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID

@@ -45,6 +45,8 @@ public class DishController {
                                                                  "  \"price\": 0,\n" +
                                                                  "  \"weight\": 0,\n" +
                                                                  "  \"calories\": 0,\n" +
+                                                                 "  \"allergens\": \"Celery::Cereals containing gluten::Clams\",\n" +
+                                                                 "  \"tags\": \"Spicy::Vegan\",\n" +
                                                                  "  \"state\": \"ENABLED or DISABLED\",\n" +
                                                                  "  \"image\": \"Base64 only JPG and PNG (not necessary)\"\n" +
                                                                  "}")
