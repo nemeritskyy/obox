@@ -17,6 +17,8 @@ public class DishResponse {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("category_id")
     private String categoryId;
+    @JsonProperty("associated_id")
+    private String associatedId;
     @JsonProperty("name")
     private String name;
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -30,6 +32,12 @@ public class DishResponse {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("calories")
     private Integer calories;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("allergens")
+    private String allergens;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("tags")
+    private String tags;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("image_url")
     private String imageUrl;

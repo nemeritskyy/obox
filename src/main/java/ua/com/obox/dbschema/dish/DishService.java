@@ -21,6 +21,7 @@ public class DishService {
     private final CategoryRepository categoryRepository;
     private final LoggingService loggingService;
     private final UploadDishImageFTP dishImageFTP;
+    private final DishServiceHelper serviceHelper;
     private String loggingMessage;
 
     public DishResponse getDishById(String dishId) {
@@ -31,14 +32,10 @@ public class DishService {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Dish with id " + dishId + Message.NOT_FOUND.getMessage());
         });
-        if (dish.getCategory() != null){
+        if (dish.getCategory() != null) {
             categoryUUID = dish.getCategory().getCategoryId();
         }
 
-//        if (dish.getState().equals(State.DISABLED)) {
-//            loggingService.log(LogLevel.ERROR, loggingMessage + Message.HIDDEN.getMessage());
-//            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Dish with id " + dishId + Message.HIDDEN.getMessage());
-//        }
         loggingService.log(LogLevel.INFO, loggingMessage);
         return DishResponse.builder()
                 .dishId(dish.getDishId())
@@ -50,12 +47,17 @@ public class DishService {
                 .calories(dish.getCalories())
                 .imageUrl(dish.getImageUrl())
                 .state(dish.getState())
+                .allergens(dish.getAllergens())
+                .tags(dish.getTags())
+                .associatedId(dish.getAssociatedId())
                 .build();
     }
 
     public DishResponseId createDish(Dish request) {
         String image = (request.getImage() != null) ? request.getImage() : "";
         String description = (request.getDescription() != null) ? request.getDescription().trim() : null;
+        String allergens = (request.getAllergens() != null) ? request.getAllergens().trim() : null;
+        String tags = (request.getTags() != null) ? request.getTags().trim() : null;
         Category category = null;
 
         loggingMessage = ExceptionTools.generateLoggingMessage("createDish", request.getCategory_id());
@@ -72,13 +74,18 @@ public class DishService {
             });
         }
 
+        String associatedId = serviceHelper.getAssociatedIdForDish(request.getCategory_id(), dishRepository, loggingService);
+
         Dish dish = Dish.builder()
                 .name(request.getName().trim()) // delete whitespaces
                 .description(description)
+                .associatedId(associatedId)
                 .price(request.getPrice())
                 .category(category)
                 .calories(request.getCalories())
                 .weight(request.getWeight())
+                .allergens(allergens)
+                .tags(tags)
                 .state(request.getState())
                 .build();
         dishRepository.save(dish);
@@ -100,7 +107,10 @@ public class DishService {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Dish with id " + dishId + Message.NOT_FOUND.getMessage());
         });
-
+        if (image.equals("empty")) {
+            loggingService.log(LogLevel.ERROR, loggingMessage + " Image" + Message.NOT_EMPTY.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Image" + Message.NOT_EMPTY.getMessage());
+        }
         if (!image.isEmpty() && Validator.validateImage(image, loggingService)) {
             dishImageFTP.deleteImage(dish.getImageUrl(), loggingService); // delete old image
             dish.setImageUrl(dishImageFTP.uploadImage(request.getImage(), dish.getDishId(), loggingService)); // upload new image
@@ -109,22 +119,14 @@ public class DishService {
             Validator.validateName(loggingMessage, request.getName(), loggingService);
             dish.setName(request.getName().trim()); // delete whitespaces
         }
-        if (request.getDescription() != null) {
-            Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
-            dish.setDescription(request.getDescription().trim());
-        }
+
+        serviceHelper.updateDishFromRequestNullEnable(dish, request, loggingMessage, loggingService);
+
         if (request.getPrice() != null) {
             Validator.positiveInteger("Price", request.getPrice(), 100000, loggingService); // validate price
             dish.setPrice(request.getPrice());
         }
-        if (request.getCalories() != null) {
-            Validator.positiveInteger("Calories", request.getCalories(), 30000, loggingService); // validate calories
-            dish.setCalories(request.getCalories());
-        }
-        if (request.getWeight() != null) {
-            Validator.positiveInteger("Weight", request.getWeight(), 100000, loggingService); // validate weight
-            dish.setWeight(request.getWeight());
-        }
+
         if (request.getCategory_id() != null) {
             Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
             dish.setCategoryIdForDish(request.getCategory_id()); // set new category id;

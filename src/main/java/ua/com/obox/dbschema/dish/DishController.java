@@ -45,6 +45,8 @@ public class DishController {
                                                                  "  \"price\": 0,\n" +
                                                                  "  \"weight\": 0,\n" +
                                                                  "  \"calories\": 0,\n" +
+                                                                 "  \"allergens\": \"Celery::Cereals containing gluten::Clams\",\n" +
+                                                                 "  \"tags\": \"Spicy::Vegan\",\n" +
                                                                  "  \"state\": \"ENABLED or DISABLED\",\n" +
                                                                  "  \"image\": \"Base64 only JPG and PNG (not necessary)\"\n" +
                                                                  "}")
@@ -53,6 +55,8 @@ public class DishController {
         Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
         Validator.validateName(loggingMessage, request.getName(), loggingService);
         Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
+        Validator.validateVarchar(loggingMessage, "Allergens", request.getAllergens(), loggingService);
+        Validator.validateVarchar(loggingMessage, "Tags", request.getTags(), loggingService);
         Validator.validateState(loggingMessage, request.getState(), loggingService); // validate state
         Validator.positiveInteger("Price", request.getPrice(), 100000, loggingService); // validate price
         Validator.positiveInteger("Calories", request.getCalories(), 30000, loggingService); // validate calories

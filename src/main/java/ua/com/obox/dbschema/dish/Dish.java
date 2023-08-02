@@ -1,11 +1,14 @@
 package ua.com.obox.dbschema.dish;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.tools.State;
+import ua.com.obox.dbschema.tools.EmptyIntegerDeserializer;
+import ua.com.obox.dbschema.tools.logging.EmptyStringDeserializer;
 
 import javax.persistence.*;
 
@@ -30,16 +33,22 @@ public class Dish {
     private String name;
     private Double price;
     private String description;
+    @JsonDeserialize(using = EmptyIntegerDeserializer.class)
     private Integer calories;
+    @JsonDeserialize(using = EmptyIntegerDeserializer.class)
     private Integer weight;
     @JsonIgnore
     private String imageUrl;
+    private String allergens;
+    private String tags;
     @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
     private String state;
+    private String associatedId;
     @Transient
     private String category_id;
     @Transient
     @Schema(description = "Dish picture")
+    @JsonDeserialize(using = EmptyStringDeserializer.class)
     private String image;
 
     @JsonIgnore

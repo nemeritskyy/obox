@@ -1,4 +1,4 @@
-package ua.com.obox.dbschema.menu;
+package ua.com.obox.dbschema.associateddata;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -10,13 +10,15 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class MenuResponse {
-    @JsonProperty("menu_id")
-    private String menuId;
-    @JsonProperty("name")
-    private String name;
+public class RestaurantAssociatedDataResponse {
+    @JsonProperty("associated_id")
+    private String associatedId;
     @JsonProperty("restaurant_id")
     private String restaurantId;
     @JsonProperty("language_code")
-    private String language;
+    private String languageCode;
+    @JsonProperty("allergens")
+    private String allergens;
+    @JsonProperty("tags")
+    private String tags;
 }
