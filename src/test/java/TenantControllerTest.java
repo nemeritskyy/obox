@@ -22,6 +22,7 @@ import ua.com.obox.dbschema.tenant.*;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -40,23 +41,6 @@ public class TenantControllerTest {
     private MockMvc mockMvc;
     @Mock
     private TenantRepository tenantRepository;
-    private static Tenant testTenant;
-
-//    @Before
-//    public void setup() {
-//        testTenant = new Tenant();
-//        testTenant.setTenantId(tenantTestIdExisting);
-//        testTenant.setName("New Name");
-//        testTenant.setState(State.ENABLED);
-//        this.tenantRepository.save(testTenant);
-//    }
-
-//    @Before
-//    public void setup() {
-//        Tenant tenant1 = new Tenant(UUID.randomUUID().toString(), RandomStringUtils.random(15, true, true), restaurantList, "ENABLED");
-//        Tenant tenant2 = new Tenant(tenantTestIdExisting, "Tenant 2", restaurantList, "DISABLED");
-//        tenantRepository.saveAll(Arrays.asList(tenant1, tenant2));
-//    }
 
     @BeforeEach
     public void setup(WebApplicationContext wac) {
@@ -81,20 +65,9 @@ public class TenantControllerTest {
         );
     }
 
-    private void testValidNameInRequest(String name, MockHttpServletRequestBuilder requestBuilder) throws Exception {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("name", name);
-
-        mockMvc.perform(requestBuilder
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonObject.toString()))
-                .andExpect(status().isCreated());
-    }
-
-    //Bad Request
     @ParameterizedTest
     @MethodSource("getInvalidNames")
-    public void testCreateAndPatchNameEmptySpace201Chars(String name) {
+    public void testCreateAndPatchNameEmptySpace201Chars(String name) { //Bad Request
         assertAll(
                 () -> testInvalidNameInRequest(name, post(URL)),
                 () -> testInvalidNameInRequest(name, patch(URL + tenantTestIdExisting))
@@ -103,10 +76,51 @@ public class TenantControllerTest {
 
     private static Stream<String> getInvalidNames() {
         return Stream.of(
-                "", // Post. 10
                 "    ", // Post. 6
-                RandomStringUtils.random(202, true, true) // Post. 9
+                RandomStringUtils.random(202, true, true), // Post. 9
+                "" // Post. 10
         );
+    }
+
+    @Test
+    public void testGetTenantByExistingId() throws Exception {
+        mockMvc.perform(get(URL + tenantTestIdExisting)) // Get. 1
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testGetTenantByNotFoundId() throws Exception { // Get. 2
+        mockMvc.perform(get(URL + RandomStringUtils.random(5, true, true)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testGetTenantByIdAfterPatch() throws Exception { // Get 3
+        String newName = "New name";
+        String jsonBody = "{\"name\": \"" + newName + "\"}";
+
+        mockMvc.perform(patch(URL + tenantTestIdExisting)
+                        .contentType("application/json")
+                        .content(jsonBody))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get(URL + tenantTestIdExisting))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$.tenant_id").exists())
+                .andExpect(jsonPath("$.name", equalTo(newName)));
+    }
+
+    @Test
+    public void testGetTenantByInvalidId() throws Exception { // Get. 4
+        mockMvc.perform(get(URL + UUID.randomUUID()))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testGetTenantForbidden() throws Exception {
+        mockMvc.perform(get(URL + tenantForbiddenStateDisabled)) // Get. 1.a
+                .andExpect(status().isForbidden());
     }
 
     private void testInvalidNameInRequest(String name, MockHttpServletRequestBuilder requestBuilder) throws Exception {
@@ -119,40 +133,15 @@ public class TenantControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    @Test
-    public void testGetTenantByExistingId() throws Exception {
-        mockMvc.perform(get(URL + tenantTestIdExisting)) // Get. 1
-                .andExpect(status().isOk());
+    private void testValidNameInRequest(String name, MockHttpServletRequestBuilder requestBuilder) throws Exception {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("name", name);
+
+        mockMvc.perform(requestBuilder
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jsonObject.toString()))
+                .andExpect(status().isCreated());
     }
-
-    @Test
-    public void testGetTenantByNotFoundId() throws Exception {
-        mockMvc.perform(get(URL + RandomStringUtils.random(5, true, true))) // Get. 2
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    public void testGetTenantByInvalidId() throws Exception {
-        mockMvc.perform(get(URL + UUID.randomUUID())) // Get. 4
-                .andExpect(status().isNotFound());
-    }
-
-
-    @Test
-    public void testGetTenantForbidden() throws Exception{
-        mockMvc.perform(get(URL + tenantForbiddenStateDisabled)) // Get. 1.a
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    public void testGetTenantByIdResponseCheckFields() throws Exception {
-        mockMvc.perform(get(URL + tenantTestIdExisting))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.tenant_id").exists())
-                .andExpect(jsonPath("$.name").exists());
-    }
-
 //    Code Example
 //    @ParameterizedTest
 //    @ValueSource(strings = {"", "    ", "clakxliwqxrun"})
