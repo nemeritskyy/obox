@@ -1,4 +1,4 @@
-package ua.com.obox.dbschema.menuitem;
+package ua.com.obox.dbschema.dish;
 
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -14,22 +14,22 @@ import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 @RestController
-@RequestMapping("/items")
+@RequestMapping("/dishes")
 @RequiredArgsConstructor
-@Tag(name = "Items")
-public class MenuItemController {
-    private final MenuItemService service;
+@Tag(name = "Dishes")
+public class DishController {
+    private final DishService service;
     private final LoggingService loggingService;
     private String loggingMessage;
 
-    @GetMapping("/{itemId}")
+    @GetMapping("/{dishId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "404", description = "Not found")
     })
-    public ResponseEntity<MenuItemResponse> getItemById(@PathVariable String itemId) {
-        MenuItemResponse menuItemResponse = service.getItemById(itemId);
-        return ResponseEntity.ok(menuItemResponse);
+    public ResponseEntity<DishResponse> getDishById(@PathVariable String dishId) {
+        DishResponse dishResponse = service.getDishById(dishId);
+        return ResponseEntity.ok(dishResponse);
     }
 
     @PostMapping("/")
@@ -37,7 +37,7 @@ public class MenuItemController {
             @ApiResponse(responseCode = "201", description = "Success", content = @Content(mediaType = "application/json")),
             @ApiResponse(responseCode = "400", description = "Bad Request")
     })
-    public ResponseEntity<MenuItemResponseId> createItem(@RequestBody
+    public ResponseEntity<DishResponseId> createDish(@RequestBody
                                                          @Schema(example = "{\n" +
                                                                  "  \"category_id\": \"uuid\",\n" +
                                                                  "  \"name\": \"string\",\n" +
@@ -45,11 +45,11 @@ public class MenuItemController {
                                                                  "  \"price\": 0,\n" +
                                                                  "  \"weight\": 0,\n" +
                                                                  "  \"calories\": 0,\n" +
-                                                                 "  \"state\": \"ENABLE or DISABLE\",\n" +
+                                                                 "  \"state\": \"ENABLED or DISABLED\",\n" +
                                                                  "  \"image\": \"Base64 only JPG and PNG (not necessary)\"\n" +
                                                                  "}")
-                                                         MenuItem request) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("createItem", request.getCategory_id());
+                                                             Dish request) {
+        loggingMessage = ExceptionTools.generateLoggingMessage("createDish", request.getCategory_id());
         Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
         Validator.validateName(loggingMessage, request.getName(), loggingService);
         Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
@@ -58,30 +58,30 @@ public class MenuItemController {
         Validator.positiveInteger("Calories", request.getCalories(), 30000, loggingService); // validate calories
         Validator.positiveInteger("Weight", request.getWeight(), 100000, loggingService); // validate weight
 
-        MenuItemResponseId response = service.createItem(request);
+        DishResponseId response = service.createDish(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PatchMapping("{itemId}")
+    @PatchMapping("{dishId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "404", description = "Not found")
     })
-    public ResponseEntity<Void> patchItemById(@PathVariable String itemId, @RequestBody
+    public ResponseEntity<Void> patchDishById(@PathVariable String dishId, @RequestBody
 
-    MenuItem request) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("patchItemById", request.getCategory_id());
-        service.patchItemById(itemId, request);
+    Dish request) {
+        loggingMessage = ExceptionTools.generateLoggingMessage("patchDishById", request.getCategory_id());
+        service.patchDishById(dishId, request);
         return ResponseEntity.noContent().build();
     }
 
-    @DeleteMapping("/{itemId}")
+    @DeleteMapping("/{dishId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "404", description = "Not found")
     })
-    public ResponseEntity<Void> deleteMenuById(@PathVariable String itemId) {
-        service.deleteItemById(itemId);
+    public ResponseEntity<Void> deleteDishById(@PathVariable String dishId) {
+        service.deleteDishById(dishId);
         return ResponseEntity.noContent().build();
     }
 }

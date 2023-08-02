@@ -11,24 +11,38 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        jdbc:
+          time_zone: GMT+3
     database: mysql
     database-platform: org.hibernate.dialect.MySQL5Dialect
   mail:
     host: mail.obox.com.ua
     port: 587
     username: support@obox.com.ua
-    password: lzoEqcLT
+    password: x
     properties:
       mail:
         smtp:
           auth: true
           starttls.enable: true
+  servlet:
+    multipart:
+      enabled: true # Включаем поддержку multipart
+      max-file-size: 10MB # Максимальный размер каждого файла
+      max-request-size: 20MB # Максимальный размер запроса (сумма всех файлов)
+      file-size-threshold: 0 # Пороговый размер файлов, при котором они будут записаны во временное хранилище вместо постоянного места
+ftp:
+  server: obox.com.ua
+  port: 21
+  username: boss@obox.com.ua
+  password: x
 server:
   error:
     include-stacktrace: never
     include-message: always
 application:
   url: https://api.obox.com.ua
+  image-dns: https://img.obox.com.ua
   security:
     jwt:
       secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970

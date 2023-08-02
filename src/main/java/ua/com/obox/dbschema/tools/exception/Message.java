@@ -23,7 +23,7 @@ public enum Message {
     LIMIT(" must be in the range of 0 to "),
     HIDDEN(" is hidden"),
     BAD_UUID(" uuid is incorrect"),
-    BAD_STATE(" state is incorrect"),
+    BAD_STATE("The state is incorrect"),
     ERROR(" Error"),
     DELETE(" deleted"),
     FORBIDDEN(" forbidden");

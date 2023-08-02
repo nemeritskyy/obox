@@ -1,4 +1,4 @@
-package ua.com.obox.dbschema.menuitem;
+package ua.com.obox.dbschema.dish;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -15,14 +15,14 @@ import javax.persistence.*;
 @AllArgsConstructor
 @Entity
 @ToString
-@Table(name = "menu_item")
-public class MenuItem {
+@Table(name = "dish")
+public class Dish {
     @Id
     @GeneratedValue(generator = "uuid2")
     @GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(columnDefinition = "CHAR(36)")
     @JsonIgnore
-    private String itemId;
+    private String dishId;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
     @JsonIgnore
@@ -34,7 +34,7 @@ public class MenuItem {
     private Integer weight;
     @JsonIgnore
     private String imageUrl;
-    @Column(columnDefinition = "VARCHAR(7) DEFAULT '" + State.ENABLE + "'")
+    @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
     private String state;
     @Transient
     private String category_id;
@@ -43,7 +43,7 @@ public class MenuItem {
     private String image;
 
     @JsonIgnore
-    public void setCategoryIdForMenuItem(String category_id) {
+    public void setCategoryIdForDish(String category_id) {
         Category category = new Category();
         category.setCategoryId(category_id);
         this.category = category;

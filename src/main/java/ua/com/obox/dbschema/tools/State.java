@@ -1,6 +1,6 @@
 package ua.com.obox.dbschema.tools;
 
 public class State {
-    public static final String ENABLE = "ENABLE";
-    public static final String DISABLE = "DISABLE";
+    public static final String ENABLED = "ENABLED";
+    public static final String DISABLED = "DISABLED";
 }

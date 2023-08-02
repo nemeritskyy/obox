@@ -53,7 +53,7 @@ public class TenantService {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + Message.NOT_FOUND.getMessage());
         });
-        if (tenant.getState().equals(State.DISABLE)) {
+        if (tenant.getState().equals(State.DISABLED)) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.FORBIDDEN.getMessage());
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tenant with id " + tenantId + Message.FORBIDDEN.getMessage());
         }
@@ -68,7 +68,7 @@ public class TenantService {
         loggingMessage = ExceptionTools.generateLoggingMessage("createTenant", request.getName());
         Tenant tenant = Tenant.builder()
                 .name(request.getName().trim()) // delete whitespaces
-                .state(State.ENABLE)
+                .state(State.ENABLED)
                 .build();
         tenantRepository.save(tenant);
         loggingService.log(LogLevel.INFO, loggingMessage + " id=" + tenant.getTenantId() + Message.CREATE.getMessage());
@@ -98,7 +98,7 @@ public class TenantService {
             return new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + Message.NOT_FOUND.getMessage());
         });
         if (!forceDelete) {
-            tenant.setState(State.DISABLE);
+            tenant.setState(State.DISABLED);
             tenantRepository.save(tenant);
         } else {
             tenantRepository.delete(tenant);

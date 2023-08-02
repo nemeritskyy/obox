@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.menu.Menu;
-import ua.com.obox.dbschema.menuitem.MenuItem;
+import ua.com.obox.dbschema.dish.Dish;
 
 import javax.persistence.*;
 import java.util.List;
@@ -33,7 +33,7 @@ public class Category {
     private String menu_id;
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<MenuItem> items;
+    private List<Dish> dishes;
 
     @JsonIgnore
     public void setMenuIdForCategory(String menu_id) {
