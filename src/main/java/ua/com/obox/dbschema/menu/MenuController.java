@@ -52,6 +52,7 @@ public class MenuController {
     public ResponseEntity<MenuResponseId> createMenu(@RequestBody Menu request) {
         Validator.validateName("createMenu", request.getName(), loggingService);
         Validator.languageCode("createMenu", request.getLanguage_code(), loggingService);
+        Validator.checkUUID("createMenu", request.getRestaurant_id(), loggingService);
         MenuResponseId response = service.createMenu(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

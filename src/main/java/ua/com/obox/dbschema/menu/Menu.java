@@ -41,8 +41,8 @@ public class Menu {
     public void setRestaurantIdForMenu(String restaurant_id, String languageCode, RestaurantAssociatedDataRepository dataRepository) {
         Restaurant restaurant = new Restaurant();
         restaurant.setRestaurantId(restaurant_id);
-        if (dataRepository.findByRestaurantIdAndLanguageCode(restaurant_id,languageCode).isEmpty()) {
-            RestaurantAssociatedData associatedData = new RestaurantAssociatedData(languageCode, restaurant_id);
+        if (dataRepository.findByRestaurantIdAndLanguageCode(restaurant_id, languageCode.toLowerCase()).isEmpty()) {
+            RestaurantAssociatedData associatedData = new RestaurantAssociatedData(languageCode.toLowerCase(), restaurant_id);
             dataRepository.save(associatedData);
         }
         this.restaurant = restaurant;

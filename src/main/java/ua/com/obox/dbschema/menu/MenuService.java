@@ -77,7 +77,7 @@ public class MenuService {
         Menu menu = Menu.builder()
                 .name(request.getName().trim()) // delete whitespaces
                 .restaurant(restaurant)
-                .language_code(request.getLanguage_code())
+                .language_code(request.getLanguage_code().toLowerCase())
                 .build();
         menuRepository.save(menu);
         loggingService.log(LogLevel.INFO, loggingMessage + " id=" + menu.getMenuId() + Message.CREATE.getMessage());
