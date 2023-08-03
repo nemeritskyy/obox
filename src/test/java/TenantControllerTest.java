@@ -168,7 +168,7 @@ public class TenantControllerTest {
     }
 
     @Test
-    public void testPatchDeleted() throws Exception { // Patch. 6
+    public void testPatchDeleted() throws Exception { // Patch. 6 // Del. 1
         mockMvc.perform(delete(URL + tenantId + "?forceDelete=true")).andExpect(status().isNoContent());
         String newName = "New name";
         String jsonBody = "{\"name\": \"" + newName + "\"}";
@@ -176,6 +176,17 @@ public class TenantControllerTest {
                         .contentType("application/json")
                         .content(jsonBody))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testDeleteRandomSymbol() throws Exception { // Del. 4
+        String randomSymbol = RandomStringUtils.random(1, true, true);
+        mockMvc.perform(delete(URL + randomSymbol)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testGetAfterDelete() throws Exception { // Get. 2.b
+        mockMvc.perform(get(URL + tenantId)).andExpect(status().isNotFound());
     }
 
 //    Code Example
