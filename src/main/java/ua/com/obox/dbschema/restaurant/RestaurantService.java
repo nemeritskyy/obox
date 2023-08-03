@@ -75,9 +75,11 @@ public class RestaurantService {
         });
         Restaurant restaurant = Restaurant.builder()
                 .name(request.getName().trim()) // delete whitespaces
-                .address(request.getAddress().trim())
                 .tenant(tenant)
                 .build();
+        if (request.getAddress() != null) {
+            serviceHelper.updateStringField(restaurant::setAddress, request.getAddress(), "Address", loggingMessage, loggingService);
+        }
         restaurantRepository.save(restaurant);
         loggingService.log(LogLevel.INFO, loggingMessage + " id=" + restaurant.getRestaurantId() + Message.CREATE.getMessage());
         return RestaurantResponseId.builder()
