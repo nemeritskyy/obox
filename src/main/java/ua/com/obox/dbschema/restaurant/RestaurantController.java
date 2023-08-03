@@ -71,8 +71,6 @@ public class RestaurantController {
             "}")
     Restaurant request) {
         loggingMessage = "patchRestaurantById";
-        Validator.validateName(loggingMessage, request.getName(), loggingService);
-        Validator.validateVarchar(loggingMessage, "Address", request.getAddress(), loggingService);
         service.patchRestaurantById(restaurantId, request);
         return ResponseEntity.noContent().build();
     }
