@@ -1,5 +1,6 @@
+import com.jayway.jsonpath.JsonPath;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.json.JSONObject;
+import org.hamcrest.Matchers;
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -9,18 +10,17 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
+import tools.TestValues;
 import ua.com.obox.OboxApplication;
 import ua.com.obox.dbschema.tenant.*;
 
 import java.util.UUID;
-import java.util.stream.Stream;
 
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -34,9 +34,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 public class TenantControllerTest {
-    private final String URL = "http://localhost:8080/tenants/";
-    private static final String tenantTestIdExisting = "e93614c7-e58e-40b6-84b2-01c4f5055fc9"; // must be really row in db
-    private static final String tenantForbiddenStateDisabled = "a95de739-40fa-414a-9f62-fdaedb2a8282"; // must be really row in db state DISABLED
+    private final String URL = "https://api.obox.com.ua/tenants/";
+    private static final String tenantTestIdExisting = "972c6465-200d-4ec3-ab1c-aaa359cdab35"; // must be really row in db
+    //    private static final String tenantTestIdExisting = "e93614c7-e58e-40b6-84b2-01c4f5055fc9"; // must be really row in db
+    private static final String tenantForbiddenStateDisabled = "519e21ef-83ab-46ab-afb6-a1460963a2df"; // must be really row in db state DISABLED
+    //    private static final String tenantForbiddenStateDisabled = "a95de739-40fa-414a-9f62-fdaedb2a8282"; // must be really row in db state DISABLED
+    private static String tenantId = null;
+
     @Autowired
     private MockMvc mockMvc;
     @Mock
@@ -48,54 +52,83 @@ public class TenantControllerTest {
     }
 
     @ParameterizedTest
-    @MethodSource("getValidNames")
-    public void testPostSuccessCreateTenant(String name) {
+    @MethodSource("tools.TestValues#getValidNames")
+    public void testPostValid(String name) {
         assertAll(
-                () -> testValidNameInRequest(name, post(URL))
-        );
-    }
-
-    private static Stream<String> getValidNames() {
-        return Stream.of(
-                "a", // Post. 1
-                "A", // Post. 3
-                "Ї", // Post. 4
-                "3", // Post. 5
-                RandomStringUtils.random(200, true, true) // Post. 8
+                () -> TestValues.testValidNameInRequest(name, post(URL), mockMvc)
         );
     }
 
     @ParameterizedTest
-    @MethodSource("getInvalidNames")
-    public void testCreateAndPatchNameEmptySpace201Chars(String name) { //Bad Request
+    @MethodSource("tools.TestValues#getInvalidNames")
+    public void testPostInvalid(String name) {
         assertAll(
-                () -> testInvalidNameInRequest(name, post(URL)),
-                () -> testInvalidNameInRequest(name, patch(URL + tenantTestIdExisting))
+                () -> TestValues.testInvalidNameInRequest(name, post(URL), mockMvc)
         );
     }
 
-    private static Stream<String> getInvalidNames() {
-        return Stream.of(
-                "    ", // Post. 6
-                RandomStringUtils.random(202, true, true), // Post. 9
-                "" // Post. 10
-        );
+    @ParameterizedTest
+    @MethodSource("tools.TestValues#getValidNames") // Patch. 2
+    public void testPatchValid(String name) throws Exception {
+        String jsonBody = "{\"name\": \"" + name + "\"}";
+        mockMvc.perform(patch(URL + tenantTestIdExisting)
+                        .contentType("application/json")
+                        .content(jsonBody))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get(URL + tenantTestIdExisting))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$.tenant_id").exists())
+                .andExpect(jsonPath("$.name", equalTo(name.trim())));
+    }
+
+    @ParameterizedTest
+    @MethodSource("tools.TestValues#getInvalidNames") // Patch. 3 // Patch. 4
+    public void testPatchInvalid(String name) throws Exception {
+        String jsonBody = "{\"name\": \"" + name + "\"}";
+        mockMvc.perform(patch(URL + tenantTestIdExisting)
+                        .contentType("application/json")
+                        .content(jsonBody))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    public void testGetTenantByExistingId() throws Exception {
+    public void testPostSpaceSymbol() throws Exception { // Post. 7 // Get. 5
+        String newName = "      New name  ";
+        String jsonBody = "{\"name\": \"" + newName + "\"}";
+
+        MvcResult result = mockMvc.perform(post(URL)
+                        .contentType("application/json")
+                        .content(jsonBody))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.tenant_id", Matchers.notNullValue()))
+                .andReturn();
+
+        String responseJson = result.getResponse().getContentAsString();
+        tenantId = JsonPath.parse(responseJson).read("$.tenant_id", String.class);
+
+        mockMvc.perform(get(URL + tenantId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$.tenant_id", equalTo(tenantId)))
+                .andExpect(jsonPath("$.name", equalTo(newName.trim())));
+    }
+
+    @Test
+    public void testGetByExistingId() throws Exception {
         mockMvc.perform(get(URL + tenantTestIdExisting)) // Get. 1
                 .andExpect(status().isOk());
     }
 
     @Test
-    public void testGetTenantByNotFoundId() throws Exception { // Get. 2
+    public void testGetByNotFoundId() throws Exception { // Get. 2
         mockMvc.perform(get(URL + RandomStringUtils.random(5, true, true)))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    public void testGetTenantByIdAfterPatch() throws Exception { // Get 3
+    public void testGetByIdAfterPatch() throws Exception { // Get. 3 Patch. 1
         String newName = "New name";
         String jsonBody = "{\"name\": \"" + newName + "\"}";
 
@@ -112,36 +145,39 @@ public class TenantControllerTest {
     }
 
     @Test
-    public void testGetTenantByInvalidId() throws Exception { // Get. 4
+    public void testGetByInvalidId() throws Exception { // Get. 4
         mockMvc.perform(get(URL + UUID.randomUUID()))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    public void testGetTenantForbidden() throws Exception {
+    public void testGetForbidden() throws Exception {
         mockMvc.perform(get(URL + tenantForbiddenStateDisabled)) // Get. 1.a
                 .andExpect(status().isForbidden());
     }
 
-    private void testInvalidNameInRequest(String name, MockHttpServletRequestBuilder requestBuilder) throws Exception {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("name", name);
-
-        mockMvc.perform(requestBuilder
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonObject.toString()))
-                .andExpect(status().isBadRequest());
+    @Test
+    public void testPatchByIdRandomSymbol() throws Exception { // Patch. 5
+        String newName = "New name";
+        String jsonBody = "{\"name\": \"" + newName + "\"}";
+        String randomSymbol = RandomStringUtils.random(1, true, true);
+        mockMvc.perform(patch(URL + randomSymbol)
+                        .contentType("application/json")
+                        .content(jsonBody))
+                .andExpect(status().isNotFound());
     }
 
-    private void testValidNameInRequest(String name, MockHttpServletRequestBuilder requestBuilder) throws Exception {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("name", name);
-
-        mockMvc.perform(requestBuilder
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonObject.toString()))
-                .andExpect(status().isCreated());
+    @Test
+    public void testPatchDeleted() throws Exception { // Patch. 6
+        mockMvc.perform(delete(URL + tenantId + "?forceDelete=true")).andExpect(status().isNoContent());
+        String newName = "New name";
+        String jsonBody = "{\"name\": \"" + newName + "\"}";
+        mockMvc.perform(patch(URL + tenantId)
+                        .contentType("application/json")
+                        .content(jsonBody))
+                .andExpect(status().isNotFound());
     }
+
 //    Code Example
 //    @ParameterizedTest
 //    @ValueSource(strings = {"", "    ", "clakxliwqxrun"})
