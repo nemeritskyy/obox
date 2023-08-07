@@ -9,4 +9,6 @@ public interface RestaurantAssociatedDataRepository extends JpaRepository<Restau
     Optional<RestaurantAssociatedData> findByRestaurantIdAndLanguageCode(String restaurantId, String languageCode);
 
     Optional<RestaurantAssociatedData> findByAssociatedId(String associatedId);
+
+    Optional<RestaurantAssociatedData> findByRestaurantId(String restaurantId);
 }

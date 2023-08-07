@@ -13,10 +13,10 @@ import lombok.NoArgsConstructor;
 public class MenuResponse {
     @JsonProperty("menu_id")
     private String menuId;
-    @JsonProperty("name")
-    private String name;
     @JsonProperty("restaurant_id")
     private String restaurantId;
+    @JsonProperty("name")
+    private String name;
     @JsonProperty("language_code")
     private String language;
 }
