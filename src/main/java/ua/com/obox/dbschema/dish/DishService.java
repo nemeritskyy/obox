@@ -54,11 +54,15 @@ public class DishService {
     }
 
     public DishResponseId createDish(Dish request) {
+        Dish dish = new Dish();
         String image = (request.getImage() != null) ? request.getImage() : "";
         String description = (request.getDescription() != null) ? request.getDescription().trim() : null;
         String allergens = (request.getAllergens() != null) ? request.getAllergens().trim() : null;
         String tags = (request.getTags() != null) ? request.getTags().trim() : null;
         Category category = null;
+
+        serviceHelper.updateStringField(dish::setAllergens, request.getAllergens(), "Allergens", loggingMessage, loggingService);
+        serviceHelper.updateStringField(dish::setTags, request.getTags(), "Tags", loggingMessage, loggingService);
 
         loggingMessage = ExceptionTools.generateLoggingMessage("createDish", request.getCategory_id());
         request.setCategoryIdForDish(request.getCategory_id());
@@ -76,7 +80,7 @@ public class DishService {
 
         String associatedId = serviceHelper.getAssociatedIdForDish(request.getCategory_id(), dishRepository, loggingService);
 
-        Dish dish = Dish.builder()
+        dish = Dish.builder()
                 .name(request.getName().trim()) // delete whitespaces
                 .description(description)
                 .associatedId(associatedId)
@@ -84,10 +88,11 @@ public class DishService {
                 .category(category)
                 .calories(request.getCalories())
                 .weight(request.getWeight())
-                .allergens(allergens)
-                .tags(tags)
+//                .allergens(allergens)
+//                .tags(tags)
                 .state(request.getState())
                 .build();
+
         dishRepository.save(dish);
         if (!image.isEmpty() && Validator.validateImage(image, loggingService)) {
             dish.setImageUrl(dishImageFTP.uploadImage(request.getImage(), dish.getDishId(), loggingService));
