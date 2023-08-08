@@ -68,12 +68,20 @@ public class MenuService {
     }
 
     public MenuResponseId createMenu(Menu request) {
+        Restaurant restaurant;
         loggingMessage = ExceptionTools.generateLoggingMessage("createMenu", request.getRestaurant_id());
-        request.setRestaurantIdForMenu(request.getRestaurant_id(),request.getLanguage_code(), dataRepository);
-        Restaurant restaurant = restaurantRepository.findByRestaurantId(request.getRestaurant().getRestaurantId()).orElseThrow(() -> {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.RESTAURANT_NOT_FOUND.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Restaurant with id " + request.getRestaurant().getRestaurantId() + Message.NOT_FOUND.getMessage(), null);
-        });
+        try {
+            restaurant = restaurantRepository.findByRestaurantId(request.getRestaurant_id())
+                    .orElseThrow(() -> {
+                        loggingService.log(LogLevel.ERROR, loggingMessage + Message.RESTAURANT_NOT_FOUND.getMessage());
+                        return new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                                "Restaurant with id " + request.getRestaurant_id() + Message.NOT_FOUND.getMessage(), null);
+                    });
+        } catch (NullPointerException e) {
+            loggingService.log(LogLevel.ERROR, "NullPointerException occurred: " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Null value encountered", e);
+        }
+        request.setRestaurantIdForMenu(request.getRestaurant_id(), request.getLanguage_code(), dataRepository);
         Menu menu = Menu.builder()
                 .name(request.getName().trim()) // delete whitespaces
                 .restaurant(restaurant)
