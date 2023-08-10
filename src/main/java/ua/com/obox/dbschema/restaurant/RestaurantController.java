@@ -69,7 +69,6 @@ public class RestaurantController {
             "  \"address\": \"string\"" +
             "}")
     Restaurant request) {
-        loggingMessage = "patchRestaurantById";
         service.patchRestaurantById(restaurantId, request);
         return ResponseEntity.noContent().build();
     }

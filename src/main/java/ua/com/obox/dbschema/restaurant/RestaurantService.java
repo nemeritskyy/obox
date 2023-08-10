@@ -60,7 +60,7 @@ public class RestaurantService extends AbstractResponseService {
             return null;
         });
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s", loggingService, restaurantId));
+        loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, restaurantId));
         return RestaurantResponse.builder()
                 .restaurantId(restaurant.getRestaurantId())
                 .address(restaurant.getAddress())

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.restaurant.RestaurantResponse;
+import ua.com.obox.dbschema.restaurant.RestaurantServiceHelper;
 import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
@@ -22,6 +23,8 @@ public class TenantService extends AbstractResponseService {
     private final TenantRepository tenantRepository;
     private final RestaurantRepository restaurantRepository;
     private final LoggingService loggingService;
+
+    private final RestaurantServiceHelper serviceHelper;
     private String loggingMessage;
     private String responseMessage;
 
@@ -62,7 +65,7 @@ public class TenantService extends AbstractResponseService {
             forbiddenResponse(tenantId);
         }
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s", loggingService, tenantId));
+        loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, tenantId));
         return TenantResponse.builder()
                 .tenantId(tenant.getTenantId())
                 .name(tenant.getName())
@@ -97,9 +100,10 @@ public class TenantService extends AbstractResponseService {
             return null;
         });
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s OLD NAME=%s NEW NAME=%s %s", loggingMessage, tenant.getTenantId(), tenant.getName(), request.getName(), Message.UPDATE.getMessage()));
-        tenant.setName(request.getName().trim());
+        serviceHelper.updateNameField(tenant::setName, request.getName(), "Name", loggingMessage, loggingService);
+
         tenantRepository.save(tenant);
+        loggingService.log(LogLevel.INFO, String.format("%s %s %s", loggingMessage, tenantId, Message.UPDATE.getMessage()));
     }
 
     public void deleteTenantById(String tenantId, boolean forceDelete) {

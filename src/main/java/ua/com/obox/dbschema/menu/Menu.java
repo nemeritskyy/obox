@@ -38,7 +38,7 @@ public class Menu {
     private String language_code;
 
     @JsonIgnore
-    public void setRestaurantIdForMenu(String restaurant_id, String languageCode, RestaurantAssociatedDataRepository dataRepository) {
+    public void checkAssociatedData(String restaurant_id, String languageCode, RestaurantAssociatedDataRepository dataRepository) {
         Restaurant restaurant = new Restaurant();
         restaurant.setRestaurantId(restaurant_id);
         if (dataRepository.findByRestaurantIdAndLanguageCode(restaurant_id, languageCode.toLowerCase()).isEmpty()) {
