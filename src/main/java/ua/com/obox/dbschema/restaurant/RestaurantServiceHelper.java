@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 
 @Service
 public class RestaurantServiceHelper {
-    public void updateStringField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
+    public void updateVarcharField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
         if (value != null) {
             String trimmedValue = value.trim();
             if (!trimmedValue.isEmpty()) {
@@ -17,6 +17,13 @@ public class RestaurantServiceHelper {
             } else {
                 setter.accept(null);
             }
+        }
+    }
+
+    public void updateNameField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
+        if (value != null) {
+            Validator.validateName(loggingMessage, value, loggingService);
+            setter.accept(value.trim());
         }
     }
 }

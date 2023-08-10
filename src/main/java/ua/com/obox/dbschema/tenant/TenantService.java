@@ -9,7 +9,8 @@ import ua.com.obox.dbschema.restaurant.RestaurantResponse;
 import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
-import ua.com.obox.dbschema.tools.logging.LoggingResponseHelper;
+import ua.com.obox.dbschema.tools.services.AbstractResponseService;
+import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 import java.util.*;
@@ -17,7 +18,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class TenantService {
+public class TenantService extends AbstractResponseService {
     private final TenantRepository tenantRepository;
     private final RestaurantRepository restaurantRepository;
     private final LoggingService loggingService;
@@ -30,7 +31,7 @@ public class TenantService {
 
         List<Restaurant> restaurants = restaurantRepository.findAllByTenant_TenantId(tenantId);
         if (restaurants.isEmpty()) {
-            NotFoundResponse(tenantId);
+            notFoundResponse(tenantId);
         }
 
         List<RestaurantResponse> responseList = restaurants.stream()
@@ -53,15 +54,15 @@ public class TenantService {
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
 
         tenant = tenantInfo.orElseThrow(() -> {
-            NotFoundResponse(tenantId);
+            notFoundResponse(tenantId);
             return null;
         });
 
         if (tenant.getState().equals(State.DISABLED)) {
-            ForbiddenResponse(tenantId);
+            forbiddenResponse(tenantId);
         }
 
-        loggingService.log(LogLevel.INFO, loggingMessage);
+        loggingService.log(LogLevel.INFO, String.format("%s %s", loggingService, tenantId));
         return TenantResponse.builder()
                 .tenantId(tenant.getTenantId())
                 .name(tenant.getName())
@@ -92,11 +93,11 @@ public class TenantService {
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
 
         tenant = tenantInfo.orElseThrow(() -> {
-            NotFoundResponse(tenantId);
+            notFoundResponse(tenantId);
             return null;
         });
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s OLD NAME=%s NEW NAME=%s %s", loggingMessage, tenant.getTenantId(), tenant.getName(), request.getName().trim(), Message.UPDATE.getMessage()));
+        loggingService.log(LogLevel.INFO, String.format("%s %s OLD NAME=%s NEW NAME=%s %s", loggingMessage, tenant.getTenantId(), tenant.getName(), request.getName(), Message.UPDATE.getMessage()));
         tenant.setName(request.getName().trim());
         tenantRepository.save(tenant);
     }
@@ -107,7 +108,7 @@ public class TenantService {
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
 
         tenant = tenantInfo.orElseThrow(() -> {
-            NotFoundResponse(tenantId);
+            notFoundResponse(tenantId);
             return null;
         });
 
@@ -121,17 +122,19 @@ public class TenantService {
         loggingService.log(LogLevel.INFO, String.format("%s %s NAME=%s %s", loggingMessage, tenantId, tenant.getName(), Message.DELETE.getMessage()));
     }
 
-    private void NotFoundResponse(String tenantId) {
+    @Override
+    public void notFoundResponse(String entityId) {
         LoggingResponseHelper.loggingThrowException(
-                tenantId,
+                entityId,
                 LogLevel.ERROR, HttpStatus.NOT_FOUND,
                 loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
                 loggingService);
     }
 
-    private void ForbiddenResponse(String tenantId) {
+    @Override
+    public void forbiddenResponse(String entityId) {
         LoggingResponseHelper.loggingThrowException(
-                tenantId,
+                entityId,
                 LogLevel.ERROR, HttpStatus.FORBIDDEN,
                 loggingMessage, responseMessage + Message.FORBIDDEN.getMessage(),
                 loggingService);

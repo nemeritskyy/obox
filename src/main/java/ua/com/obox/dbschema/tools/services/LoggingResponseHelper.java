@@ -1,7 +1,9 @@
-package ua.com.obox.dbschema.tools.logging;
+package ua.com.obox.dbschema.tools.services;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
+import ua.com.obox.dbschema.tools.logging.LogLevel;
+import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 public class LoggingResponseHelper {
     public static void loggingThrowException(String entityId,
