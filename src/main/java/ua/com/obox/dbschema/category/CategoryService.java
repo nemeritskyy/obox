@@ -3,68 +3,73 @@ package ua.com.obox.dbschema.category;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.menu.Menu;
 import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.dish.DishResponse;
-import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
+import ua.com.obox.dbschema.tools.services.AbstractResponseService;
+import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
+import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class CategoryService {
+public class CategoryService extends AbstractResponseService {
     private final CategoryRepository categoryRepository;
     private final MenuRepository menuRepository;
     private final DishRepository dishRepository;
     private final LoggingService loggingService;
+    private final UpdateServiceHelper serviceHelper;
     private String loggingMessage;
+    private String responseMessage;
 
     public List<DishResponse> getAllDishesByCategoryId(String categoryId) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("getAllDishesByCategoryId", categoryId);
+        loggingMessage = "getAllDishesByCategoryId";
+        responseMessage = String.format("Dishes with Category id %s", categoryId);
+
         List<Dish> dishes = dishRepository.findAllByCategory_CategoryId(categoryId);
         if (dishes.isEmpty()) {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Dishes with Category id " + categoryId + Message.NOT_FOUND.getMessage(), null);
-        }
-        List<DishResponse> responseList = new ArrayList<>();
-
-        for (Dish dish : dishes) {
-            DishResponse response = DishResponse.builder()
-                    .dishId(dish.getDishId())
-                    .categoryId(dish.getCategory().getCategoryId())
-                    .associatedId(dish.getAssociatedId())
-                    .name(dish.getName())
-                    .description(dish.getDescription())
-                    .price(dish.getPrice())
-                    .weight(dish.getWeight())
-                    .calories(dish.getCalories())
-                    .allergens(dish.getAllergens())
-                    .tags(dish.getTags())
-                    .imageUrl(dish.getImageUrl())
-                    .state(dish.getState())
-                    .build();
-            responseList.add(response);
+            notFoundResponse(categoryId);
         }
 
-        loggingService.log(LogLevel.INFO, loggingMessage + Message.FIND_COUNT.getMessage() + responseList.size());
+        List<DishResponse> responseList = dishes.stream()
+                .map(dish -> DishResponse.builder()
+                        .dishId(dish.getDishId())
+                        .categoryId(dish.getCategory().getCategoryId())
+                        .associatedId(dish.getAssociatedId())
+                        .name(dish.getName())
+                        .description(dish.getDescription())
+                        .price(dish.getPrice())
+                        .weight(dish.getWeight())
+                        .calories(dish.getCalories())
+                        .allergens(dish.getAllergens())
+                        .tags(dish.getTags())
+                        .imageUrl(dish.getImageUrl())
+                        .state(dish.getState())
+                        .build()).collect(Collectors.toList());
+
+        loggingService.log(LogLevel.INFO, String.format("%s %s %s %d", loggingMessage, categoryId, Message.FIND_COUNT.getMessage(), responseList.size()));
         return responseList;
     }
 
     public CategoryResponse getCategoryById(String categoryId) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("getCategoryById", categoryId);
+        Category category;
+        loggingMessage = "getCategoryById";
+        responseMessage = String.format("Category with id %s", categoryId);
         var categoryInfo = categoryRepository.findByCategoryId(categoryId);
-        Category category = categoryInfo.orElseThrow(() -> {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Category with id " + categoryId + Message.NOT_FOUND.getMessage());
+
+        category = categoryInfo.orElseThrow(() -> {
+            notFoundResponse(categoryId);
+            return null;
         });
-        loggingService.log(LogLevel.INFO, loggingMessage);
+
+        loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, categoryId));
         return CategoryResponse.builder()
                 .categoryId(category.getCategoryId())
                 .name(category.getName())
@@ -73,44 +78,78 @@ public class CategoryService {
     }
 
     public CategoryResponseId createCategory(Category request) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("createCategory", request.getMenu_id());
+        Menu menu;
+        Category category;
+        loggingMessage = "createCategory";
+        responseMessage = String.format("Menu with id %s", request.getMenu_id());
+
         request.setMenuIdForCategory(request.getMenu_id());
-        Menu menu = menuRepository.findByMenuId(request.getMenu().getMenuId()).orElseThrow(() -> {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.MENU_NOT_FOUND.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Menu with id " + request.getMenu().getMenuId() + Message.NOT_FOUND.getMessage(), null);
+
+        menu = menuRepository.findByMenuId(request.getMenu().getMenuId()).orElseThrow(() -> {
+            badRequestResponse(request.getMenu().getMenuId());
+            return null;
         });
-        Category category = Category.builder()
-                .name(request.getName().trim()) // delete whitespaces
+
+        category = Category.builder()
+                .name(request.getName().trim())
                 .menu(menu)
                 .build();
+
         categoryRepository.save(category);
-        loggingService.log(LogLevel.INFO, loggingMessage + " id=" + category.getCategoryId() + Message.CREATE.getMessage());
+
+        loggingService.log(LogLevel.INFO, String.format("%s %s UUID=%s %s", loggingMessage, request.getName(), category.getCategoryId(), Message.CREATE.getMessage()));
         return CategoryResponseId.builder()
                 .categoryId(category.getCategoryId())
                 .build();
     }
 
     public void patchCategoryById(String categoryId, Category request) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("patchCategoryById", categoryId);
+        Category category;
+        loggingMessage = "patchCategoryById";
+        responseMessage = String.format("Category with id %s", categoryId);
         var categoryInfo = categoryRepository.findByCategoryId(categoryId);
-        Category category = categoryInfo.orElseThrow(() -> {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Category with id " + categoryId + Message.NOT_FOUND.getMessage());
+
+        category = categoryInfo.orElseThrow(() -> {
+            notFoundResponse(categoryId);
+            return null;
         });
-        String oldName = category.getName();
-        category.setName(request.getName().trim()); // delete whitespaces
+
+        serviceHelper.updateNameField(category::setName, request.getName(), "Name", loggingMessage, loggingService);
+
         categoryRepository.save(category);
-        loggingService.log(LogLevel.INFO, loggingMessage + " OLD name=" + oldName + " NEW name=" + request.getName() + Message.UPDATE.getMessage());
+        loggingService.log(LogLevel.INFO, String.format("%s %s %s", loggingMessage, categoryId, Message.UPDATE.getMessage()));
     }
 
     public void deleteCategoryById(String categoryId) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("deleteCategoryById", categoryId);
+        Category category;
+        loggingMessage = "deleteCategoryById";
+        responseMessage = String.format("Category with id %s", categoryId);
         var categoryInfo = categoryRepository.findByCategoryId(categoryId);
-        Category category = categoryInfo.orElseThrow(() -> {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Category with id " + categoryId + Message.NOT_FOUND.getMessage());
+
+        category = categoryInfo.orElseThrow(() -> {
+            notFoundResponse(categoryId);
+            return null;
         });
+
         categoryRepository.delete(category);
-        loggingService.log(LogLevel.INFO, loggingMessage + " name=" + category.getName() + Message.DELETE.getMessage());
+        loggingService.log(LogLevel.INFO, String.format("%s %s NAME=%s %s", loggingService, categoryId, category.getName(), Message.DELETE.getMessage()));
+    }
+
+    @Override
+    public void notFoundResponse(String entityId) {
+        LoggingResponseHelper.loggingThrowException(
+                entityId,
+                LogLevel.ERROR, HttpStatus.NOT_FOUND,
+                loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
+                loggingService);
+    }
+
+    @Override
+    public void badRequestResponse(String entityId) {
+        LoggingResponseHelper.loggingThrowException(
+                entityId,
+                LogLevel.ERROR, HttpStatus.BAD_REQUEST,
+                loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
+                loggingService);
     }
 }

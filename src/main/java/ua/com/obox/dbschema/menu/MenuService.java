@@ -10,7 +10,7 @@ import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.category.CategoryResponse;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
-import ua.com.obox.dbschema.restaurant.RestaurantServiceHelper;
+import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
@@ -28,7 +28,7 @@ public class MenuService extends AbstractResponseService {
     private final CategoryRepository categoryRepository;
     private final LoggingService loggingService;
     private final RestaurantAssociatedDataRepository dataRepository;
-    private final RestaurantServiceHelper serviceHelper;
+    private final UpdateServiceHelper serviceHelper;
     private String loggingMessage;
     private String responseMessage;
 

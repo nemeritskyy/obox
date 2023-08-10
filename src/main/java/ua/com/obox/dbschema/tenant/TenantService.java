@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.restaurant.RestaurantResponse;
-import ua.com.obox.dbschema.restaurant.RestaurantServiceHelper;
+import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
@@ -24,7 +24,7 @@ public class TenantService extends AbstractResponseService {
     private final RestaurantRepository restaurantRepository;
     private final LoggingService loggingService;
 
-    private final RestaurantServiceHelper serviceHelper;
+    private final UpdateServiceHelper serviceHelper;
     private String loggingMessage;
     private String responseMessage;
 

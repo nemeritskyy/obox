@@ -1,4 +1,4 @@
-package ua.com.obox.dbschema.restaurant;
+package ua.com.obox.dbschema.tools.services;
 
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.tools.Validator;
@@ -7,7 +7,7 @@ import ua.com.obox.dbschema.tools.logging.LoggingService;
 import java.util.function.Consumer;
 
 @Service
-public class RestaurantServiceHelper {
+public class UpdateServiceHelper {
     public void updateVarcharField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
         if (value != null) {
             String trimmedValue = value.trim();

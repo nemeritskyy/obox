@@ -13,6 +13,7 @@ import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.services.AbstractResponseService;
 import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
+import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,7 +25,7 @@ public class RestaurantService extends AbstractResponseService {
     private final TenantRepository tenantRepository;
     private final MenuRepository menuRepository;
     private final LoggingService loggingService;
-    private final RestaurantServiceHelper serviceHelper;
+    private final UpdateServiceHelper serviceHelper;
     private String loggingMessage;
     private String responseMessage;
 
