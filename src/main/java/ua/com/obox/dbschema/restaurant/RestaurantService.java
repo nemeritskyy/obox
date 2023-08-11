@@ -128,7 +128,7 @@ public class RestaurantService extends AbstractResponseService {
         });
 
         restaurantRepository.delete(restaurant);
-        loggingService.log(LogLevel.INFO, String.format("%s %s NAME=%s %s", loggingService, restaurantId, restaurant.getName(), Message.DELETE.getMessage()));
+        loggingService.log(LogLevel.INFO, String.format("%s %s NAME=%s %s", loggingMessage, restaurantId, restaurant.getName(), Message.DELETE.getMessage()));
     }
 
     @Override

@@ -132,7 +132,7 @@ public class CategoryService extends AbstractResponseService {
         });
 
         categoryRepository.delete(category);
-        loggingService.log(LogLevel.INFO, String.format("%s %s NAME=%s %s", loggingService, categoryId, category.getName(), Message.DELETE.getMessage()));
+        loggingService.log(LogLevel.INFO, String.format("%s %s NAME=%s %s", loggingMessage, categoryId, category.getName(), Message.DELETE.getMessage()));
     }
 
     @Override

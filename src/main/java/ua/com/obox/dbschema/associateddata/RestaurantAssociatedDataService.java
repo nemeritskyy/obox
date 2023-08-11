@@ -3,26 +3,34 @@ package ua.com.obox.dbschema.associateddata;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
-import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
+import ua.com.obox.dbschema.tools.services.AbstractResponseService;
+import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
+import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 
 @Service
 @RequiredArgsConstructor
-public class RestaurantAssociatedDataService {
+public class RestaurantAssociatedDataService extends AbstractResponseService {
     private final RestaurantAssociatedDataRepository dataRepository;
     private final LoggingService loggingService;
+    private final UpdateServiceHelper serviceHelper;
     private String loggingMessage;
+    private String responseMessage;
+
     public RestaurantAssociatedDataResponse getAssociatedDataById(String associatedDataId) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("getAssociatedDataById", associatedDataId);
+        RestaurantAssociatedData associatedData;
+        loggingMessage = "getAssociatedDataById";
+        responseMessage = String.format("Associated data with id %s", associatedDataId);
         var data = dataRepository.findByAssociatedId(associatedDataId);
-        RestaurantAssociatedData associatedData = data.orElseThrow(() -> {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Associated data with id " + associatedDataId + Message.NOT_FOUND.getMessage());
+
+        associatedData = data.orElseThrow(() -> {
+            notFoundResponse(associatedDataId);
+            return null;
         });
-        loggingService.log(LogLevel.INFO, loggingMessage);
+
+        loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, associatedDataId));
         return RestaurantAssociatedDataResponse.builder()
                 .associatedId(associatedData.getAssociatedId())
                 .restaurantId(associatedData.getRestaurantId())
@@ -33,14 +41,27 @@ public class RestaurantAssociatedDataService {
     }
 
     public void deleteAssociatedDataByRestaurantId(String restaurantId) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("deleteAssociatedDataByRestaurantId", restaurantId);
+        RestaurantAssociatedData associatedData;
+        loggingMessage = "deleteAssociatedDataByRestaurantId";
+        responseMessage = String.format("Associated data with restaurant id %s", restaurantId);
         var dataInfo = dataRepository.findByRestaurantId(restaurantId);
-        RestaurantAssociatedData associatedData = dataInfo.orElseThrow(() -> {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Associated data with id " + restaurantId + Message.NOT_FOUND.getMessage());
+
+        associatedData = dataInfo.orElseThrow(() -> {
+            notFoundResponse(restaurantId);
+            return null;
         });
+
         dataRepository.delete(associatedData);
-        loggingService.log(LogLevel.INFO, loggingMessage + " id=" + associatedData.getAssociatedId()
-                + " language code=" + associatedData.getLanguageCode() + Message.DELETE.getMessage());
+        loggingService.log(LogLevel.INFO, String.format("%s UUID=%s RESTAURANT=%s LANGUAGE CODE=%s %s",
+                loggingService, associatedData.getAssociatedId(), restaurantId, associatedData.getLanguageCode(), Message.DELETE.getMessage()));
+    }
+
+    @Override
+    public void notFoundResponse(String entityId) {
+        LoggingResponseHelper.loggingThrowException(
+                entityId,
+                LogLevel.ERROR, HttpStatus.NOT_FOUND,
+                loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
+                loggingService);
     }
 }

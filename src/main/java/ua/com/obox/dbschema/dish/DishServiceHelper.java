@@ -17,8 +17,8 @@ public class DishServiceHelper {
         String languageCode = dishRepository.findLanguageCode(categoryId);
         associatedId = dishRepository.findAssociatedIdByRestaurantId(restaurantId, languageCode);
         if (associatedId == null) {
-            loggingService.log(LogLevel.ERROR, "Wrong associated query, category_id is required");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Wrong associated query, category_id is required");
+            loggingService.log(LogLevel.ERROR, "Field category_id is required");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Field category_id is required");
         }
         System.out.println(associatedId);
         return associatedId;

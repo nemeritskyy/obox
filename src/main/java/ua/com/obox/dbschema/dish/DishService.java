@@ -12,34 +12,38 @@ import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.ftp.UploadDishImageFTP;
+import ua.com.obox.dbschema.tools.services.AbstractResponseService;
+import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
+import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 
 @Service
 @RequiredArgsConstructor
-public class DishService {
+public class DishService extends AbstractResponseService {
 
     private final DishRepository dishRepository;
     private final CategoryRepository categoryRepository;
     private final LoggingService loggingService;
     private final UploadDishImageFTP dishImageFTP;
-    private final DishServiceHelper serviceHelper;
+    private final DishServiceHelper dishServiceHelper;
+    private final UpdateServiceHelper serviceHelper;
     private String loggingMessage;
+    private String responseMessage;
 
     public DishResponse getDishById(String dishId) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("getDishById", dishId);
-        String categoryUUID = null;
+        Dish dish;
+        loggingMessage = "getDishById";
+        responseMessage = String.format("Dish with id %s", dishId);
         var dishInfo = dishRepository.findByDishId(dishId);
-        Dish dish = dishInfo.orElseThrow(() -> {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Dish with id " + dishId + Message.NOT_FOUND.getMessage());
-        });
-        if (dish.getCategory() != null) {
-            categoryUUID = dish.getCategory().getCategoryId();
-        }
 
-        loggingService.log(LogLevel.INFO, loggingMessage);
+        dish = dishInfo.orElseThrow(() -> {
+            notFoundResponse(dishId);
+            return null;
+        });
+
+        loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, dishId));
         return DishResponse.builder()
                 .dishId(dish.getDishId())
-                .categoryId(categoryUUID)
+                .categoryId(dish.getCategory().getCategoryId())
                 .name(dish.getName())
                 .description(dish.getDescription())
                 .price(dish.getPrice())
@@ -54,46 +58,45 @@ public class DishService {
     }
 
     public DishResponseId createDish(Dish request) {
+        String associatedId;
         String image = (request.getImage() != null) ? request.getImage() : "";
-        String description = (request.getDescription() != null) ? request.getDescription().trim() : null;
-        String allergens = (request.getAllergens() != null) ? request.getAllergens().trim() : null;
-        String tags = (request.getTags() != null) ? request.getTags().trim() : null;
         Category category = null;
 
-        loggingMessage = ExceptionTools.generateLoggingMessage("createDish", request.getCategory_id());
+        loggingMessage = "createDish";
+        responseMessage = String.format("Category with id %s", request.getCategory_id());
+
         request.setCategoryIdForDish(request.getCategory_id());
-        if (request.getPrice() == null) {
-            loggingService.log(LogLevel.ERROR, loggingMessage + " The price cannot be an empty");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The price cannot be an empty");
-        }
 
         if (request.getCategory_id() != null) {
             category = categoryRepository.findByCategoryId(request.getCategory().getCategoryId()).orElseThrow(() -> {
-                loggingService.log(LogLevel.ERROR, loggingMessage + Message.CATEGORY_NOT_FOUND.getMessage());
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Category with id " + request.getCategory().getCategoryId() + Message.NOT_FOUND.getMessage(), null);
+                badRequestResponse(request.getCategory().getCategoryId());
+                return null;
             });
         }
 
-        String associatedId = serviceHelper.getAssociatedIdForDish(request.getCategory_id(), dishRepository, loggingService);
+        associatedId = dishServiceHelper.getAssociatedIdForDish(request.getCategory_id(), dishRepository, loggingService);
 
         Dish dish = Dish.builder()
-                .name(request.getName().trim()) // delete whitespaces
-                .description(description)
                 .associatedId(associatedId)
-                .price(request.getPrice())
                 .category(category)
-                .calories(request.getCalories())
-                .weight(request.getWeight())
-                .allergens(allergens)
-                .tags(tags)
                 .state(request.getState())
                 .build();
-        dishRepository.save(dish);
+
+        serviceHelper.updateNameField(dish::setName, request.getName(), "Name", loggingMessage, loggingService);
+        serviceHelper.updatePriceField(dish::setPrice, request.getPrice(), "Price", loggingMessage, loggingService, 100_000);
+        serviceHelper.updateIntegerField(dish::setWeight, request.getWeight(), "Weight", loggingMessage, loggingService, 100_000);
+        serviceHelper.updateIntegerField(dish::setCalories, request.getCalories(), "Weight", loggingMessage, loggingService, 30_000);
+        serviceHelper.updateVarcharField(dish::setDescription, request.getDescription(), "Description", loggingMessage, loggingService);
+        serviceHelper.updateVarcharField(dish::setAllergens, request.getAllergens(), "Allergens", loggingMessage, loggingService);
+        serviceHelper.updateVarcharField(dish::setTags, request.getTags(), "Tags", loggingMessage, loggingService);
+
         if (!image.isEmpty() && Validator.validateImage(image, loggingService)) {
             dish.setImageUrl(dishImageFTP.uploadImage(request.getImage(), dish.getDishId(), loggingService));
-            dishRepository.save(dish);
         }
-        loggingService.log(LogLevel.INFO, loggingMessage + " id=" + dish.getDishId() + Message.CREATE.getMessage());
+
+        dishRepository.save(dish);
+
+        loggingService.log(LogLevel.INFO, String.format("%s %s UUID=%s %s", loggingMessage, request.getName(), dish.getDishId(), Message.CREATE.getMessage()));
         return DishResponseId.builder()
                 .dishId(dish.getDishId())
                 .build();
@@ -120,7 +123,7 @@ public class DishService {
             dish.setName(request.getName().trim()); // delete whitespaces
         }
 
-        serviceHelper.updateDishFromRequestNullEnable(dish, request, loggingMessage, loggingService);
+        dishServiceHelper.updateDishFromRequestNullEnable(dish, request, loggingMessage, loggingService);
 
         if (request.getPrice() != null) {
             Validator.positiveInteger("Price", request.getPrice(), 100000, loggingService); // validate price
@@ -152,6 +155,24 @@ public class DishService {
         }
         dishRepository.delete(dish);
         loggingService.log(LogLevel.INFO, loggingMessage + " name=" + dish.getName() + Message.DELETE.getMessage());
+    }
+
+    @Override
+    public void notFoundResponse(String entityId) {
+        LoggingResponseHelper.loggingThrowException(
+                entityId,
+                LogLevel.ERROR, HttpStatus.NOT_FOUND,
+                loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
+                loggingService);
+    }
+
+    @Override
+    public void badRequestResponse(String entityId) {
+        LoggingResponseHelper.loggingThrowException(
+                entityId,
+                LogLevel.ERROR, HttpStatus.BAD_REQUEST,
+                loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
+                loggingService);
     }
 
 }

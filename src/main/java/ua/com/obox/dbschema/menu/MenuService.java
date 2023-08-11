@@ -135,7 +135,7 @@ public class MenuService extends AbstractResponseService {
         });
 
         menuRepository.delete(menu);
-        loggingService.log(LogLevel.INFO, String.format("%s %s NAME=%s %s", loggingService, menuId, menu.getName(), Message.DELETE.getMessage()));
+        loggingService.log(LogLevel.INFO, String.format("%s %s NAME=%s %s", loggingMessage, menuId, menu.getName(), Message.DELETE.getMessage()));
     }
 
     @Override

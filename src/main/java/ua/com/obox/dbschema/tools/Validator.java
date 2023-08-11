@@ -26,7 +26,7 @@ public class Validator {
     }
 
     public static void validateVarchar(String loggingMessage, String fieldName, String str, LoggingService loggingService) {
-        if (str != null && str.length() == 0 || str != null && str.length() > 255) {
+        if (str != null && str.trim().length() == 0 || str != null && str.length() > 255) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.LIMIT_255.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, fieldName + Message.LIMIT_255.getMessage());
         }
