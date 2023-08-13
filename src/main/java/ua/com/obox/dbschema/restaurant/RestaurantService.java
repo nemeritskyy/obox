@@ -109,7 +109,8 @@ public class RestaurantService extends AbstractResponseService {
             return null;
         });
 
-        serviceHelper.updateNameField(restaurant::setName, request.getName(), "Name", loggingMessage, loggingService);
+        if (request.getName() != null)
+            serviceHelper.updateNameField(restaurant::setName, request.getName(), "Name", loggingMessage, loggingService);
         serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "Address", loggingMessage, loggingService);
 
         restaurantRepository.save(restaurant);

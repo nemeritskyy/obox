@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 @Service
 public class UpdateServiceHelper {
     public void updateVarcharField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
-        if (value == null) {
+        if (value == null || value.trim().isEmpty()) {
             setter.accept(null);
         } else {
             Validator.validateVarchar(loggingMessage, field, value, loggingService);
@@ -44,5 +44,10 @@ public class UpdateServiceHelper {
             loggingService.log(LogLevel.ERROR, loggingMessage + " The price cannot be an empty");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The price cannot be an empty");
         }
+    }
+
+    public void updateState(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
+        Validator.validateState(loggingMessage, value, loggingService);
+        setter.accept(value);
     }
 }

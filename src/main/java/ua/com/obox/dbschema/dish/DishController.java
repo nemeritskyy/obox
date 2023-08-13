@@ -65,7 +65,6 @@ public class DishController {
     public ResponseEntity<Void> patchDishById(@PathVariable String dishId, @RequestBody
 
     Dish request) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("patchDishById", request.getCategory_id());
         service.patchDishById(dishId, request);
         return ResponseEntity.noContent().build();
     }

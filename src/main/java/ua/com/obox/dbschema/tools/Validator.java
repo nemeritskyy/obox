@@ -8,7 +8,6 @@ import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 import java.util.Base64;
-import java.util.UUID;
 
 
 @RequiredArgsConstructor
@@ -36,18 +35,6 @@ public class Validator {
         if (code == null || code.length() < 2 || code.length() > 3) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.LANGUAGE.getMessage());
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.LANGUAGE.getMessage().trim());
-        }
-    }
-
-    public static void checkUUID(String loggingMessage, String uuid, LoggingService loggingService) {
-        try {
-            if (uuid == null) {
-                throw new IllegalArgumentException("UUID required");
-            }
-            UUID.fromString(uuid);
-        } catch (IllegalArgumentException e) {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.BAD_UUID.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, uuid + Message.BAD_UUID.getMessage());
         }
     }
 

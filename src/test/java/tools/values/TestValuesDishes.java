@@ -178,15 +178,15 @@ public class TestValuesDishes {
                         "calories", 1,
                         "state", "ENABLED"
                 ),
-                Map.of( // Post. 15
-                        "category_id", SupportingData.categoryId,
-                        "name", "dish1",
-                        "description", "",
-                        "price", 1,
-                        "weight", 1,
-                        "calories", 1,
-                        "state", "ENABLED"
-                ),
+//                Map.of( // Post. 15
+//                        "category_id", SupportingData.categoryId,
+//                        "name", "dish1",
+//                        "description", "",
+//                        "price", 1,
+//                        "weight", 1,
+//                        "calories", 1,
+//                        "state", "ENABLED"
+//                ),
                 Map.of( // Post. 17
                         "category_id", SupportingData.categoryId,
                         "name", "dish1",
