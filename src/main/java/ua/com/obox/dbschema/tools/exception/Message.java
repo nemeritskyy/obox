@@ -15,7 +15,7 @@ public enum Message {
     GET_BY_ID(" Get by id"),
     CREATE(" created"),
     UPDATE(" updated"),
-    FIND_COUNT(" find COUNT="),
+    FIND_COUNT("find COUNT="),
     REQUIRED("Field name is required"),
     LIMIT_200("Name field must contain from 1 to 200 characters"),
     LIMIT_255(" field must contain from 1 to 255 characters"),

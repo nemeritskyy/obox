@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
+import ua.com.obox.dbschema.tools.RequiredServiceHelper;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
@@ -22,7 +23,7 @@ public class DishService extends AbstractResponseService {
     private final CategoryRepository categoryRepository;
     private final LoggingService loggingService;
     private final UploadDishImageFTP dishImageFTP;
-    private final DishServiceHelper dishServiceHelper;
+    private final RequiredServiceHelper dishServiceHelper;
     private final UpdateServiceHelper serviceHelper;
     private String loggingMessage;
     private String responseMessage;

@@ -27,11 +27,13 @@ public class Validator {
         return null;
     }
 
-    public static void validateVarchar(String loggingMessage, String fieldName, String str, LoggingService loggingService) {
+    public static String validateVarchar(String loggingMessage, String fieldName, String str, LoggingService loggingService) {
         if (str != null && str.trim().length() == 0 || str != null && str.length() > 255) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.LIMIT_255.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, fieldName + Message.LIMIT_255.getMessage());
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, fieldName + Message.LIMIT_255.getMessage());
+            return fieldName + Message.LIMIT_255.getMessage();
         }
+        return null;
     }
 
     public static void languageCode(String loggingMessage, String code, LoggingService loggingService) {

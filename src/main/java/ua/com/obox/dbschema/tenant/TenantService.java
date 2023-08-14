@@ -3,7 +3,7 @@ package ua.com.obox.dbschema.tenant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import ua.com.obox.dbschema.dish.DishServiceHelper;
+import ua.com.obox.dbschema.tools.RequiredServiceHelper;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.restaurant.RestaurantResponse;
@@ -27,7 +27,7 @@ public class TenantService extends AbstractResponseService {
     private final RestaurantRepository restaurantRepository;
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
-    private final DishServiceHelper requiredServiceHelper;
+    private final RequiredServiceHelper requiredServiceHelper;
     private String loggingMessage;
     private String responseMessage;
 

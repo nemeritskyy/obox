@@ -1,15 +1,18 @@
-package ua.com.obox.dbschema.dish;
+package ua.com.obox.dbschema.tools;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ua.com.obox.dbschema.dish.Dish;
+import ua.com.obox.dbschema.dish.DishRepository;
+import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.tenant.Tenant;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 
 @Service
-public class DishServiceHelper {
+public class RequiredServiceHelper {
     public String getAssociatedIdForDish(String categoryId, DishRepository dishRepository, LoggingService loggingService) {
         String associatedId;
         String restaurantId = dishRepository.findRestaurantIdByCategoryId(categoryId);
@@ -33,6 +36,13 @@ public class DishServiceHelper {
     public String updateNameIfNeeded(String name, Tenant tenant, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {
         if (name != null) {
             return serviceHelper.updateNameField(tenant::setName, name, "Name", loggingMessage, loggingService);
+        }
+        return null;
+    }
+
+    public String updateNameIfNeeded(String name, Restaurant restaurant, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {
+        if (name != null) {
+            return serviceHelper.updateNameField(restaurant::setName, name, "Name", loggingMessage, loggingService);
         }
         return null;
     }

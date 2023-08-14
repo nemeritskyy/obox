@@ -11,13 +11,17 @@ import java.util.function.Consumer;
 
 @Service
 public class UpdateServiceHelper {
-    public void updateVarcharField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
+    public String updateVarcharField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
         if (value == null || value.trim().isEmpty()) {
             setter.accept(null);
-        } else {
-            Validator.validateVarchar(loggingMessage, field, value, loggingService);
-            setter.accept(value.trim());
+            return null;
         }
+
+        String checkField = Validator.validateVarchar(loggingMessage, field, value, loggingService);
+        if (checkField == null) {
+            setter.accept(value);
+        }
+        return checkField;
     }
 
     public String updateNameField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
