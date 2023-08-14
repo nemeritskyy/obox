@@ -12,16 +12,19 @@ import java.util.Base64;
 
 @RequiredArgsConstructor
 public class Validator {
-    public static void validateName(String loggingMessage, String name, LoggingService loggingService) {
+    public static String validateName(String loggingMessage, String name, LoggingService loggingService) {
         if (name == null || name.trim().isEmpty()) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.REQUIRED.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.REQUIRED.getMessage().trim());
+            return Message.REQUIRED.getMessage();
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.REQUIRED.getMessage().trim());
         }
         name = name.trim(); // delete whitespaces
         if (name.length() > 200) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.ERROR.getMessage() + Message.LIMIT_200.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.LIMIT_200.getMessage().trim());
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.LIMIT_200.getMessage().trim());
+            return Message.LIMIT_200.getMessage();
         }
+        return null;
     }
 
     public static void validateVarchar(String loggingMessage, String fieldName, String str, LoggingService loggingService) {
@@ -45,11 +48,13 @@ public class Validator {
         }
     }
 
-    public static void validateState(String loggingMessage, String state, LoggingService loggingService) {
-        if (state == null || !state.equals(State.ENABLED) && !state.equals(State.DISABLED)) {
+    public static String validateState(String loggingMessage, String state, LoggingService loggingService) {
+        if (state == null || (!state.equals(State.ENABLED) && !state.equals(State.DISABLED))) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.BAD_STATE.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.BAD_STATE.getMessage());
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.BAD_STATE.getMessage());
+            return Message.BAD_STATE.getMessage();
         }
+        return null;
     }
 
     public static boolean validateImage(String image, LoggingService loggingService) {

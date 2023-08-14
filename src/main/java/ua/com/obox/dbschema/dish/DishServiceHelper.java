@@ -3,6 +3,7 @@ package ua.com.obox.dbschema.dish;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ua.com.obox.dbschema.tenant.Tenant;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
@@ -22,10 +23,18 @@ public class DishServiceHelper {
         return associatedId;
     }
 
-    public void updateNameIfNeeded(String name, Dish dish, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {
+    public String updateNameIfNeeded(String name, Dish dish, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {
         if (name != null) {
-            serviceHelper.updateNameField(dish::setName, name, "Name", loggingMessage, loggingService);
+            return serviceHelper.updateNameField(dish::setName, name, "Name", loggingMessage, loggingService);
         }
+        return null;
+    }
+
+    public String updateNameIfNeeded(String name, Tenant tenant, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {
+        if (name != null) {
+            return serviceHelper.updateNameField(tenant::setName, name, "Name", loggingMessage, loggingService);
+        }
+        return null;
     }
 
     public void updatePriceIfNeeded(Double price, Dish dish, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {

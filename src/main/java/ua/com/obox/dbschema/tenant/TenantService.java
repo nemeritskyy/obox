@@ -3,9 +3,12 @@ package ua.com.obox.dbschema.tenant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.dish.DishServiceHelper;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.restaurant.RestaurantResponse;
+import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
+import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.exception.Message;
@@ -23,8 +26,8 @@ public class TenantService extends AbstractResponseService {
     private final TenantRepository tenantRepository;
     private final RestaurantRepository restaurantRepository;
     private final LoggingService loggingService;
-
     private final UpdateServiceHelper serviceHelper;
+    private final DishServiceHelper requiredServiceHelper;
     private String loggingMessage;
     private String responseMessage;
 
@@ -75,12 +78,19 @@ public class TenantService extends AbstractResponseService {
 
     public TenantResponseId createTenant(Tenant request) {
         Tenant tenant;
+        Map<String, String> fieldErrors = new ResponseErrorMap<>();
         loggingMessage = "createTenant";
 
         tenant = Tenant.builder()
-                .name(request.getName().trim())
                 .state(State.ENABLED)
                 .build();
+
+        fieldErrors.put("name", serviceHelper.updateNameField(tenant::setName, request.getName(), "Name", loggingMessage, loggingService));
+//        fieldErrors.put("state", serviceHelper.updateState(tenant::setState, request.getState(), "State", loggingMessage, loggingService));
+
+        if (fieldErrors.size() > 0)
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+
         tenantRepository.save(tenant);
 
         loggingService.log(LogLevel.INFO, String.format("%s %s UUID=%s %s", loggingMessage, request.getName(), tenant.getTenantId(), Message.CREATE.getMessage()));
@@ -91,6 +101,7 @@ public class TenantService extends AbstractResponseService {
 
     public void patchTenantById(String tenantId, Tenant request) {
         Tenant tenant;
+        Map<String, String> fieldErrors = new ResponseErrorMap<>();
         loggingMessage = "patchTenantById";
         responseMessage = String.format("Tenant with id %s", tenantId);
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
@@ -100,7 +111,10 @@ public class TenantService extends AbstractResponseService {
             return null;
         });
 
-        serviceHelper.updateNameField(tenant::setName, request.getName(), "Name", loggingMessage, loggingService);
+        fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), tenant, loggingMessage, loggingService, serviceHelper));
+
+        if (fieldErrors.size() > 0)
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         tenantRepository.save(tenant);
         loggingService.log(LogLevel.INFO, String.format("%s %s %s", loggingMessage, tenantId, Message.UPDATE.getMessage()));

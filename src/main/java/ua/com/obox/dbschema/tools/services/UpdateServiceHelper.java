@@ -20,9 +20,11 @@ public class UpdateServiceHelper {
         }
     }
 
-    public void updateNameField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
-        Validator.validateName(loggingMessage, value, loggingService);
-        setter.accept(value.trim());
+    public String updateNameField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
+        String name = Validator.validateName(loggingMessage, value, loggingService);
+        if (name == null)
+            setter.accept(value.trim());
+        return name;
     }
 
     public void updateIntegerField(Consumer<Integer> setter, Integer value, String field, String loggingMessage, LoggingService loggingService, int maxValue) {
@@ -46,8 +48,10 @@ public class UpdateServiceHelper {
         }
     }
 
-    public void updateState(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
-        Validator.validateState(loggingMessage, value, loggingService);
-        setter.accept(value);
+    public String updateState(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
+        String state = Validator.validateState(loggingMessage, value, loggingService);
+        if (state == null)
+            setter.accept(value);
+        return state;
     }
 }
