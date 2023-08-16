@@ -58,4 +58,9 @@ public class UpdateServiceHelper {
             setter.accept(value);
         return state;
     }
+
+    public String updateLanguageCode(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
+        String languageCode = Validator.languageCode("createMenu", value, loggingService);
+        return languageCode;
+    }
 }

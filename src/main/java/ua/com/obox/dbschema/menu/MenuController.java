@@ -10,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ua.com.obox.dbschema.category.CategoryResponse;
-import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 import java.util.List;
@@ -50,8 +49,6 @@ public class MenuController {
             @ApiResponse(responseCode = "400", description = "Bad Request")
     })
     public ResponseEntity<MenuResponseId> createMenu(@RequestBody Menu request) {
-        Validator.validateName("createMenu", request.getName(), loggingService);
-        Validator.languageCode("createMenu", request.getLanguage_code(), loggingService);
         MenuResponseId response = service.createMenu(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -66,7 +63,6 @@ public class MenuController {
             "  \"name\": \"string\"" +
             "}")
     Menu request) {
-        Validator.validateName("patchMenuById", request.getName(), loggingService);
         service.patchMenuById(menuId, request);
         return ResponseEntity.noContent().build();
     }

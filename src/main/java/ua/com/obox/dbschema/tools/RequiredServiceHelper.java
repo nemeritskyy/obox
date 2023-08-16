@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
+import ua.com.obox.dbschema.menu.Menu;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.tenant.Tenant;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
@@ -43,6 +44,13 @@ public class RequiredServiceHelper {
     public String updateNameIfNeeded(String name, Restaurant restaurant, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {
         if (name != null) {
             return serviceHelper.updateNameField(restaurant::setName, name, "Name", loggingMessage, loggingService);
+        }
+        return null;
+    }
+
+    public String updateNameIfNeeded(String name, Menu menu, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {
+        if (name != null) {
+            return serviceHelper.updateNameField(menu::setName, name, "Name", loggingMessage, loggingService);
         }
         return null;
     }

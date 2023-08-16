@@ -36,11 +36,13 @@ public class Validator {
         return null;
     }
 
-    public static void languageCode(String loggingMessage, String code, LoggingService loggingService) {
+    public static String languageCode(String loggingMessage, String code, LoggingService loggingService) {
         if (code == null || code.length() < 2 || code.length() > 3) {
             loggingService.log(LogLevel.ERROR, loggingMessage + Message.LANGUAGE.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.LANGUAGE.getMessage().trim());
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, Message.LANGUAGE.getMessage().trim());
+            return Message.LANGUAGE.getMessage();
         }
+        return null;
     }
 
     public static void positiveInteger(String loggingMessage, Number inputInteger, int maxInteger, LoggingService loggingService) {

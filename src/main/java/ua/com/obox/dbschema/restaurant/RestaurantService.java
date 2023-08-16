@@ -163,13 +163,4 @@ public class RestaurantService extends AbstractResponseService {
                 loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
                 loggingService);
     }
-
-    @Override
-    public void badRequestResponse(String entityId) {
-        LoggingResponseHelper.loggingThrowException(
-                entityId,
-                LogLevel.ERROR, HttpStatus.BAD_REQUEST,
-                loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
-                loggingService);
-    }
 }
