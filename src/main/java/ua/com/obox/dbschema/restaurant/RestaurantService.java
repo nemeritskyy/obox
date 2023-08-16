@@ -9,6 +9,7 @@ import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.menu.MenuResponse;
 import ua.com.obox.dbschema.tenant.Tenant;
 import ua.com.obox.dbschema.tenant.TenantRepository;
+import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
@@ -24,6 +25,7 @@ public class RestaurantService {
     private final TenantRepository tenantRepository;
     private final MenuRepository menuRepository;
     private final LoggingService loggingService;
+    private final RestaurantServiceHelper serviceHelper;
     private String loggingMessage;
 
     public List<MenuResponse> getAllMenusByRestaurantId(String restaurantId) {
@@ -73,9 +75,11 @@ public class RestaurantService {
         });
         Restaurant restaurant = Restaurant.builder()
                 .name(request.getName().trim()) // delete whitespaces
-                .address(request.getAddress().trim())
                 .tenant(tenant)
                 .build();
+        if (request.getAddress() != null) {
+            serviceHelper.updateStringField(restaurant::setAddress, request.getAddress(), "Address", loggingMessage, loggingService);
+        }
         restaurantRepository.save(restaurant);
         loggingService.log(LogLevel.INFO, loggingMessage + " id=" + restaurant.getRestaurantId() + Message.CREATE.getMessage());
         return RestaurantResponseId.builder()
@@ -92,8 +96,13 @@ public class RestaurantService {
         });
         String oldName = restaurant.getName();
         String oldAddress = restaurant.getAddress();
-        restaurant.setName(request.getName().trim()); // delete whitespaces
-        restaurant.setAddress(request.getAddress().trim()); // delete whitespaces
+        if (request.getName() != null) {
+            Validator.validateName(loggingMessage, request.getName(), loggingService);
+            restaurant.setName(request.getName().trim()); // delete whitespaces
+        }
+        if (request.getAddress() != null) {
+            serviceHelper.updateStringField(restaurant::setAddress, request.getAddress(), "Address", loggingMessage, loggingService);
+        }
         restaurantRepository.save(restaurant);
         loggingService.log(LogLevel.INFO, loggingMessage + " OLD name=" + oldName + " NEW name=" + request.getName() + " OLD address=" + oldAddress + " NEW address=" + request.getAddress() + Message.UPDATE.getMessage());
     }

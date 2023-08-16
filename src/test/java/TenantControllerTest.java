@@ -1,112 +1,206 @@
-import org.json.JSONObject;
-import org.junit.Test;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
+import tools.GetRequestEquals;
+import tools.PatchRequest;
+import tools.PostRequest;
 import ua.com.obox.OboxApplication;
-import ua.com.obox.dbschema.tenant.*;
-import ua.com.obox.dbschema.tools.State;
 
-import java.util.stream.Stream;
+import java.util.Map;
+import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.hamcrest.Matchers.equalTo;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@RunWith(SpringRunner.class)
 @SpringBootTest(classes = OboxApplication.class)
 @AutoConfigureMockMvc
-@Transactional
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class TenantControllerTest {
-    private final String URL = "http://localhost:8080/tenants/";
-    private static final String tenantTestIdExisting = "0696ac8a-78a5-4239-b455-352e36c700a6";
+    private final String URL_TENANT = "https://api.obox.com.ua/tenants/";
+    private static String tenantId = null;
+    private static String tenantForbiddenStateDisabled = null;
     @Autowired
     private MockMvc mockMvc;
-    @Mock
-    private TenantRepository tenantRepository;
-    private static Tenant testTenant;
 
-    @BeforeAll
-    public static void setupTestTenant(@Autowired TenantRepository tenantRepository) {
-        testTenant = new Tenant();
-        testTenant.setTenantId(tenantTestIdExisting);
-        testTenant.setState(State.ENABLED);
-        tenantRepository.save(testTenant);
-    }
-
-    //    @Before
-//    public void setup() {
-////        Tenant tenant1 = new Tenant("a95de739-40fa-414a-9f62-fdaedb2a8282", "Tenant 1", "ENABLE");
-////        Tenant tenant2 = new Tenant("b73c1e7b-72d3-4ab9-9811-9e9aa2f96e71", "Tenant 2", "DISABLE");
-////        tenantRepository.saveAll(Arrays.asList(tenant1, tenant2));
-//    }
     @BeforeEach
     public void setup(WebApplicationContext wac) {
         mockMvc = MockMvcBuilders.webAppContextSetup(wac).build();
     }
 
     @Test
-    public void testGetTenantById_Existing() throws Exception {
-        mockMvc.perform(get(URL + tenantTestIdExisting))
+    @Order(1)
+    public void testCreateTenantForTest() throws Exception { // Create Tenant for test
+        Map<String, Object> requestBody = Map.of(
+                "name",
+                "createTenantForRestaurantTest()");
+        tenantId = PostRequest.performGetIdAfterPost("$.tenant_id", URL_TENANT, requestBody, mockMvc);
+    }
+
+    @Test
+    @Order(10)
+    public void testGetByExistingId() throws Exception {
+        mockMvc.perform(get(URL_TENANT + tenantId)) // Get. 1
                 .andExpect(status().isOk());
     }
 
     @Test
-    public void testGetTenantById_NotFound() throws Exception {
-        mockMvc.perform(get(URL + "non_existent_id"))
+    @Order(11)
+    public void testGetByNotFoundId() throws Exception { // Get. 2
+        mockMvc.perform(get(URL_TENANT + UUID.randomUUID()))
                 .andExpect(status().isNotFound());
     }
 
-    //Bad Request
     @ParameterizedTest
-    @MethodSource("getInvalidNames")
-    public void testCreateAndPatchNameEmptySpace201Chars(String name) throws Exception {
-        assertAll(
-                () -> testInvalidNameInRequest(name, post(URL)),
-                () -> testInvalidNameInRequest(name, patch(URL + tenantTestIdExisting))
-        );
+    @Order(30)
+    @Transactional
+    @MethodSource("tools.TestValues#getValidNames")
+    public void testPostValidNames(String name) throws Exception {
+        Map<String, Object> requestBody = Map.of(
+                "name", name);
+        PostRequest
+                .performPostRequest(URL_TENANT, requestBody, mockMvc)
+                .andExpect(status().isCreated());
     }
 
-    private void testInvalidNameInRequest(String name, MockHttpServletRequestBuilder requestBuilder) throws Exception {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("name", name);
-
-        mockMvc.perform(requestBuilder
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(jsonObject.toString()))
+    @ParameterizedTest
+    @Order(40)
+    @Transactional
+    @MethodSource("tools.TestValues#getInvalidNames")
+    public void testPostInvalidNames(String name) throws Exception {
+        Map<String, Object> requestBody = Map.of(
+                "name", name);
+        PostRequest
+                .performPostRequest(URL_TENANT, requestBody, mockMvc)
                 .andExpect(status().isBadRequest());
     }
 
-    private static Stream<String> getInvalidNames() {
-        return Stream.of("", "    ", "clakxliwqxrunucparyjausiocrpzffjjtnxnvdhxgvtxnzkuzdpxwekxzhvfqcuqgwclllijphouweqkowsuaekfvqxiqfqbyfywdoudlsfhbtqdjizasylsonzzfbnzohqpagbwkotkmciynsukwkdzzfaogilcpyanfyjrzptzjojbqdszzavgobvlwsuuakaoroxc");
+    @Test
+    @Order(41)
+    public void testPostSpaceSymbol() throws Exception { // Post. 7 // Get. 5
+        String spaceName = "      New name with space  ";
+
+        Map<String, Object> requestResponse;
+        Map<String, Object> requestBody = Map.of(
+                "name", spaceName);
+        tenantForbiddenStateDisabled = PostRequest
+                .performGetIdAfterPost("$.tenant_id", URL_TENANT, requestBody, mockMvc);
+
+        requestResponse = Map.of(
+                "$.tenant_id", equalTo(tenantForbiddenStateDisabled),
+                "$.name", equalTo(spaceName.trim())
+        );
+
+        GetRequestEquals
+                .performGetAndExpect(URL_TENANT + tenantForbiddenStateDisabled, requestResponse, mockMvc);
+
+        mockMvc.perform(delete(URL_TENANT + tenantForbiddenStateDisabled)); // State Forbidden
+    }
+
+    @Test
+    @Order(42)
+    public void testGetForbidden() throws Exception {
+        mockMvc.perform(get(URL_TENANT + tenantForbiddenStateDisabled)) // Get. 1.a
+                .andExpect(status().isForbidden());
+    }
+
+    @ParameterizedTest
+    @Order(50)
+    @MethodSource("tools.TestValues#getValidNames") // Patch. 2
+    public void testPatchValid(String name) throws Exception {
+        Map<String, Object> requestResponse;
+        Map<String, Object> requestBody = Map.of(
+                "name", name);
+
+        PatchRequest
+                .performPatchRequest(URL_TENANT + tenantId, requestBody, mockMvc)
+                .andExpect(status().isNoContent());
+
+        requestResponse = Map.of(
+                "$.tenant_id", equalTo(tenantId),
+                "$.name", equalTo(name.trim())
+        );
+
+        GetRequestEquals
+                .performGetAndExpect(URL_TENANT + tenantId, requestResponse, mockMvc);
+    }
+
+    @ParameterizedTest
+    @Order(51)
+    @MethodSource("tools.TestValues#getInvalidNames") // Patch. 3 // Patch. 4
+    public void testPatchInvalid(String name) throws Exception {
+        Map<String, Object> requestBody = Map.of(
+                "name", name);
+        PatchRequest
+                .performPatchRequest(URL_TENANT + tenantId, requestBody, mockMvc)
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @Order(52)
+    public void testGetByIdAfterPatch() throws Exception { // Get. 3 Patch. 1
+        String name = "Patch name";
+        Map<String, Object> requestResponse;
+        Map<String, Object> requestBody = Map.of(
+                "name", name);
+        PatchRequest
+                .performPatchRequest(URL_TENANT + tenantId, requestBody, mockMvc)
+                .andExpect(status().isNoContent());
+
+        requestResponse = Map.of(
+                "$.name", equalTo(name.trim())
+        );
+
+        GetRequestEquals
+                .performGetAndExpect(URL_TENANT + tenantId, requestResponse, mockMvc);
     }
 
 
-//    Code Example
-//    @ParameterizedTest
-//    @ValueSource(strings = {"", "    ", "clakxliwqxrunucparyjausiocrpzffjjtnxnvdhxgvtxnzkuzdpxwekxzhvfqcuqgwclllijphouweqkowsuaekfvqxiqfqbyfywdoudlsfhbtqdjizasylsonzzfbnzohqpagbwkotkmciynsukwkdzzfaogilcpyanfyjrzptzjojbqdszzavgobvlwsuuakaoroxc"})
+    @Test
+    public void testPatchByIdRandomSymbol() throws Exception { // Patch. 5
+        String name = "Patch name";
+        Map<String, Object> requestBody = Map.of(
+                "name", name);
+        PatchRequest
+                .performPatchRequest(URL_TENANT + tenantId + RandomStringUtils.random(1, true, true), requestBody, mockMvc)
+                .andExpect(status().isNotFound());
+    }
 
-//    public void testCreateWithVarcharName() throws Exception { // 201 symbol
-//        String name201Chars = "clakxliwqxrunucparyjausiocrpzffjjtnxnvdhxgvtxnzkuzdpxwekxzhvfqcuqgwclllijphouweqkowsuaekfvqxiqfqbyfywdoudlsfhbtqdjizasylsonzzfbnzohqpagbwkotkmciynsukwkdzzfaogilcpyanfyjrzptzjojbqdszzavgobvlwsuuakaoroxc";
-//        JSONObject jsonObject = new JSONObject();
-//        jsonObject.put("name", name201Chars);
-//
-//        mockMvc.perform(post(URL)
-//                        .contentType(MediaType.APPLICATION_JSON)
-//                        .content(jsonObject.toString()))
-//                .andExpect(status().isBadRequest());
-//    }
+    @Test
+    @Order(90)
+    public void testDeleted() throws Exception { // Del. 1
+        String name = "Patch name";
+        Map<String, Object> requestBody = Map.of(
+                "name", name);
+
+        mockMvc.perform(delete(URL_TENANT + tenantId + "?forceDelete=true")).andExpect(status().isNoContent());
+
+        mockMvc.perform(delete(URL_TENANT + tenantForbiddenStateDisabled + "?forceDelete=true"));
+
+        PatchRequest
+                .performPatchRequest(URL_TENANT + tenantId + RandomStringUtils.random(1, true, true), requestBody, mockMvc)
+                .andExpect(status().isNotFound());
+    }
+
+    //
+    @Test
+    @Order(90)
+    public void testDeleteRandomSymbol() throws Exception { // Del. 4
+        String randomSymbol = RandomStringUtils.random(1, true, true);
+        mockMvc.perform(delete(URL_TENANT + randomSymbol)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    @Order(100)
+    public void testGetAfterDelete() throws Exception { // Get. 2.b // Get. 4
+        mockMvc.perform(get(URL_TENANT + tenantId)).andExpect(status().isNotFound());
+    }
 }

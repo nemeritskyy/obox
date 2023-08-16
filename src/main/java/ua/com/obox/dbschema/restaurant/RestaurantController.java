@@ -54,7 +54,6 @@ public class RestaurantController {
     public ResponseEntity<RestaurantResponseId> createRestaurant(@RequestBody Restaurant request) {
         loggingMessage = "createRestaurant";
         Validator.validateName(loggingMessage, request.getName(), loggingService);
-        Validator.validateVarchar(loggingMessage, "Address", request.getAddress(), loggingService);
         RestaurantResponseId response = service.createRestaurant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
@@ -71,8 +70,6 @@ public class RestaurantController {
             "}")
     Restaurant request) {
         loggingMessage = "patchRestaurantById";
-        Validator.validateName(loggingMessage, request.getName(), loggingService);
-        Validator.validateVarchar(loggingMessage, "Address", request.getAddress(), loggingService);
         service.patchRestaurantById(restaurantId, request);
         return ResponseEntity.noContent().build();
     }

@@ -32,7 +32,7 @@ public class DishServiceHelper {
         updateIntegerField(dish::setWeight, request.getWeight(), "Weight", loggingMessage, loggingService, 0, 100000);
     }
 
-    private void updateStringField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
+    public void updateStringField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
         if (value != null) {
             String trimmedValue = value.trim();
             if (!trimmedValue.isEmpty()) {
