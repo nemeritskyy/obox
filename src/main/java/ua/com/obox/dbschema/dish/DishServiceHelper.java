@@ -28,9 +28,16 @@ public class DishServiceHelper {
         }
     }
 
-    public void updatePriceIfNeeded(Double price, Dish dish, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {
-        if (price != null) {
-            serviceHelper.updatePriceField(dish::setPrice, price, "Price", loggingMessage, loggingService, 100_000);
+
+    public void updateStringField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
+        if (value != null) {
+            String trimmedValue = value.trim();
+            if (!trimmedValue.isEmpty()) {
+                Validator.validateVarchar(loggingMessage, field, trimmedValue, loggingService);
+                setter.accept(trimmedValue);
+            } else {
+                setter.accept(null);
+            }
         }
     }
 

@@ -57,11 +57,17 @@ public class DishService extends AbstractResponseService {
 
     public DishResponseId createDish(Dish request) {
         String associatedId;
+        Dish dish = new Dish();
         String image = (request.getImage() != null) ? request.getImage() : "";
         Category category = null;
-
         loggingMessage = "createDish";
         responseMessage = String.format("Category with id %s", request.getCategory_id());
+
+        request.setCategoryIdForDish(request.getCategory_id());
+        if (request.getPrice() == null) {
+            loggingService.log(LogLevel.ERROR, loggingMessage + " The price cannot be an empty");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The price cannot be an empty");
+        }
 
         category = categoryRepository.findByCategoryId(request.getCategory_id()).orElseThrow(() -> {
             badRequestResponse(request.getCategory().getCategoryId());
@@ -71,7 +77,9 @@ public class DishService extends AbstractResponseService {
 
         associatedId = dishServiceHelper.getAssociatedIdForDish(request.getCategory_id(), dishRepository, loggingService);
 
-        Dish dish = Dish.builder()
+        dish = Dish.builder()
+                .name(request.getName().trim()) // delete whitespaces
+                .description(description)
                 .associatedId(associatedId)
                 .category(category)
                 .build();
