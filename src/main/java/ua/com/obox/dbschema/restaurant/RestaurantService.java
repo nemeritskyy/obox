@@ -115,9 +115,10 @@ public class RestaurantService extends AbstractResponseService {
     public void patchRestaurantById(String restaurantId, Restaurant request) {
         Restaurant restaurant;
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
+        loggingMessage = "patchRestaurantById";
+        responseMessage = String.format("Restaurant with id %s", restaurantId);
+
         try (Session session = entityManager.unwrap(Session.class)) {
-            loggingMessage = "patchRestaurantById";
-            responseMessage = String.format("Restaurant with id %s", restaurantId);
             var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
 
             restaurant = restaurantInfo.orElseThrow(() -> {

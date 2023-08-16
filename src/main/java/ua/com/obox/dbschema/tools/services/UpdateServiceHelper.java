@@ -1,8 +1,6 @@
 package ua.com.obox.dbschema.tools.services;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
@@ -31,24 +29,31 @@ public class UpdateServiceHelper {
         return name;
     }
 
-    public void updateIntegerField(Consumer<Integer> setter, Integer value, String field, String loggingMessage, LoggingService loggingService, int maxValue) {
+    public String updateIntegerField(Consumer<Integer> setter, Integer value, String field, String loggingMessage, LoggingService loggingService, int maxValue) {
         if (value != null) {
             if (value == 0) {
                 setter.accept(null);
             } else {
-                Validator.positiveInteger(field, value, maxValue, loggingService);
-                setter.accept(value);
+                String result = Validator.positiveInteger(field, value, maxValue, loggingService);
+                if (result == null) {
+                    setter.accept(value);
+                }
+                return result;
             }
         }
+        return null;
     }
 
-    public void updatePriceField(Consumer<Double> setter, Double value, String field, String loggingMessage, LoggingService loggingService, int maxValue) {
+    public String updatePriceField(Consumer<Double> setter, Double value, String field, String loggingMessage, LoggingService loggingService, int maxValue) {
         if (value != null) {
-            Validator.positiveInteger(field, value, maxValue, loggingService);
-            setter.accept(value);
+            String result = Validator.positiveInteger(field, value, maxValue, loggingService);
+            if (result == null) {
+                setter.accept(value);
+            }
+            return result;
         } else {
             loggingService.log(LogLevel.ERROR, loggingMessage + " The price cannot be an empty");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The price cannot be an empty");
+            return "The price cannot be an empty";
         }
     }
 

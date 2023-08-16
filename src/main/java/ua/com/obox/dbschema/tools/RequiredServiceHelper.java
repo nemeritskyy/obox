@@ -16,13 +16,12 @@ import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 @Service
 public class RequiredServiceHelper {
     public String getAssociatedIdForDish(String categoryId, DishRepository dishRepository, LoggingService loggingService) {
-        String associatedId;
         String restaurantId = dishRepository.findRestaurantIdByCategoryId(categoryId);
         String languageCode = dishRepository.findLanguageCode(categoryId);
-        associatedId = dishRepository.findAssociatedIdByRestaurantId(restaurantId, languageCode);
+        String associatedId = dishRepository.findAssociatedIdByRestaurantId(restaurantId, languageCode);
         if (associatedId == null) {
             loggingService.log(LogLevel.ERROR, "Field category_id is required, or you use bad value");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Field category_id is required, or you use bad value");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You use bad data without associated");
         }
         System.out.println(associatedId);
         return associatedId;
@@ -63,10 +62,11 @@ public class RequiredServiceHelper {
         return null;
     }
 
-    public void updatePriceIfNeeded(Double price, Dish dish, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {
+    public String updatePriceIfNeeded(Double price, Dish dish, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {
         if (price != null) {
-            serviceHelper.updatePriceField(dish::setPrice, price, "Price", loggingMessage, loggingService, 100_000);
+            return serviceHelper.updatePriceField(dish::setPrice, price, "Price", loggingMessage, loggingService, 100_000);
         }
+        return null;
     }
 
     public void updateStateIfNeeded(String state, Dish dish, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {

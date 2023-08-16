@@ -19,8 +19,6 @@ import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.services.AbstractResponseService;
 import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;

@@ -9,9 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ua.com.obox.dbschema.tools.Validator;
-import ua.com.obox.dbschema.tools.exception.ExceptionTools;
-import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 @RestController
 @RequestMapping("/dishes")
@@ -19,8 +16,6 @@ import ua.com.obox.dbschema.tools.logging.LoggingService;
 @Tag(name = "Dishes")
 public class DishController {
     private final DishService service;
-    private final LoggingService loggingService;
-    private String loggingMessage;
 
     @GetMapping("/{dishId}")
     @ApiResponses(value = {
@@ -51,8 +46,6 @@ public class DishController {
                                                                  "  \"image\": \"Base64 only JPG and PNG (not necessary)\"\n" +
                                                                  "}")
                                                              Dish request) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("createDish", request.getCategory_id());
-        Validator.validateState(loggingMessage, request.getState(), loggingService);
         DishResponseId response = service.createDish(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
