@@ -3,13 +3,15 @@ package ua.com.obox.dbschema.menu;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.associateddata.RestaurantAssociatedDataRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.category.CategoryResponse;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
+import ua.com.obox.dbschema.tools.RequiredServiceHelper;
+import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
+import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
@@ -18,6 +20,7 @@ import ua.com.obox.dbschema.tools.services.AbstractResponseService;
 import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,6 +32,7 @@ public class MenuService extends AbstractResponseService {
     private final LoggingService loggingService;
     private final RestaurantAssociatedDataRepository dataRepository;
     private final UpdateServiceHelper serviceHelper;
+    private final RequiredServiceHelper requiredServiceHelper;
     private String loggingMessage;
     private String responseMessage;
 
@@ -75,27 +79,28 @@ public class MenuService extends AbstractResponseService {
     public MenuResponseId createMenu(Menu request) {
         Restaurant restaurant;
         Menu menu;
+        Map<String, String> fieldErrors = new ResponseErrorMap<>();
         loggingMessage = "createMenu";
         responseMessage = String.format("Restaurant with id %s", request.getRestaurant_id());
 
-        try {
-            restaurant = restaurantRepository.findByRestaurantId(request.getRestaurant_id())
-                    .orElseThrow(() -> {
-                        badRequestResponse(request.getRestaurant_id());
-                        return null;
-                    });
-        } catch (NullPointerException e) {
-            loggingService.log(LogLevel.ERROR, "NullPointerException occurred: " + e.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Null value encountered", e);
-        }
-
-        request.checkAssociatedData(request.getRestaurant_id(), request.getLanguage_code(), dataRepository); // if associated data is empty create it
+        restaurant = restaurantRepository.findByRestaurantId(request.getRestaurant_id())
+                .orElseGet(() -> {
+                    fieldErrors.put("restaurant_id", responseMessage + Message.NOT_FOUND.getMessage());
+                    return null;
+                });
 
         menu = Menu.builder()
-                .name(request.getName().trim())
                 .restaurant(restaurant)
-                .language_code(request.getLanguage_code().toLowerCase())
                 .build();
+
+        fieldErrors.put("name", serviceHelper.updateNameField(menu::setName, request.getName(), "Name", loggingMessage, loggingService));
+        fieldErrors.put("language_code", serviceHelper.updateLanguageCode(menu::setLanguage_code, request.getLanguage_code(), "Language code", loggingMessage, loggingService));
+
+
+        if (fieldErrors.size() > 0)
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+
+        menu.checkAssociatedData(request.getRestaurant_id(), request.getLanguage_code(), dataRepository); // if associated data is empty create it
 
         menuRepository.save(menu);
 
@@ -108,6 +113,8 @@ public class MenuService extends AbstractResponseService {
 
     public void patchMenuById(String menuId, Menu request) {
         Menu menu;
+        Map<String, String> fieldErrors = new ResponseErrorMap<>();
+
         loggingMessage = "patchMenuById";
         responseMessage = String.format("Menu with id %s", menuId);
         var menuInfo = menuRepository.findByMenuId(menuId);
@@ -117,7 +124,11 @@ public class MenuService extends AbstractResponseService {
             return null;
         });
 
-        serviceHelper.updateNameField(menu::setName, request.getName(), "Name", loggingMessage, loggingService);
+        if (request.getName() != null)
+            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), menu, loggingMessage, loggingService, serviceHelper));
+
+        if (fieldErrors.size() > 0)
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         menuRepository.save(menu);
         loggingService.log(LogLevel.INFO, String.format("%s %s %s", loggingMessage, menuId, Message.UPDATE.getMessage()));
@@ -143,15 +154,6 @@ public class MenuService extends AbstractResponseService {
         LoggingResponseHelper.loggingThrowException(
                 entityId,
                 LogLevel.ERROR, HttpStatus.NOT_FOUND,
-                loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
-                loggingService);
-    }
-
-    @Override
-    public void badRequestResponse(String entityId) {
-        LoggingResponseHelper.loggingThrowException(
-                entityId,
-                LogLevel.ERROR, HttpStatus.BAD_REQUEST,
                 loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
                 loggingService);
     }

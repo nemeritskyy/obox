@@ -8,14 +8,18 @@ import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.dish.DishResponse;
+import ua.com.obox.dbschema.tools.RequiredServiceHelper;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
+import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
+import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.services.AbstractResponseService;
 import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +30,7 @@ public class CategoryService extends AbstractResponseService {
     private final DishRepository dishRepository;
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
+    private final RequiredServiceHelper requiredServiceHelper;
     private String loggingMessage;
     private String responseMessage;
 
@@ -80,20 +85,26 @@ public class CategoryService extends AbstractResponseService {
     public CategoryResponseId createCategory(Category request) {
         Menu menu;
         Category category;
+        Map<String, String> fieldErrors = new ResponseErrorMap<>();
         loggingMessage = "createCategory";
         responseMessage = String.format("Menu with id %s", request.getMenu_id());
 
         request.setMenuIdForCategory(request.getMenu_id());
 
-        menu = menuRepository.findByMenuId(request.getMenu().getMenuId()).orElseThrow(() -> {
-            badRequestResponse(request.getMenu().getMenuId());
-            return null;
-        });
+        menu = menuRepository.findByMenuId(request.getMenu().getMenuId())
+                .orElseGet(() -> {
+                    fieldErrors.put("menu_id", responseMessage + Message.NOT_FOUND.getMessage());
+                    return null;
+                });
 
         category = Category.builder()
-                .name(request.getName().trim())
                 .menu(menu)
                 .build();
+
+        fieldErrors.put("name", serviceHelper.updateNameField(category::setName, request.getName(), "Name", loggingMessage, loggingService));
+
+        if (fieldErrors.size() > 0)
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         categoryRepository.save(category);
 
@@ -105,6 +116,8 @@ public class CategoryService extends AbstractResponseService {
 
     public void patchCategoryById(String categoryId, Category request) {
         Category category;
+        Map<String, String> fieldErrors = new ResponseErrorMap<>();
+
         loggingMessage = "patchCategoryById";
         responseMessage = String.format("Category with id %s", categoryId);
         var categoryInfo = categoryRepository.findByCategoryId(categoryId);
@@ -114,7 +127,11 @@ public class CategoryService extends AbstractResponseService {
             return null;
         });
 
-        serviceHelper.updateNameField(category::setName, request.getName(), "Name", loggingMessage, loggingService);
+        if (request.getName() != null)
+            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), category, loggingMessage, loggingService, serviceHelper));
+
+        if (fieldErrors.size() > 0)
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         categoryRepository.save(category);
         loggingService.log(LogLevel.INFO, String.format("%s %s %s", loggingMessage, categoryId, Message.UPDATE.getMessage()));
@@ -140,15 +157,6 @@ public class CategoryService extends AbstractResponseService {
         LoggingResponseHelper.loggingThrowException(
                 entityId,
                 LogLevel.ERROR, HttpStatus.NOT_FOUND,
-                loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
-                loggingService);
-    }
-
-    @Override
-    public void badRequestResponse(String entityId) {
-        LoggingResponseHelper.loggingThrowException(
-                entityId,
-                LogLevel.ERROR, HttpStatus.BAD_REQUEST,
                 loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
                 loggingService);
     }

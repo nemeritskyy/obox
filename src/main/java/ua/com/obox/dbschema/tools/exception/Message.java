@@ -15,9 +15,9 @@ public enum Message {
     GET_BY_ID(" Get by id"),
     CREATE(" created"),
     UPDATE(" updated"),
-    FIND_COUNT(" find COUNT="),
-    REQUIRED(" Field name is required"),
-    LIMIT_200(" Name field must contain from 1 to 200 characters"),
+    FIND_COUNT("find COUNT="),
+    REQUIRED("Field name is required"),
+    LIMIT_200("Name field must contain from 1 to 200 characters"),
     LIMIT_255(" field must contain from 1 to 255 characters"),
     BOOLEAN(" must be false or true"),
     CHECK_PRICE(" the price should be in the range of 0 to 100000"),
@@ -27,7 +27,7 @@ public enum Message {
     BAD_STATE("The state is incorrect"),
     ERROR(" Error"),
     DELETE(" deleted"),
-    LANGUAGE(" Bad language code must contain from 2 to 3 characters"),
+    LANGUAGE("Bad language code must contain from 2 to 3 characters"),
     FORBIDDEN(" forbidden");
 
     private final String message;

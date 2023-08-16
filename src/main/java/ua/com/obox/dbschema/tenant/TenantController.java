@@ -9,7 +9,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ua.com.obox.dbschema.restaurant.RestaurantResponse;
-import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 import java.util.List;
@@ -22,7 +21,6 @@ import java.util.List;
 @Tag(name = "Tenants")
 public class TenantController {
     private final TenantService service;
-    private final LoggingService loggingService;
 
     @GetMapping("/{tenantId}/restaurants")
     @ApiResponses(value = {
@@ -50,7 +48,6 @@ public class TenantController {
             @ApiResponse(responseCode = "400", description = "Bad Request")
     })
     public ResponseEntity<TenantResponseId> createTenant(@RequestBody Tenant request) {
-        Validator.validateName("createTenant", request.getName(), loggingService);
         TenantResponseId response = service.createTenant(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

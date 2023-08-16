@@ -41,9 +41,10 @@ public class Menu {
     public void checkAssociatedData(String restaurant_id, String languageCode, RestaurantAssociatedDataRepository dataRepository) {
         Restaurant restaurant = new Restaurant();
         restaurant.setRestaurantId(restaurant_id);
-        if (dataRepository.findByRestaurantIdAndLanguageCode(restaurant_id, languageCode.toLowerCase()).isEmpty()) {
+        if (languageCode != null && dataRepository.findByRestaurantIdAndLanguageCode(restaurant_id, languageCode.toLowerCase()).isEmpty()) {
             RestaurantAssociatedData associatedData = new RestaurantAssociatedData(languageCode.toLowerCase(), restaurant_id);
             dataRepository.save(associatedData);
+            language_code = languageCode.toLowerCase();
         }
         this.restaurant = restaurant;
     }

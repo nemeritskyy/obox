@@ -10,9 +10,4 @@ public class AbstractResponseService implements CommonResponseService{
     public void forbiddenResponse(String entityId) {
 
     }
-
-    @Override
-    public void badRequestResponse(String entityId) {
-
-    }
 }

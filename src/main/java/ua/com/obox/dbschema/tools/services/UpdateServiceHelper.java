@@ -1,8 +1,6 @@
 package ua.com.obox.dbschema.tools.services;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
@@ -11,43 +9,63 @@ import java.util.function.Consumer;
 
 @Service
 public class UpdateServiceHelper {
-    public void updateVarcharField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
+    public String updateVarcharField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
         if (value == null || value.trim().isEmpty()) {
             setter.accept(null);
-        } else {
-            Validator.validateVarchar(loggingMessage, field, value, loggingService);
-            setter.accept(value.trim());
+            return null;
         }
+
+        String checkField = Validator.validateVarchar(loggingMessage, field, value, loggingService);
+        if (checkField == null) {
+            setter.accept(value);
+        }
+        return checkField;
     }
 
-    public void updateNameField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
-        Validator.validateName(loggingMessage, value, loggingService);
-        setter.accept(value.trim());
+    public String updateNameField(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
+        String name = Validator.validateName(loggingMessage, value, loggingService);
+        if (name == null)
+            setter.accept(value.trim());
+        return name;
     }
 
-    public void updateIntegerField(Consumer<Integer> setter, Integer value, String field, String loggingMessage, LoggingService loggingService, int maxValue) {
+    public String updateIntegerField(Consumer<Integer> setter, Integer value, String field, String loggingMessage, LoggingService loggingService, int maxValue) {
         if (value != null) {
             if (value == 0) {
                 setter.accept(null);
             } else {
-                Validator.positiveInteger(field, value, maxValue, loggingService);
-                setter.accept(value);
+                String result = Validator.positiveInteger(field, value, maxValue, loggingService);
+                if (result == null) {
+                    setter.accept(value);
+                }
+                return result;
             }
         }
+        return null;
     }
 
-    public void updatePriceField(Consumer<Double> setter, Double value, String field, String loggingMessage, LoggingService loggingService, int maxValue) {
+    public String updatePriceField(Consumer<Double> setter, Double value, String field, String loggingMessage, LoggingService loggingService, int maxValue) {
         if (value != null) {
-            Validator.positiveInteger(field, value, maxValue, loggingService);
-            setter.accept(value);
+            String result = Validator.positiveInteger(field, value, maxValue, loggingService);
+            if (result == null) {
+                setter.accept(value);
+            }
+            return result;
         } else {
             loggingService.log(LogLevel.ERROR, loggingMessage + " The price cannot be an empty");
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The price cannot be an empty");
+            return "The price cannot be an empty";
         }
     }
 
-    public void updateState(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
-        Validator.validateState(loggingMessage, value, loggingService);
-        setter.accept(value);
+    public String updateState(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
+        String state = Validator.validateState(loggingMessage, value, loggingService);
+        if (state == null)
+            setter.accept(value);
+        return state;
+    }
+
+    public String updateLanguageCode(Consumer<String> setter, String value, String field, String loggingMessage, LoggingService loggingService) {
+        String languageCode = Validator.languageCode("createMenu", value, loggingService);
+        return languageCode;
     }
 }
