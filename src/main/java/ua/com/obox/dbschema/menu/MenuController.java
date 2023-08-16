@@ -10,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ua.com.obox.dbschema.category.CategoryResponse;
-import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 import java.util.List;
 
@@ -21,7 +20,6 @@ import java.util.List;
 public class MenuController {
 
     private final MenuService service;
-    private final LoggingService loggingService;
 
     @GetMapping("/{menuId}/categories")
     @ApiResponses(value = {

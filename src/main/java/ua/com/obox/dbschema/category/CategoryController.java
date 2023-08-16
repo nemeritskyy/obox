@@ -10,8 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import ua.com.obox.dbschema.dish.DishResponse;
-import ua.com.obox.dbschema.tools.Validator;
-import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 import java.util.List;
 
@@ -21,7 +19,6 @@ import java.util.List;
 @Tag(name = "Categories")
 public class CategoryController {
     private final CategoryService service;
-    private final LoggingService loggingService;
 
     @GetMapping("/{categoryId}/dishes")
     @ApiResponses(value = {
@@ -49,7 +46,6 @@ public class CategoryController {
             @ApiResponse(responseCode = "400", description = "Bad Request")
     })
     public ResponseEntity<CategoryResponseId> createCategory(@RequestBody Category request) {
-        Validator.validateName("createCategory", request.getName(), loggingService);
         CategoryResponseId response = service.createCategory(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

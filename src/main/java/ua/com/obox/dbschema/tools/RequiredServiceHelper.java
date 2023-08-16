@@ -3,6 +3,7 @@ package ua.com.obox.dbschema.tools;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.menu.Menu;
@@ -51,6 +52,13 @@ public class RequiredServiceHelper {
     public String updateNameIfNeeded(String name, Menu menu, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {
         if (name != null) {
             return serviceHelper.updateNameField(menu::setName, name, "Name", loggingMessage, loggingService);
+        }
+        return null;
+    }
+
+    public String updateNameIfNeeded(String name, Category category, String loggingMessage, LoggingService loggingService, UpdateServiceHelper serviceHelper) {
+        if (name != null) {
+            return serviceHelper.updateNameField(category::setName, name, "Name", loggingMessage, loggingService);
         }
         return null;
     }
