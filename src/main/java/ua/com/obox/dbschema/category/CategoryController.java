@@ -64,7 +64,6 @@ public class CategoryController {
             "  \"name\": \"string\"" +
             "}")
     Category request) {
-        Validator.validateName("patchCategoryById", request.getName(), loggingService);
         service.patchCategoryById(categoryId, request);
         return ResponseEntity.noContent().build();
     }

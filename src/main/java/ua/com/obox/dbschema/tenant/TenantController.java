@@ -61,7 +61,6 @@ public class TenantController {
             @ApiResponse(responseCode = "404", description = "Not found")
     })
     public ResponseEntity<Void> patchTenantById(@PathVariable String tenantId, @RequestBody Tenant request) {
-        Validator.validateName("patchTenantById", request.getName(), loggingService);
         service.patchTenantById(tenantId, request);
         return ResponseEntity.noContent().build();
     }

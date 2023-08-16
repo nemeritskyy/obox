@@ -52,6 +52,7 @@ public class DishController {
                                                                  "}")
                                                              Dish request) {
         loggingMessage = ExceptionTools.generateLoggingMessage("createDish", request.getCategory_id());
+
         Validator.checkUUID(loggingMessage, request.getCategory_id(), loggingService); // validate UUID
         Validator.validateName(loggingMessage, request.getName(), loggingService);
         Validator.validateVarchar(loggingMessage, "Description", request.getDescription(), loggingService);
@@ -72,7 +73,6 @@ public class DishController {
     public ResponseEntity<Void> patchDishById(@PathVariable String dishId, @RequestBody
 
     Dish request) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("patchDishById", request.getCategory_id());
         service.patchDishById(dishId, request);
         return ResponseEntity.noContent().build();
     }

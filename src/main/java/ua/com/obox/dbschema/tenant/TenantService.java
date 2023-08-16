@@ -3,107 +3,144 @@ package ua.com.obox.dbschema.tenant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.restaurant.RestaurantResponse;
+import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.exception.Message;
-import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
+import ua.com.obox.dbschema.tools.services.AbstractResponseService;
+import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class TenantService {
+public class TenantService extends AbstractResponseService {
     private final TenantRepository tenantRepository;
     private final RestaurantRepository restaurantRepository;
     private final LoggingService loggingService;
+
+    private final UpdateServiceHelper serviceHelper;
     private String loggingMessage;
+    private String responseMessage;
 
     public List<RestaurantResponse> getAllRestaurantsByTenantId(String tenantId) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("getAllRestaurantsByTenantId", tenantId);
+        loggingMessage = "getAllRestaurantsByTenantId";
+        responseMessage = String.format("Restaurants with Tenant id %s", tenantId);
+
         List<Restaurant> restaurants = restaurantRepository.findAllByTenant_TenantId(tenantId);
         if (restaurants.isEmpty()) {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Restaurants with Tenant id " + tenantId + Message.NOT_FOUND.getMessage(), null);
-        }
-        List<RestaurantResponse> responseList = new ArrayList<>();
-
-        for (Restaurant restaurant : restaurants) {
-            RestaurantResponse response = RestaurantResponse.builder()
-                    .restaurantId(restaurant.getRestaurantId())
-                    .address(restaurant.getAddress())
-                    .name(restaurant.getName())
-                    .tenantId(restaurant.getTenant().getTenantId())
-                    .build();
-            responseList.add(response);
+            notFoundResponse(tenantId);
         }
 
-        loggingService.log(LogLevel.INFO, loggingMessage + Message.FIND_COUNT.getMessage() + responseList.size());
+        List<RestaurantResponse> responseList = restaurants.stream()
+                .map(restaurant -> RestaurantResponse.builder()
+                        .restaurantId(restaurant.getRestaurantId())
+                        .address(restaurant.getAddress())
+                        .name(restaurant.getName())
+                        .tenantId(restaurant.getTenant().getTenantId())
+                        .build())
+                .collect(Collectors.toList());
+
+        loggingService.log(LogLevel.INFO, String.format("%s %s %s %d", loggingMessage, tenantId, Message.FIND_COUNT.getMessage(), responseList.size()));
         return responseList;
     }
 
     public TenantResponse getTenantById(String tenantId) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("getTenantById", tenantId);
+        Tenant tenant;
+        loggingMessage = "getTenantById";
+        responseMessage = String.format("Tenant with id %s", tenantId);
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
-        Tenant tenant = tenantInfo.orElseThrow(() -> {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + Message.NOT_FOUND.getMessage());
+
+        tenant = tenantInfo.orElseThrow(() -> {
+            notFoundResponse(tenantId);
+            return null;
         });
+
         if (tenant.getState().equals(State.DISABLED)) {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.FORBIDDEN.getMessage());
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tenant with id " + tenantId + Message.FORBIDDEN.getMessage());
+            forbiddenResponse(tenantId);
         }
-        loggingService.log(LogLevel.INFO, loggingMessage);
+
+        loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, tenantId));
         return TenantResponse.builder()
                 .tenantId(tenant.getTenantId())
                 .name(tenant.getName())
                 .build();
     }
 
+
     public TenantResponseId createTenant(Tenant request) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("createTenant", request.getName());
-        Tenant tenant = Tenant.builder()
-                .name(request.getName().trim()) // delete whitespaces
+        Tenant tenant;
+        loggingMessage = "createTenant";
+
+        tenant = Tenant.builder()
+                .name(request.getName().trim())
                 .state(State.ENABLED)
                 .build();
         tenantRepository.save(tenant);
-        loggingService.log(LogLevel.INFO, loggingMessage + " id=" + tenant.getTenantId() + Message.CREATE.getMessage());
+
+        loggingService.log(LogLevel.INFO, String.format("%s %s UUID=%s %s", loggingMessage, request.getName(), tenant.getTenantId(), Message.CREATE.getMessage()));
         return TenantResponseId.builder()
                 .tenantId(tenant.getTenantId())
                 .build();
     }
 
     public void patchTenantById(String tenantId, Tenant request) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("patchTenantById", tenantId);
+        Tenant tenant;
+        loggingMessage = "patchTenantById";
+        responseMessage = String.format("Tenant with id %s", tenantId);
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
-        Tenant tenant = tenantInfo.orElseThrow(() -> {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + Message.NOT_FOUND.getMessage());
+
+        tenant = tenantInfo.orElseThrow(() -> {
+            notFoundResponse(tenantId);
+            return null;
         });
-        String oldName = tenant.getName();
-        tenant.setName(request.getName().trim()); // delete whitespaces
+
+        serviceHelper.updateNameField(tenant::setName, request.getName(), "Name", loggingMessage, loggingService);
+
         tenantRepository.save(tenant);
-        loggingService.log(LogLevel.INFO, loggingMessage + " OLD name=" + oldName + " NEW name=" + request.getName() + Message.UPDATE.getMessage());
+        loggingService.log(LogLevel.INFO, String.format("%s %s %s", loggingMessage, tenantId, Message.UPDATE.getMessage()));
     }
 
     public void deleteTenantById(String tenantId, boolean forceDelete) {
-        loggingMessage = ExceptionTools.generateLoggingMessage("deleteTenantById", tenantId);
+        Tenant tenant;
+        loggingMessage = "deleteTenantById";
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
-        Tenant tenant = tenantInfo.orElseThrow(() -> {
-            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
-            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Tenant with id " + tenantId + Message.NOT_FOUND.getMessage());
+
+        tenant = tenantInfo.orElseThrow(() -> {
+            notFoundResponse(tenantId);
+            return null;
         });
+
         if (!forceDelete) {
             tenant.setState(State.DISABLED);
             tenantRepository.save(tenant);
         } else {
             tenantRepository.delete(tenant);
         }
-        loggingService.log(LogLevel.INFO, loggingMessage + " name=" + tenant.getName() + Message.DELETE.getMessage());
+
+        loggingService.log(LogLevel.INFO, String.format("%s %s NAME=%s %s", loggingMessage, tenantId, tenant.getName(), Message.DELETE.getMessage()));
     }
 
+    @Override
+    public void notFoundResponse(String entityId) {
+        LoggingResponseHelper.loggingThrowException(
+                entityId,
+                LogLevel.ERROR, HttpStatus.NOT_FOUND,
+                loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
+                loggingService);
+    }
+
+    @Override
+    public void forbiddenResponse(String entityId) {
+        LoggingResponseHelper.loggingThrowException(
+                entityId,
+                LogLevel.ERROR, HttpStatus.FORBIDDEN,
+                loggingMessage, responseMessage + Message.FORBIDDEN.getMessage(),
+                loggingService);
+    }
 }
