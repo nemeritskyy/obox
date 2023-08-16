@@ -32,4 +32,15 @@ public class RestaurantAssociatedDataService {
                 .build();
     }
 
+    public void deleteAssociatedDataByRestaurantId(String restaurantId) {
+        loggingMessage = ExceptionTools.generateLoggingMessage("deleteAssociatedDataByRestaurantId", restaurantId);
+        var dataInfo = dataRepository.findByRestaurantId(restaurantId);
+        RestaurantAssociatedData associatedData = dataInfo.orElseThrow(() -> {
+            loggingService.log(LogLevel.ERROR, loggingMessage + Message.NOT_FOUND.getMessage());
+            return new ResponseStatusException(HttpStatus.NOT_FOUND, "Associated data with id " + restaurantId + Message.NOT_FOUND.getMessage());
+        });
+        dataRepository.delete(associatedData);
+        loggingService.log(LogLevel.INFO, loggingMessage + " id=" + associatedData.getAssociatedId()
+                + " language code=" + associatedData.getLanguageCode() + Message.DELETE.getMessage());
+    }
 }

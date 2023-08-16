@@ -14,7 +14,8 @@ public class EmptyIntegerDeserializer extends JsonDeserializer<Integer> {
         if (value.isEmpty()){
             return 0;
         } else {
-            return Integer.parseInt(value);
+            Double doubleValue = Double.valueOf(value);
+            return doubleValue.intValue();
         }
     }
 }
