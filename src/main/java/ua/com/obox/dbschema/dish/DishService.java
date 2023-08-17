@@ -40,12 +40,15 @@ public class DishService extends AbstractResponseService {
         Dish dish;
         loggingMessage = "getDishById";
         responseMessage = String.format("Dish with id %s", dishId);
-        var dishInfo = dishRepository.findByDishId(dishId);
+        try (Session session = entityManager.unwrap(Session.class)) {
+            var dishInfo = dishRepository.findByDishId(dishId);
 
-        dish = dishInfo.orElseThrow(() -> {
-            notFoundResponse(dishId);
-            return null;
-        });
+            dish = dishInfo.orElseThrow(() -> {
+                notFoundResponse(dishId);
+                return null;
+            });
+            session.evict(dish); // unbind the session
+        }
 
         loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, dishId));
         return DishResponse.builder()
@@ -56,7 +59,7 @@ public class DishService extends AbstractResponseService {
                 .price(dish.getPrice())
                 .weight(dish.getWeight())
                 .calories(dish.getCalories())
-                .imageUrl(dish.getImageUrl())
+                .imageUrl(String.format("%s/%s/%s", "https://img.obox.com.ua", dish.getAssociatedId(), dish.getImageUrl()))
                 .state(dish.getState())
                 .allergens(dish.getAllergens())
                 .tags(dish.getTags())

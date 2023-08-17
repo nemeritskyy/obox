@@ -55,7 +55,7 @@ public class CategoryService extends AbstractResponseService {
                         .calories(dish.getCalories())
                         .allergens(dish.getAllergens())
                         .tags(dish.getTags())
-                        .imageUrl(dish.getImageUrl())
+                        .imageUrl(String.format("%s/%s/%s", "https://img.obox.com.ua", dish.getAssociatedId(), dish.getImageUrl()))
                         .state(dish.getState())
                         .build()).collect(Collectors.toList());
 
