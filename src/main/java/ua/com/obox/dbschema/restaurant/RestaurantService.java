@@ -98,8 +98,8 @@ public class RestaurantService extends AbstractResponseService {
                 .tenant(tenant)
                 .build();
 
-        fieldErrors.put("name", serviceHelper.updateNameField(restaurant::setName, request.getName(), "Name", loggingMessage, loggingService));
-        fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "Address", loggingMessage, loggingService));
+        fieldErrors.put("name", serviceHelper.updateNameField(restaurant::setName, request.getName(), "Name", loggingMessage));
+        fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "Address", loggingMessage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
@@ -130,9 +130,9 @@ public class RestaurantService extends AbstractResponseService {
         }
 
         if (request.getName() != null)
-            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), restaurant, loggingMessage, loggingService, serviceHelper));
+            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), restaurant, loggingMessage));
         if (request.getAddress() != null)
-            fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "Address", loggingMessage, loggingService));
+            fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "Address", loggingMessage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);

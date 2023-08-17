@@ -7,28 +7,20 @@ import lombok.Getter;
 @Getter
 public enum Message {
     NOT_FOUND(" not found"),
-    NOT_EMPTY(" cannot be empty"),
-    TENANT_NOT_FOUND(" tenant not found"),
-    RESTAURANT_NOT_FOUND(" restaurant not found"),
-    MENU_NOT_FOUND(" Menu not found"),
-    CATEGORY_NOT_FOUND(" Category not found"),
-    GET_BY_ID(" Get by id"),
-    CREATE(" created"),
-    UPDATE(" updated"),
+    NOT_EMPTY("cannot be empty"),
+    CREATE("created"),
+    UPDATE("updated"),
     FIND_COUNT("find COUNT="),
     REQUIRED("Field name is required"),
     LIMIT_200("Name field must contain from 1 to 200 characters"),
-    LIMIT_255(" field must contain from 1 to 255 characters"),
-    BOOLEAN(" must be false or true"),
-    CHECK_PRICE(" the price should be in the range of 0 to 100000"),
-    LIMIT(" must be in the range of 0 to "),
-    HIDDEN(" is hidden"),
-    BAD_UUID(" uuid is incorrect"),
+    LIMIT_255("field must contain from 1 to 255 characters"),
+    LIMIT("must be in the range of 0 to"),
     BAD_STATE("The state is incorrect"),
-    ERROR(" Error"),
-    DELETE(" deleted"),
+    ERROR("ERROR"),
+    DELETE("deleted"),
     LANGUAGE("Bad language code must contain from 2 to 3 characters"),
-    FORBIDDEN(" forbidden");
+    FORBIDDEN(" forbidden"),
+    BAD_IMAGE_TYPE("Bad type of upload image support only JPG and PNG");
 
     private final String message;
 }

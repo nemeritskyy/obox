@@ -8,14 +8,12 @@ import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.services.AbstractResponseService;
 import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
-import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 
 @Service
 @RequiredArgsConstructor
 public class RestaurantAssociatedDataService extends AbstractResponseService {
     private final RestaurantAssociatedDataRepository dataRepository;
     private final LoggingService loggingService;
-    private final UpdateServiceHelper serviceHelper;
     private String loggingMessage;
     private String responseMessage;
 
@@ -53,7 +51,7 @@ public class RestaurantAssociatedDataService extends AbstractResponseService {
 
         dataRepository.delete(associatedData);
         loggingService.log(LogLevel.INFO, String.format("%s UUID=%s RESTAURANT=%s LANGUAGE CODE=%s %s",
-                loggingService, associatedData.getAssociatedId(), restaurantId, associatedData.getLanguageCode(), Message.DELETE.getMessage()));
+                loggingMessage, associatedData.getAssociatedId(), restaurantId, associatedData.getLanguageCode(), Message.DELETE.getMessage()));
     }
 
     @Override
