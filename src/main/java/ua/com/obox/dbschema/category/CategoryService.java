@@ -101,7 +101,12 @@ public class CategoryService extends AbstractResponseService {
                 .menu(menu)
                 .build();
 
-        fieldErrors.put("name", serviceHelper.updateNameField(category::setName, request.getName(), "Name", loggingMessage));
+        if (request.getName() != null && !categoryRepository.findAllByMenu_MenuIdAndName(request.getMenu_id(), request.getName().trim()).isEmpty()) {
+            loggingMessage = Message.CATEGORY_EXISTS.getMessage();
+            fieldErrors.put("name", Message.CATEGORY_EXISTS.getMessage());
+        } else {
+            fieldErrors.put("name", serviceHelper.updateNameField(category::setName, request.getName(), "Name", loggingMessage));
+        }
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
@@ -127,8 +132,14 @@ public class CategoryService extends AbstractResponseService {
             return null;
         });
 
-        if (request.getName() != null)
-            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), category, loggingMessage));
+        if (request.getName() != null) {
+            if (!categoryRepository.findAllByMenu_MenuIdAndName(category.getMenu().getMenuId(), request.getName().trim()).isEmpty()) {
+                loggingMessage = Message.CATEGORY_EXISTS.getMessage();
+                fieldErrors.put("name", Message.CATEGORY_EXISTS.getMessage());
+            } else {
+                fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), category, loggingMessage));
+            }
+        }
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);

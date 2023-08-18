@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
     List<Category> findAllByMenu_MenuId(String menuId);
     Optional<Category> findByCategoryId(String categoryId);
+    List<Category> findAllByMenu_MenuIdAndName(String menuId, String name);
 }

@@ -20,7 +20,10 @@ public enum Message {
     DELETE("deleted"),
     LANGUAGE("Bad language code must contain from 2 to 3 characters"),
     FORBIDDEN(" forbidden"),
-    BAD_IMAGE_TYPE("Bad type of upload image support only JPG and PNG");
+    BAD_IMAGE_TYPE("Bad type of upload image support only JPG and PNG"),
+    MENU_EXISTS("Menu with this name already exists"),
+    CATEGORY_EXISTS("Category with this name already exists"),
+    DISH_EXISTS("Dish with this name in this category already exists");
 
     private final String message;
 }

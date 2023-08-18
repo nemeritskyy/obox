@@ -90,7 +90,12 @@ public class DishService extends AbstractResponseService {
                 .category(category)
                 .build();
 
-        fieldErrors.put("name", serviceHelper.updateNameField(dish::setName, request.getName(), "Name", loggingMessage));
+        if (request.getName() != null && !dishRepository.findAllByCategory_CategoryIdAndName(request.getCategory_id(), request.getName().trim()).isEmpty()) {
+            loggingMessage = Message.DISH_EXISTS.getMessage();
+            fieldErrors.put("name", Message.DISH_EXISTS.getMessage());
+        } else {
+            fieldErrors.put("name", serviceHelper.updateNameField(dish::setName, request.getName(), "Name", loggingMessage));
+        }
         fieldErrors.put("price", serviceHelper.updatePriceField(dish::setPrice, request.getPrice(), "Price", loggingMessage, 100_000));
         fieldErrors.put("weight", serviceHelper.updateIntegerField(dish::setWeight, request.getWeight(), "Weight", loggingMessage, 100_000));
         fieldErrors.put("calories", serviceHelper.updateIntegerField(dish::setCalories, request.getCalories(), "Calories", loggingMessage, 30_000));
@@ -135,7 +140,15 @@ public class DishService extends AbstractResponseService {
         }
 
         if (request.getName() != null)
-            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), dish, loggingMessage));
+        {
+            if (!dishRepository.findAllByCategory_CategoryIdAndName(dish.getCategory().getCategoryId(), request.getName().trim()).isEmpty()) {
+                loggingMessage = Message.DISH_EXISTS.getMessage();
+                fieldErrors.put("name", Message.DISH_EXISTS.getMessage());
+            } else {
+                fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), dish, loggingMessage));
+            }
+        }
+
         if (request.getPrice() != null)
             fieldErrors.put("price", requiredServiceHelper.updatePriceIfNeeded(request.getPrice(), dish, loggingMessage));
         if (request.getState() != null)

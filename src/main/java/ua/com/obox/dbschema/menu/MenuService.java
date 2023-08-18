@@ -93,7 +93,13 @@ public class MenuService extends AbstractResponseService {
                 .restaurant(restaurant)
                 .build();
 
-        fieldErrors.put("name", serviceHelper.updateNameField(menu::setName, request.getName(), "Name", loggingMessage));
+        if (request.getName() != null && !menuRepository.findAllByRestaurant_RestaurantIdAndName(request.getRestaurant_id(), request.getName().trim()).isEmpty()) {
+            loggingMessage = Message.MENU_EXISTS.getMessage();
+            fieldErrors.put("name", Message.MENU_EXISTS.getMessage());
+        } else {
+            fieldErrors.put("name", serviceHelper.updateNameField(menu::setName, request.getName(), "Name", loggingMessage));
+        }
+
         fieldErrors.put("language_code", serviceHelper.updateLanguageCode(menu::setLanguage_code, request.getLanguage_code()));
 
 
@@ -124,8 +130,14 @@ public class MenuService extends AbstractResponseService {
             return null;
         });
 
-        if (request.getName() != null)
-            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), menu, loggingMessage));
+        if (request.getName() != null) {
+            if (!menuRepository.findAllByRestaurant_RestaurantIdAndName(menu.getRestaurant().getRestaurantId(), request.getName().trim()).isEmpty()) {
+                loggingMessage = Message.MENU_EXISTS.getMessage();
+                fieldErrors.put("name", Message.MENU_EXISTS.getMessage());
+            } else {
+                fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), menu, loggingMessage));
+            }
+        }
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
