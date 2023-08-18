@@ -44,8 +44,8 @@ public class Menu {
         if (languageCode != null && dataRepository.findByRestaurantIdAndLanguageCode(restaurant_id, languageCode.toLowerCase()).isEmpty()) {
             RestaurantAssociatedData associatedData = new RestaurantAssociatedData(languageCode.toLowerCase(), restaurant_id);
             dataRepository.save(associatedData);
-            language_code = languageCode.toLowerCase();
         }
+        language_code = languageCode.toLowerCase();
         this.restaurant = restaurant;
     }
 }

@@ -12,6 +12,7 @@ public interface DishRepository extends JpaRepository<Dish, UUID> {
     List<Dish> findAllByCategory_CategoryId(String categoryId);
 
     Optional<Dish> findByDishId(String dishId);
+    List<Dish> findAllByCategory_CategoryIdAndName(String categoryId, String name);
 
     @Query("SELECT m.restaurant.restaurantId FROM Menu m " +
             "JOIN Category c ON m.menuId = c.menu.menuId " +
