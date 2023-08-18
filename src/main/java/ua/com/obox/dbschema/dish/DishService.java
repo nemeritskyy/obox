@@ -40,12 +40,15 @@ public class DishService extends AbstractResponseService {
         Dish dish;
         loggingMessage = "getDishById";
         responseMessage = String.format("Dish with id %s", dishId);
-        var dishInfo = dishRepository.findByDishId(dishId);
+        try (Session session = entityManager.unwrap(Session.class)) {
+            var dishInfo = dishRepository.findByDishId(dishId);
 
-        dish = dishInfo.orElseThrow(() -> {
-            notFoundResponse(dishId);
-            return null;
-        });
+            dish = dishInfo.orElseThrow(() -> {
+                notFoundResponse(dishId);
+                return null;
+            });
+            session.evict(dish); // unbind the session
+        }
 
         loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, dishId));
         return DishResponse.builder()
@@ -56,7 +59,7 @@ public class DishService extends AbstractResponseService {
                 .price(dish.getPrice())
                 .weight(dish.getWeight())
                 .calories(dish.getCalories())
-                .imageUrl(dish.getImageUrl())
+                .imageUrl(String.format("%s/%s/%s", "https://img.obox.com.ua", dish.getAssociatedId(), dish.getImageUrl()))
                 .state(dish.getState())
                 .allergens(dish.getAllergens())
                 .tags(dish.getTags())
@@ -80,32 +83,32 @@ public class DishService extends AbstractResponseService {
 
         if (category != null) {
             request.setCategoryIdForDish(request.getCategory_id());
-            associatedId = requiredServiceHelper.getAssociatedIdForDish(request.getCategory_id(), dishRepository, loggingService);
+            associatedId = requiredServiceHelper.getAssociatedIdForDish(request.getCategory_id(), dishRepository);
         }
 
         Dish dish = Dish.builder()
                 .category(category)
                 .build();
 
-        fieldErrors.put("name", serviceHelper.updateNameField(dish::setName, request.getName(), "Name", loggingMessage, loggingService));
-        fieldErrors.put("price", serviceHelper.updatePriceField(dish::setPrice, request.getPrice(), "Price", loggingMessage, loggingService, 100_000));
-        fieldErrors.put("weight", serviceHelper.updateIntegerField(dish::setWeight, request.getWeight(), "Weight", loggingMessage, loggingService, 100_000));
-        fieldErrors.put("calories", serviceHelper.updateIntegerField(dish::setCalories, request.getCalories(), "Calories", loggingMessage, loggingService, 30_000));
-        fieldErrors.put("description", serviceHelper.updateVarcharField(dish::setDescription, request.getDescription(), "Description", loggingMessage, loggingService));
-        fieldErrors.put("allergens", serviceHelper.updateVarcharField(dish::setAllergens, request.getAllergens(), "Allergens", loggingMessage, loggingService));
-        fieldErrors.put("tags", serviceHelper.updateVarcharField(dish::setTags, request.getTags(), "Tags", loggingMessage, loggingService));
-        fieldErrors.put("state", serviceHelper.updateState(dish::setState, request.getState(), "State", loggingMessage, loggingService));
+        fieldErrors.put("name", serviceHelper.updateNameField(dish::setName, request.getName(), "Name", loggingMessage));
+        fieldErrors.put("price", serviceHelper.updatePriceField(dish::setPrice, request.getPrice(), "Price", loggingMessage, 100_000));
+        fieldErrors.put("weight", serviceHelper.updateIntegerField(dish::setWeight, request.getWeight(), "Weight", loggingMessage, 100_000));
+        fieldErrors.put("calories", serviceHelper.updateIntegerField(dish::setCalories, request.getCalories(), "Calories", loggingMessage, 30_000));
+        fieldErrors.put("description", serviceHelper.updateVarcharField(dish::setDescription, request.getDescription(), "Description", loggingMessage));
+        fieldErrors.put("allergens", serviceHelper.updateVarcharField(dish::setAllergens, request.getAllergens(), "Allergens", loggingMessage));
+        fieldErrors.put("tags", serviceHelper.updateVarcharField(dish::setTags, request.getTags(), "Tags", loggingMessage));
+        fieldErrors.put("state", serviceHelper.updateState(dish::setState, request.getState(), "State", loggingMessage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         dish.setAssociatedId(associatedId);
 
-        if (!image.isEmpty() && Validator.validateImage(image, loggingService)) {
-            dish.setImageUrl(dishImageFTP.uploadImage(request.getImage(), dish.getDishId(), loggingService));
-        }
-
         dishRepository.save(dish);
+
+        if (!image.isEmpty() && Validator.validateImage(image, loggingService)) {
+            dish.setImageUrl(dishImageFTP.uploadImage(request.getImage(), associatedId, dish.getDishId(), loggingService));
+        }
 
         loggingService.log(LogLevel.INFO, String.format("%s %s UUID=%s %s", loggingMessage, request.getName(), dish.getDishId(), Message.CREATE.getMessage()));
         return DishResponseId.builder()
@@ -132,11 +135,11 @@ public class DishService extends AbstractResponseService {
         }
 
         if (request.getName() != null)
-            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), dish, loggingMessage, loggingService, serviceHelper));
+            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), dish, loggingMessage));
         if (request.getPrice() != null)
-            fieldErrors.put("price", requiredServiceHelper.updatePriceIfNeeded(request.getPrice(), dish, loggingMessage, loggingService, serviceHelper));
+            fieldErrors.put("price", requiredServiceHelper.updatePriceIfNeeded(request.getPrice(), dish, loggingMessage));
         if (request.getState() != null)
-            fieldErrors.put("state", serviceHelper.updateState(dish::setState, request.getState(), "State", loggingMessage, loggingService));
+            fieldErrors.put("state", serviceHelper.updateState(dish::setState, request.getState(), "State", loggingMessage));
 
         if (request.getCategory_id() != null) {
             categoryRepository.findByCategoryId(request.getCategory_id()).orElseGet(() -> {
@@ -148,30 +151,30 @@ public class DishService extends AbstractResponseService {
         }
 
         if (request.getDescription() != null)
-            fieldErrors.put("state", serviceHelper.updateVarcharField(dish::setDescription, request.getDescription(), "Description", loggingMessage, loggingService));
+            fieldErrors.put("state", serviceHelper.updateVarcharField(dish::setDescription, request.getDescription(), "Description", loggingMessage));
 
         if (request.getAllergens() != null)
-            fieldErrors.put("allergens", serviceHelper.updateVarcharField(dish::setAllergens, request.getAllergens(), "Allergens", loggingMessage, loggingService));
+            fieldErrors.put("allergens", serviceHelper.updateVarcharField(dish::setAllergens, request.getAllergens(), "Allergens", loggingMessage));
 
         if (request.getTags() != null)
-            fieldErrors.put("tags", serviceHelper.updateVarcharField(dish::setTags, request.getTags(), "Tags", loggingMessage, loggingService));
+            fieldErrors.put("tags", serviceHelper.updateVarcharField(dish::setTags, request.getTags(), "Tags", loggingMessage));
 
         if (request.getCalories() != null)
-            fieldErrors.put("calories", serviceHelper.updateIntegerField(dish::setCalories, request.getCalories(), "Calories", loggingMessage, loggingService, 30000));
+            fieldErrors.put("calories", serviceHelper.updateIntegerField(dish::setCalories, request.getCalories(), "Calories", loggingMessage, 30000));
 
         if (request.getWeight() != null)
-            fieldErrors.put("weight", serviceHelper.updateIntegerField(dish::setWeight, request.getWeight(), "Weight", loggingMessage, loggingService, 100000));
+            fieldErrors.put("weight", serviceHelper.updateIntegerField(dish::setWeight, request.getWeight(), "Weight", loggingMessage, 100000));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         if (!image.isEmpty() && Validator.validateImage(image, loggingService)) {
-            dishImageFTP.deleteImage(dish.getImageUrl(), loggingService); // delete old image
-            dish.setImageUrl(dishImageFTP.uploadImage(request.getImage(), dish.getDishId(), loggingService)); // upload new image
+            dishImageFTP.deleteImage(dish.getAssociatedId(), dish.getImageUrl(), loggingService); // delete old image
+            dish.setImageUrl(dishImageFTP.uploadImage(request.getImage(), dish.getAssociatedId(), dish.getDishId(), loggingService)); // upload new image
         }
 
         dishRepository.save(dish);
-        loggingService.log(LogLevel.INFO, loggingMessage + Message.UPDATE.getMessage());
+        loggingService.log(LogLevel.INFO, String.format("%s %s %s", loggingMessage, dishId, Message.UPDATE.getMessage()));
     }
 
     public void deleteDishById(String dishId) {
@@ -186,7 +189,7 @@ public class DishService extends AbstractResponseService {
         });
 
         if (dish.getImageUrl() != null) {
-            dishImageFTP.deleteImage(dish.getImageUrl(), loggingService);
+            dishImageFTP.deleteImage(dish.getAssociatedId(), dish.getImageUrl(), loggingService);
         }
 
         dishRepository.delete(dish);

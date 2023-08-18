@@ -93,8 +93,8 @@ public class MenuService extends AbstractResponseService {
                 .restaurant(restaurant)
                 .build();
 
-        fieldErrors.put("name", serviceHelper.updateNameField(menu::setName, request.getName(), "Name", loggingMessage, loggingService));
-        fieldErrors.put("language_code", serviceHelper.updateLanguageCode(menu::setLanguage_code, request.getLanguage_code(), "Language code", loggingMessage, loggingService));
+        fieldErrors.put("name", serviceHelper.updateNameField(menu::setName, request.getName(), "Name", loggingMessage));
+        fieldErrors.put("language_code", serviceHelper.updateLanguageCode(menu::setLanguage_code, request.getLanguage_code()));
 
 
         if (fieldErrors.size() > 0)
@@ -125,7 +125,7 @@ public class MenuService extends AbstractResponseService {
         });
 
         if (request.getName() != null)
-            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), menu, loggingMessage, loggingService, serviceHelper));
+            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), menu, loggingMessage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);

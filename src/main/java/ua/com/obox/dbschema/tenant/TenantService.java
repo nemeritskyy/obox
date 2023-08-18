@@ -85,7 +85,7 @@ public class TenantService extends AbstractResponseService {
                 .state(State.ENABLED)
                 .build();
 
-        fieldErrors.put("name", serviceHelper.updateNameField(tenant::setName, request.getName(), "Name", loggingMessage, loggingService));
+        fieldErrors.put("name", serviceHelper.updateNameField(tenant::setName, request.getName(), "Name", loggingMessage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
@@ -110,7 +110,7 @@ public class TenantService extends AbstractResponseService {
             return null;
         });
 
-        fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), tenant, loggingMessage, loggingService, serviceHelper));
+        fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), tenant, loggingMessage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);

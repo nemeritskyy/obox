@@ -3,6 +3,7 @@ package ua.com.obox.dbschema.tools.ftp;
 import java.io.*;
 import java.util.Base64;
 
+import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPSClient;
 import org.apache.commons.net.util.TrustManagerUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +22,7 @@ public class UploadDishImageFTP {
         this.ftpConfiguration = ftpConfiguration;
     }
 
-    public String uploadImage(String image, String uuid, LoggingService loggingService) {
+    public String uploadImage(String image, String path, String uuid, LoggingService loggingService) {
         byte[] imageData = Base64.getDecoder().decode(image);
         String fileType = Validator.detectImageType(imageData, loggingService);
         String fileName = uuid + fileType;
@@ -40,8 +41,16 @@ public class UploadDishImageFTP {
 
             InputStream inputStream = new ByteArrayInputStream(imageData);
 
+            if (!ftpClient.changeWorkingDirectory(path)) {
+                ftpClient.makeDirectory(path);
+
+            }
+
+            ftpClient.changeWorkingDirectory(path);
+
             loggingMessage = "Start uploading file: " + fileName;
             boolean done = ftpClient.storeFile(fileName, inputStream);
+            System.out.println("load to: " + fileName);
             inputStream.close();
             if (done) {
                 loggingMessage = "The file " + fileName + " is uploaded successfully.";
@@ -66,7 +75,7 @@ public class UploadDishImageFTP {
         return fileName;
     }
 
-    public void deleteImage(String fileName, LoggingService loggingService) {
+    public void deleteImage(String path, String fileName, LoggingService loggingService) {
         FTPSClient ftpClient = new FTPSClient();
         ftpClient.setTrustManager(TrustManagerUtils.getAcceptAllTrustManager());
         try {
@@ -75,9 +84,26 @@ public class UploadDishImageFTP {
             loggingMessage = "Logging in to FTP server";
             ftpClient.login(ftpConfiguration.getUser(), ftpConfiguration.getPass());
             loggingMessage = "Start deleting file: " + fileName;
+
+            ftpClient.enterLocalPassiveMode();
+            ftpClient.changeWorkingDirectory(path);
             boolean deleted = ftpClient.deleteFile(fileName);
+
             if (deleted) {
-                loggingMessage = "The file " + fileName + " is deleted successfully.";
+                ftpClient.changeToParentDirectory();
+                FTPFile[] files = ftpClient.listFiles(path);
+
+                if (files != null && files.length == 2) {
+                    loggingMessage = "Folder " + path + " is empty, attempting to delete...";
+                    boolean folderDeleted = ftpClient.removeDirectory(path);
+                    if (folderDeleted) {
+                        loggingMessage = "Folder " + path + " is deleted successfully.";
+                    } else {
+                        loggingMessage = "Failed to delete the folder " + path + " (it may not be empty).";
+                    }
+                } else {
+                    loggingMessage = "Folder " + path + " is not empty, skipping deletion.";
+                }
             } else {
                 loggingMessage = "Failed to delete the file " + fileName;
             }
@@ -97,6 +123,4 @@ public class UploadDishImageFTP {
             }
         }
     }
-
-
 }

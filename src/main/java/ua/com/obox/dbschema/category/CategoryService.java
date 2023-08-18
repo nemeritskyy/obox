@@ -55,7 +55,7 @@ public class CategoryService extends AbstractResponseService {
                         .calories(dish.getCalories())
                         .allergens(dish.getAllergens())
                         .tags(dish.getTags())
-                        .imageUrl(dish.getImageUrl())
+                        .imageUrl(String.format("%s/%s/%s", "https://img.obox.com.ua", dish.getAssociatedId(), dish.getImageUrl()))
                         .state(dish.getState())
                         .build()).collect(Collectors.toList());
 
@@ -101,7 +101,7 @@ public class CategoryService extends AbstractResponseService {
                 .menu(menu)
                 .build();
 
-        fieldErrors.put("name", serviceHelper.updateNameField(category::setName, request.getName(), "Name", loggingMessage, loggingService));
+        fieldErrors.put("name", serviceHelper.updateNameField(category::setName, request.getName(), "Name", loggingMessage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
@@ -128,7 +128,7 @@ public class CategoryService extends AbstractResponseService {
         });
 
         if (request.getName() != null)
-            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), category, loggingMessage, loggingService, serviceHelper));
+            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), category, loggingMessage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
