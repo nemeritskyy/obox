@@ -35,13 +35,18 @@ public class CategoryService extends AbstractResponseService {
     private String responseMessage;
 
     public List<DishResponse> getAllDishesByCategoryId(String categoryId) {
+        Category category;
         loggingMessage = "getAllDishesByCategoryId";
         responseMessage = String.format("Dishes with Category id %s", categoryId);
 
-        List<Dish> dishes = dishRepository.findAllByCategory_CategoryId(categoryId);
-        if (dishes.isEmpty()) {
+        var categoryInfo = categoryRepository.findByCategoryId(categoryId);
+
+        category = categoryInfo.orElseThrow(() -> {
             notFoundResponse(categoryId);
-        }
+            return null;
+        });
+
+        List<Dish> dishes = dishRepository.findAllByCategory_CategoryId(categoryId);
 
         List<DishResponse> responseList = dishes.stream()
                 .map(dish -> DishResponse.builder()
@@ -55,7 +60,7 @@ public class CategoryService extends AbstractResponseService {
                         .calories(dish.getCalories())
                         .allergens(dish.getAllergens())
                         .tags(dish.getTags())
-                        .imageUrl(String.format("%s/%s/%s", "https://img.obox.com.ua", dish.getAssociatedId(), dish.getImageUrl()))
+                        .imageUrl(dish.getImageUrl() == null ? null : String.format("%s/%s/%s", "https://img.obox.com.ua", dish.getAssociatedId(), dish.getImageUrl()))
                         .state(dish.getState())
                         .build()).collect(Collectors.toList());
 
