@@ -15,14 +15,14 @@ public class UpdateServiceHelper {
     LoggingService loggingService;
 
     public String updateVarcharField(Consumer<String> setter, String value, String field, String loggingMessage) {
-        if (value == null || value.trim().isEmpty()) {
+        if (value == null || value.trim().replaceAll("\\s+", " ").isEmpty()) {
             setter.accept(null);
             return null;
         }
 
         String checkField = Validator.validateVarchar(loggingMessage, field, value, loggingService);
         if (checkField == null) {
-            setter.accept(value);
+            setter.accept(value.trim().replaceAll("\\s+", " "));
         }
         return checkField;
     }
@@ -30,7 +30,7 @@ public class UpdateServiceHelper {
     public String updateNameField(Consumer<String> setter, String value, String field, String loggingMessage) {
         String name = Validator.validateName(loggingMessage, value, loggingService);
         if (name == null)
-            setter.accept(value.trim());
+            setter.accept(value.trim().replaceAll("\\s+", " "));
         return name;
     }
 
@@ -51,6 +51,10 @@ public class UpdateServiceHelper {
 
     public String updatePriceField(Consumer<Double> setter, Double value, String field, String loggingMessage, int maxValue) {
         if (value != null) {
+            if (value == 0){
+                loggingService.log(LogLevel.ERROR, String.format("%s %s %s", loggingMessage, field, Message.PRICE_NOT_ZERO.getMessage()));
+                return String.format("%s %s", field, Message.PRICE_NOT_ZERO.getMessage());
+            }
             String result = Validator.positiveInteger(field, value, maxValue, loggingService);
             if (result == null) {
                 setter.accept(value);
