@@ -139,9 +139,9 @@ public class DishService extends AbstractResponseService {
             session.evict(dish); // unbind the session
         }
 
-        if (request.getName() != null)
+        if (request.getName() != null && !dish.getName().equals(request.getName().trim().replaceAll("\\s+", " ")))
         {
-            if (!dishRepository.findAllByCategory_CategoryIdAndName(dish.getCategory().getCategoryId(), request.getName().trim()).isEmpty()) {
+            if (!dishRepository.findAllByCategory_CategoryIdAndName(dish.getCategory().getCategoryId(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
                 loggingMessage = Message.DISH_EXISTS.getMessage();
                 fieldErrors.put("name", Message.DISH_EXISTS.getMessage());
             } else {
