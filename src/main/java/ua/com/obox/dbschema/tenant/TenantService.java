@@ -127,6 +127,7 @@ public class TenantService extends AbstractResponseService {
     public void deleteTenantById(String tenantId, boolean forceDelete) {
         Tenant tenant;
         loggingMessage = "deleteTenantById";
+        responseMessage = String.format("Tenant with id %s", tenantId);
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
 
         tenant = tenantInfo.orElseThrow(() -> {

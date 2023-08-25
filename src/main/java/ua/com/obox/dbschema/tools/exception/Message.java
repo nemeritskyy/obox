@@ -23,7 +23,8 @@ public enum Message {
     BAD_IMAGE_TYPE("Bad type of upload image support only JPG and PNG"),
     MENU_EXISTS("Menu with this name already exists"),
     CATEGORY_EXISTS("Category with this name already exists"),
-    DISH_EXISTS("Dish with this name in this category already exists");
+    DISH_EXISTS("Dish with this name in this category already exists"),
+    PRICE_NOT_ZERO("must greater be than 0");
 
     private final String message;
 }
