@@ -15,7 +15,7 @@ public class Validator {
             loggingService.log(LogLevel.ERROR, String.format("%s %s %s", loggingMessage, Message.ERROR.getMessage(), Message.REQUIRED.getMessage()));
             return Message.REQUIRED.getMessage();
         }
-        name = name.trim(); // delete whitespaces
+        name = name.trim().replaceAll("\\s+", " "); // delete whitespaces
         if (name.length() > 200) {
             loggingService.log(LogLevel.ERROR, String.format("%s %s %s", loggingMessage, Message.ERROR.getMessage(), Message.LIMIT_200.getMessage()));
             return Message.LIMIT_200.getMessage();

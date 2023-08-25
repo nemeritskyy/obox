@@ -90,7 +90,7 @@ public class DishService extends AbstractResponseService {
                 .category(category)
                 .build();
 
-        if (request.getName() != null && !dishRepository.findAllByCategory_CategoryIdAndName(request.getCategory_id(), request.getName().trim()).isEmpty()) {
+        if (request.getName() != null && !dishRepository.findAllByCategory_CategoryIdAndName(request.getCategory_id(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
             loggingMessage = Message.DISH_EXISTS.getMessage();
             fieldErrors.put("name", Message.DISH_EXISTS.getMessage());
         } else {

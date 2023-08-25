@@ -106,7 +106,7 @@ public class CategoryService extends AbstractResponseService {
                 .menu(menu)
                 .build();
 
-        if (request.getName() != null && !categoryRepository.findAllByMenu_MenuIdAndName(request.getMenu_id(), request.getName().trim()).isEmpty()) {
+        if (request.getName() != null && !categoryRepository.findAllByMenu_MenuIdAndName(request.getMenu_id(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
             loggingMessage = Message.CATEGORY_EXISTS.getMessage();
             fieldErrors.put("name", Message.CATEGORY_EXISTS.getMessage());
         } else {

@@ -39,7 +39,7 @@ public class MenuService extends AbstractResponseService {
     public List<CategoryResponse> getAllCategoriesByMenuId(String menuId) {
         Menu menu;
         loggingMessage = "getAllCategoriesByMenuId";
-        responseMessage = String.format("Categories with Menu id %s", menuId);
+        responseMessage = String.format("Menu with id %s", menuId);
 
         var menuInfo = menuRepository.findByMenuId(menuId);
 
@@ -98,7 +98,7 @@ public class MenuService extends AbstractResponseService {
                 .restaurant(restaurant)
                 .build();
 
-        if (request.getName() != null && !menuRepository.findAllByRestaurant_RestaurantIdAndName(request.getRestaurant_id(), request.getName().trim()).isEmpty()) {
+        if (request.getName() != null && !menuRepository.findAllByRestaurant_RestaurantIdAndName(request.getRestaurant_id(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
             loggingMessage = Message.MENU_EXISTS.getMessage();
             fieldErrors.put("name", Message.MENU_EXISTS.getMessage());
         } else {
