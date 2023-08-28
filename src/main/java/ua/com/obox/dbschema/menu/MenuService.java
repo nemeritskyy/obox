@@ -37,13 +37,18 @@ public class MenuService extends AbstractResponseService {
     private String responseMessage;
 
     public List<CategoryResponse> getAllCategoriesByMenuId(String menuId) {
+        Menu menu;
         loggingMessage = "getAllCategoriesByMenuId";
         responseMessage = String.format("Categories with Menu id %s", menuId);
 
-        List<Category> categories = categoryRepository.findAllByMenu_MenuId(menuId);
-        if (categories.isEmpty()) {
+        var menuInfo = menuRepository.findByMenuId(menuId);
+
+        menu = menuInfo.orElseThrow(() -> {
             notFoundResponse(menuId);
-        }
+            return null;
+        });
+
+        List<Category> categories = categoryRepository.findAllByMenu_MenuId(menuId);
 
         List<CategoryResponse> responseList = categories.stream()
                 .map(category -> CategoryResponse.builder()

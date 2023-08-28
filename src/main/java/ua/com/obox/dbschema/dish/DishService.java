@@ -59,7 +59,7 @@ public class DishService extends AbstractResponseService {
                 .price(dish.getPrice())
                 .weight(dish.getWeight())
                 .calories(dish.getCalories())
-                .imageUrl(String.format("%s/%s/%s", "https://img.obox.com.ua", dish.getAssociatedId(), dish.getImageUrl()))
+                .imageUrl(dish.getImageUrl() == null ? null : String.format("%s/%s/%s", "https://img.obox.com.ua", dish.getAssociatedId(), dish.getImageUrl()))
                 .state(dish.getState())
                 .allergens(dish.getAllergens())
                 .tags(dish.getTags())

@@ -32,13 +32,18 @@ public class TenantService extends AbstractResponseService {
     private String responseMessage;
 
     public List<RestaurantResponse> getAllRestaurantsByTenantId(String tenantId) {
+        Tenant tenant;
         loggingMessage = "getAllRestaurantsByTenantId";
         responseMessage = String.format("Restaurants with Tenant id %s", tenantId);
 
-        List<Restaurant> restaurants = restaurantRepository.findAllByTenant_TenantId(tenantId);
-        if (restaurants.isEmpty()) {
+        var tenantInfo = tenantRepository.findByTenantId(tenantId);
+
+        tenant = tenantInfo.orElseThrow(() -> {
             notFoundResponse(tenantId);
-        }
+            return null;
+        });
+
+        List<Restaurant> restaurants = restaurantRepository.findAllByTenant_TenantId(tenantId);
 
         List<RestaurantResponse> responseList = restaurants.stream()
                 .map(restaurant -> RestaurantResponse.builder()

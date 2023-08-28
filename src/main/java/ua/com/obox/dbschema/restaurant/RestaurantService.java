@@ -40,13 +40,18 @@ public class RestaurantService extends AbstractResponseService {
     private String responseMessage;
 
     public List<MenuResponse> getAllMenusByRestaurantId(String restaurantId) {
+        Restaurant restaurant;
         loggingMessage = "getAllMenusByRestaurantId";
         responseMessage = String.format("Menus with Restaurant id %s", restaurantId);
 
-        List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantId(restaurantId);
-        if (menus.isEmpty()) {
+        var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
+
+        restaurant = restaurantInfo.orElseThrow(() -> {
             notFoundResponse(restaurantId);
-        }
+            return null;
+        });
+
+        List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantId(restaurantId);
 
         List<MenuResponse> responseList = menus.stream()
                 .map(menu -> MenuResponse.builder()
