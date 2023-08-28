@@ -20,7 +20,8 @@ import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -50,6 +51,16 @@ public class DishService extends AbstractResponseService {
             session.evict(dish); // unbind the session
         }
 
+        List<String> allergens = new ArrayList<>();
+        if (dish.getAllergens() != null)
+            allergens.addAll(Arrays.stream(dish.getAllergens().split("::")).toList());
+        Collections.sort(allergens);
+
+        List<String> tags = new ArrayList<>();
+        if (dish.getTags() != null)
+            tags.addAll(Arrays.stream(dish.getTags().split("::")).toList());
+        Collections.sort(tags);
+
         loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, dishId));
         return DishResponse.builder()
                 .dishId(dish.getDishId())
@@ -61,8 +72,8 @@ public class DishService extends AbstractResponseService {
                 .calories(dish.getCalories())
                 .imageUrl(dish.getImageUrl() == null ? null : String.format("%s/%s/%s", "https://img.obox.com.ua", dish.getAssociatedId(), dish.getImageUrl()))
                 .state(dish.getState())
-                .allergens(dish.getAllergens())
-                .tags(dish.getTags())
+                .allergens(allergens)
+                .tags(tags)
                 .associatedId(dish.getAssociatedId())
                 .build();
     }
@@ -90,7 +101,7 @@ public class DishService extends AbstractResponseService {
                 .category(category)
                 .build();
 
-        if (request.getName() != null && !dishRepository.findAllByCategory_CategoryIdAndName(request.getCategory_id(), request.getName().trim()).isEmpty()) {
+        if (request.getName() != null && !dishRepository.findAllByCategory_CategoryIdAndName(request.getCategory_id(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
             loggingMessage = Message.DISH_EXISTS.getMessage();
             fieldErrors.put("name", Message.DISH_EXISTS.getMessage());
         } else {
@@ -100,8 +111,23 @@ public class DishService extends AbstractResponseService {
         fieldErrors.put("weight", serviceHelper.updateIntegerField(dish::setWeight, request.getWeight(), "Weight", loggingMessage, 100_000));
         fieldErrors.put("calories", serviceHelper.updateIntegerField(dish::setCalories, request.getCalories(), "Calories", loggingMessage, 30_000));
         fieldErrors.put("description", serviceHelper.updateVarcharField(dish::setDescription, request.getDescription(), "Description", loggingMessage));
-        fieldErrors.put("allergens", serviceHelper.updateVarcharField(dish::setAllergens, request.getAllergens(), "Allergens", loggingMessage));
-        fieldErrors.put("tags", serviceHelper.updateVarcharField(dish::setTags, request.getTags(), "Tags", loggingMessage));
+
+        if (request.getAllergens() != null) {
+            List<String> allergensList = Arrays.asList(request.getAllergens());
+            String sortedAndJoinedAllergens = allergensList.stream()
+                    .sorted()
+                    .collect(Collectors.joining("::"));
+            dish.setAllergens(sortedAndJoinedAllergens);
+        }
+
+        if (request.getTags() != null) {
+            List<String> tagsList = Arrays.asList(request.getTags());
+            String sortedAndJoinedTags = tagsList.stream()
+                    .sorted()
+                    .collect(Collectors.joining("::"));
+            dish.setAllergens(sortedAndJoinedTags);
+        }
+
         fieldErrors.put("state", serviceHelper.updateState(dish::setState, request.getState(), "State", loggingMessage));
 
         if (fieldErrors.size() > 0)
@@ -139,9 +165,8 @@ public class DishService extends AbstractResponseService {
             session.evict(dish); // unbind the session
         }
 
-        if (request.getName() != null)
-        {
-            if (!dishRepository.findAllByCategory_CategoryIdAndName(dish.getCategory().getCategoryId(), request.getName().trim()).isEmpty()) {
+        if (request.getName() != null && !dish.getName().equals(request.getName().trim().replaceAll("\\s+", " "))) {
+            if (!dishRepository.findAllByCategory_CategoryIdAndName(dish.getCategory().getCategoryId(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
                 loggingMessage = Message.DISH_EXISTS.getMessage();
                 fieldErrors.put("name", Message.DISH_EXISTS.getMessage());
             } else {
@@ -166,11 +191,25 @@ public class DishService extends AbstractResponseService {
         if (request.getDescription() != null)
             fieldErrors.put("state", serviceHelper.updateVarcharField(dish::setDescription, request.getDescription(), "Description", loggingMessage));
 
-        if (request.getAllergens() != null)
-            fieldErrors.put("allergens", serviceHelper.updateVarcharField(dish::setAllergens, request.getAllergens(), "Allergens", loggingMessage));
+        if (request.getListAllergens() != null) {
+            System.out.println(request.getListAllergens());
+            String sortedAndJoinedAllergens = request.getListAllergens().stream()
+                    .sorted()
+                    .collect(Collectors.joining("::"));
+            if (request.getListAllergens().size() == 0)
+                sortedAndJoinedAllergens = null;
+            dish.setAllergens(sortedAndJoinedAllergens);
+        }
 
-        if (request.getTags() != null)
-            fieldErrors.put("tags", serviceHelper.updateVarcharField(dish::setTags, request.getTags(), "Tags", loggingMessage));
+        if (request.getListTags() != null) {
+            System.out.println(request.getListTags());
+            String sortedAndJoinedTags = request.getListTags().stream()
+                    .sorted()
+                    .collect(Collectors.joining("::"));
+            if (request.getListTags().size() == 0)
+                sortedAndJoinedTags = null;
+            dish.setTags(sortedAndJoinedTags);
+        }
 
         if (request.getCalories() != null)
             fieldErrors.put("calories", serviceHelper.updateIntegerField(dish::setCalories, request.getCalories(), "Calories", loggingMessage, 30000));

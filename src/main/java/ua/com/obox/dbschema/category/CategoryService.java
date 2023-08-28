@@ -18,8 +18,7 @@ import ua.com.obox.dbschema.tools.services.AbstractResponseService;
 import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,20 +48,29 @@ public class CategoryService extends AbstractResponseService {
         List<Dish> dishes = dishRepository.findAllByCategory_CategoryId(categoryId);
 
         List<DishResponse> responseList = dishes.stream()
-                .map(dish -> DishResponse.builder()
-                        .dishId(dish.getDishId())
-                        .categoryId(dish.getCategory().getCategoryId())
-                        .associatedId(dish.getAssociatedId())
-                        .name(dish.getName())
-                        .description(dish.getDescription())
-                        .price(dish.getPrice())
-                        .weight(dish.getWeight())
-                        .calories(dish.getCalories())
-                        .allergens(dish.getAllergens())
-                        .tags(dish.getTags())
-                        .imageUrl(dish.getImageUrl() == null ? null : String.format("%s/%s/%s", "https://img.obox.com.ua", dish.getAssociatedId(), dish.getImageUrl()))
-                        .state(dish.getState())
-                        .build()).collect(Collectors.toList());
+                .map(dish -> {
+                    List<String> allergensList = (dish.getAllergens() != null) ? Arrays.asList(dish.getAllergens().split("::")) : new ArrayList<>();
+                    List<String> tagsList = (dish.getTags() != null) ? Arrays.asList(dish.getTags().split("::")) : new ArrayList<>();
+
+                    Collections.sort(allergensList);
+                    Collections.sort(tagsList);
+
+                    return DishResponse.builder()
+                            .dishId(dish.getDishId())
+                            .categoryId(dish.getCategory().getCategoryId())
+                            .associatedId(dish.getAssociatedId())
+                            .name(dish.getName())
+                            .description(dish.getDescription())
+                            .price(dish.getPrice())
+                            .weight(dish.getWeight())
+                            .calories(dish.getCalories())
+                            .allergens(allergensList)
+                            .tags(tagsList)
+                            .imageUrl(dish.getImageUrl() == null ? null : String.format("%s/%s/%s", "https://img.obox.com.ua", dish.getAssociatedId(), dish.getImageUrl()))
+                            .state(dish.getState())
+                            .build();
+                })
+                .collect(Collectors.toList());
 
         loggingService.log(LogLevel.INFO, String.format("%s %s %s %d", loggingMessage, categoryId, Message.FIND_COUNT.getMessage(), responseList.size()));
         return responseList;
@@ -98,7 +106,12 @@ public class CategoryService extends AbstractResponseService {
 
         menu = menuRepository.findByMenuId(request.getMenu().getMenuId())
                 .orElseGet(() -> {
-                    fieldErrors.put("menu_id", responseMessage + Message.NOT_FOUND.getMessage());
+                    if (request.getMenu().getMenuId() == null) {
+                        responseMessage = "Menu id " + Message.NOT_EMPTY.getMessage();
+                    } else {
+                        responseMessage = responseMessage + Message.NOT_FOUND.getMessage();
+                    }
+                    fieldErrors.put("menu_id", responseMessage);
                     return null;
                 });
 
@@ -106,7 +119,7 @@ public class CategoryService extends AbstractResponseService {
                 .menu(menu)
                 .build();
 
-        if (request.getName() != null && !categoryRepository.findAllByMenu_MenuIdAndName(request.getMenu_id(), request.getName().trim()).isEmpty()) {
+        if (request.getName() != null && !categoryRepository.findAllByMenu_MenuIdAndName(request.getMenu_id(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
             loggingMessage = Message.CATEGORY_EXISTS.getMessage();
             fieldErrors.put("name", Message.CATEGORY_EXISTS.getMessage());
         } else {
@@ -137,8 +150,8 @@ public class CategoryService extends AbstractResponseService {
             return null;
         });
 
-        if (request.getName() != null) {
-            if (!categoryRepository.findAllByMenu_MenuIdAndName(category.getMenu().getMenuId(), request.getName().trim()).isEmpty()) {
+        if (request.getName() != null && !category.getName().equals(request.getName().trim().replaceAll("\\s+", " "))) {
+            if (!categoryRepository.findAllByMenu_MenuIdAndName(category.getMenu().getMenuId(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
                 loggingMessage = Message.CATEGORY_EXISTS.getMessage();
                 fieldErrors.put("name", Message.CATEGORY_EXISTS.getMessage());
             } else {

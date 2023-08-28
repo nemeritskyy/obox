@@ -28,7 +28,6 @@ public class RequiredServiceHelper {
             loggingService.log(LogLevel.ERROR, "Field category_id is required, or you use bad value");
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "You use bad data without associated");
         }
-        System.out.println(associatedId);
         return associatedId;
     }
 

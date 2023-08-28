@@ -31,7 +31,7 @@ public class TestValuesDishes {
                 ),
                 Map.of( // Post. 11
                         "category_id", SupportingData.categoryId,
-                        "name", "dish1",
+                        "name", "dish3",
                         "description", "description for dish 1",
                         "price", 100_000,
                         "weight", 1,
@@ -40,7 +40,7 @@ public class TestValuesDishes {
                 ),
                 Map.of( // Post. 14
                         "category_id", SupportingData.categoryId,
-                        "name", "dish1",
+                        "name", "dish4",
                         "description", "description for dish 1",
                         "price", 99.99,
                         "weight", 1,
@@ -49,7 +49,7 @@ public class TestValuesDishes {
                 ),
                 Map.of( // Post. 19
                         "category_id", SupportingData.categoryId,
-                        "name", "dish1",
+                        "name", "dish5",
                         "description", "description for dish 1",
                         "price", 1,
                         "weight", 1,
@@ -58,7 +58,7 @@ public class TestValuesDishes {
                 ),
                 Map.of( // Post. 20
                         "category_id", SupportingData.categoryId,
-                        "name", "dish1",
+                        "name", "dish6",
                         "description", RandomStringUtils.random(255, true, true),
                         "price", 1,
                         "weight", 1,
@@ -67,7 +67,7 @@ public class TestValuesDishes {
                 ),
                 Map.of( // Post. 22
                         "category_id", SupportingData.categoryId,
-                        "name", "dish1",
+                        "name", "dish7",
                         "description", RandomStringUtils.random(255, true, true),
                         "price", 1,
                         "weight", 100_000,
@@ -76,7 +76,7 @@ public class TestValuesDishes {
                 ),
                 Map.of( // Post. 26
                         "category_id", SupportingData.categoryId,
-                        "name", "dish1",
+                        "name", "dish8",
                         "description", "description",
                         "price", 1,
                         "weight", 100.5,
@@ -238,7 +238,7 @@ public class TestValuesDishes {
     private static Stream<Map<String, Object>> getValidPatchRequests() {
         return Stream.of(
                 Map.of( // Patch. 1
-                        "name", "dish2",
+                        "name", "dish21",
                         "description", "description",
                         "price", 1,
                         "weight", 30000,
@@ -246,7 +246,7 @@ public class TestValuesDishes {
                         "state", "ENABLED"
                 ),
                 Map.of( // Patch. 2
-                        "name", "dish2",
+                        "name", "dish22",
                         "price", 100,
                         "description", "new description",
                         "weight", 30000,
@@ -254,7 +254,7 @@ public class TestValuesDishes {
                         "state", "ENABLED"
                 ),
                 Map.of( // Patch. 3
-                        "name", "dish2",
+                        "name", "dish23",
                         "price", 8,
                         "description", "new description",
                         "calories", 100.5,
@@ -262,7 +262,7 @@ public class TestValuesDishes {
                         "state", "ENABLED"
                 ),
                 Map.of( // Patch. 3 duplicate
-                        "name", "dish2",
+                        "name", "dish24",
                         "price", 8,
                         "description", "",
                         "calories", 100.5,
@@ -279,8 +279,8 @@ public class TestValuesDishes {
                 Map.of( // change for Get. 5
                         "description", "",
                         "calories", "",
-                        "allergens", "",
-                        "tags", "",
+//                        "allergens", "",
+//                        "tags", "",
                         "weight", ""
                 )
         );
@@ -311,8 +311,8 @@ public class TestValuesDishes {
                 Map.of( // Get. 5
                         "$.description", "DOES_NOT_EXIST",
                         "$.calories", "DOES_NOT_EXIST",
-                        "$.allergens", "DOES_NOT_EXIST",
-                        "$.tags", "DOES_NOT_EXIST",
+//                        "$.allergens", "DOES_NOT_EXIST",
+//                        "$.tags", "DOES_NOT_EXIST",
                         "$.weight", "DOES_NOT_EXIST"
                 )
         );

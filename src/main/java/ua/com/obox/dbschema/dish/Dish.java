@@ -1,6 +1,7 @@
 package ua.com.obox.dbschema.dish;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -11,6 +12,7 @@ import ua.com.obox.dbschema.tools.EmptyIntegerDeserializer;
 import ua.com.obox.dbschema.tools.logging.EmptyStringDeserializer;
 
 import javax.persistence.*;
+import java.util.List;
 
 @Data
 @Builder
@@ -39,8 +41,16 @@ public class Dish {
     private Integer weight;
     @JsonIgnore
     private String imageUrl;
+    @JsonIgnore
     private String allergens;
+    @Transient
+    @JsonProperty("allergens")
+    private List<String> listAllergens;
+    @JsonIgnore
     private String tags;
+    @Transient
+    @JsonProperty("tags")
+    private List<String> listTags;
     @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
     private String state;
     private String associatedId;

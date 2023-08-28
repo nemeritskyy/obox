@@ -92,7 +92,7 @@ public class MenuControllerTest {
     public void testPostValidNames(String name) throws Exception {
         Map<String, Object> requestBody = Map.of(
                 "restaurant_id", restaurantId,
-                "name", "createMenuForMenuTest()",
+                "name", name,
                 "language_code", languageCode
         );
         PostRequest
@@ -155,7 +155,7 @@ public class MenuControllerTest {
     @MethodSource("tools.TestValues#getValidNames") // Patch. 3 // Patch. 4
     public void testPatchValidNames(String name) throws Exception {
         Map<String, Object> requestBody = Map.of(
-                "name", name
+                "name", name+"1"
         );
         PatchRequest
                 .performPatchRequest(URL_MENU + menuId, requestBody, mockMvc)
