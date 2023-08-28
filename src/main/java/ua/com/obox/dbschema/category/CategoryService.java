@@ -49,8 +49,8 @@ public class CategoryService extends AbstractResponseService {
 
         List<DishResponse> responseList = dishes.stream()
                 .map(dish -> {
-                    List<String> allergensList = (dish.getAllergens()!= null) ? Arrays.asList(dish.getAllergens().split("::")) : new ArrayList<>();
-                    List<String> tagsList = (dish.getTags()!= null) ?  Arrays.asList(dish.getTags().split("::")) : new ArrayList<>();
+                    List<String> allergensList = (dish.getAllergens() != null) ? Arrays.asList(dish.getAllergens().split("::")) : new ArrayList<>();
+                    List<String> tagsList = (dish.getTags() != null) ? Arrays.asList(dish.getTags().split("::")) : new ArrayList<>();
 
                     Collections.sort(allergensList);
                     Collections.sort(tagsList);
@@ -150,8 +150,8 @@ public class CategoryService extends AbstractResponseService {
             return null;
         });
 
-        if (request.getName() != null) {
-            if (!categoryRepository.findAllByMenu_MenuIdAndName(category.getMenu().getMenuId(), request.getName().trim()).isEmpty()) {
+        if (request.getName() != null && !category.getName().equals(request.getName().trim().replaceAll("\\s+", " "))) {
+            if (!categoryRepository.findAllByMenu_MenuIdAndName(category.getMenu().getMenuId(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
                 loggingMessage = Message.CATEGORY_EXISTS.getMessage();
                 fieldErrors.put("name", Message.CATEGORY_EXISTS.getMessage());
             } else {

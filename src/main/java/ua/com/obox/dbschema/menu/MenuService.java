@@ -135,8 +135,8 @@ public class MenuService extends AbstractResponseService {
             return null;
         });
 
-        if (request.getName() != null) {
-            if (!menuRepository.findAllByRestaurant_RestaurantIdAndName(menu.getRestaurant().getRestaurantId(), request.getName().trim()).isEmpty()) {
+        if (request.getName() != null && !menu.getName().equals(request.getName().trim().replaceAll("\\s+", " "))) {
+            if (!menuRepository.findAllByRestaurant_RestaurantIdAndName(menu.getRestaurant().getRestaurantId(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
                 loggingMessage = Message.MENU_EXISTS.getMessage();
                 fieldErrors.put("name", Message.MENU_EXISTS.getMessage());
             } else {
