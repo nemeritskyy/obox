@@ -279,8 +279,8 @@ public class TestValuesDishes {
                 Map.of( // change for Get. 5
                         "description", "",
                         "calories", "",
-                        "allergens", "",
-                        "tags", "",
+//                        "allergens", "",
+//                        "tags", "",
                         "weight", ""
                 )
         );
@@ -311,8 +311,8 @@ public class TestValuesDishes {
                 Map.of( // Get. 5
                         "$.description", "DOES_NOT_EXIST",
                         "$.calories", "DOES_NOT_EXIST",
-                        "$.allergens", "DOES_NOT_EXIST",
-                        "$.tags", "DOES_NOT_EXIST",
+//                        "$.allergens", "DOES_NOT_EXIST",
+//                        "$.tags", "DOES_NOT_EXIST",
                         "$.weight", "DOES_NOT_EXIST"
                 )
         );

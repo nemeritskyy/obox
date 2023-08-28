@@ -30,8 +30,15 @@ public class DishController {
                                     "    \"price\": 300.0,\n" +
                                     "    \"weight\": 250,\n" +
                                     "    \"calories\": 400,\n" +
-                                    "    \"allergens\": \"Celery::Cereals containing gluten::Clams\",\n" +
-                                    "    \"tags\": \"Spicy::Vegan\",\n" +
+                                    "    \"allergens\": [\n" +
+                                    "        \"Celery\",\n" +
+                                    "        \"Cereals containing gluten\",\n" +
+                                    "        \"Clams\"\n" +
+                                    "    ],\n" +
+                                    "    \"tags\": [\n" +
+                                    "        \"Spicy\",\n" +
+                                    "        \"Vegan\"\n" +
+                                    "    ],\n" +
                                     "    \"image_url\": \"https://img.obox.com.ua/915e9be8-a36b-40d9-bf9b-aeedc180958e/762dbe8e-4cfc-40f0-af3f-02cfc67da709.jpg\",\n" +
                                     "    \"state\": \"ENABLED\"\n" +
                                     "}"
@@ -86,8 +93,15 @@ public class DishController {
                                                              "  \"price\": 1.99,\n" +
                                                              "  \"weight\": 0,\n" +
                                                              "  \"calories\": 0,\n" +
-                                                             "  \"allergens\": \"Celery::Cereals containing gluten::Clams\",\n" +
-                                                             "  \"tags\": \"Spicy::Vegan\",\n" +
+                                                             "    \"allergens\": [\n" +
+                                                             "        \"Celery\",\n" +
+                                                             "        \"Cereals containing gluten\",\n" +
+                                                             "        \"Clams\"\n" +
+                                                             "    ],\n" +
+                                                             "    \"tags\": [\n" +
+                                                             "        \"Spicy\",\n" +
+                                                             "        \"Vegan\"\n" +
+                                                             "    ],\n" +
                                                              "  \"state\": \"ENABLED or DISABLED\",\n" +
                                                              "  \"image\": \"Base64 only JPG and PNG (not necessary)\"\n" +
                                                              "}")
@@ -118,8 +132,15 @@ public class DishController {
             "  \"price\": 1.99,\n" +
             "  \"weight\": 0,\n" +
             "  \"calories\": 0,\n" +
-            "  \"allergens\": \"Celery::Cereals containing gluten::Clams\",\n" +
-            "  \"tags\": \"Spicy::Vegan\",\n" +
+            "    \"allergens\": [\n" +
+            "        \"Celery\",\n" +
+            "        \"Cereals containing gluten\",\n" +
+            "        \"Clams\"\n" +
+            "    ],\n" +
+            "    \"tags\": [\n" +
+            "        \"Spicy\",\n" +
+            "        \"Vegan\"\n" +
+            "    ],\n" +
             "  \"state\": \"ENABLED or DISABLED\",\n" +
             "  \"image\": \"Base64 only JPG and PNG (not necessary)\"\n" +
             "}")

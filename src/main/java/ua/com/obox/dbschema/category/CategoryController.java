@@ -34,8 +34,13 @@ public class CategoryController {
                                     "        \"price\": 100.0,\n" +
                                     "        \"weight\": 10,\n" +
                                     "        \"calories\": 300,\n" +
-                                    "        \"allergens\": null,\n" +
-                                    "        \"tags\": null,\n" +
+                                    "        \"allergens\": [\n" +
+                                    "           \"Fish\",\n" +
+                                    "           \"Soy\"\n" +
+                                    "        ],\n" +
+                                    "        \"tags\": [\n" +
+                                    "           \"Vegeteriab\"\n" +
+                                    "        ]," +
                                     "        \"image_url\": \"https://img.obox.com.ua/26e8fa15-2245-4d50-b4b5-b23eb1eb8bd2/260c74e4-c6d2-46bd-9b5f-e6c3e4be9cc7.jpg\",\n" +
                                     "        \"state\": \"ENABLED\"\n" +
                                     "    },\n" +
@@ -48,8 +53,11 @@ public class CategoryController {
                                     "        \"price\": 100.0,\n" +
                                     "        \"weight\": 10,\n" +
                                     "        \"calories\": 300,\n" +
-                                    "        \"allergens\": null,\n" +
-                                    "        \"tags\": null,\n" +
+                                    "        \"allergens\": [\n" +
+                                    "            \"Fish\",\n" +
+                                    "            \"Soy\"\n" +
+                                    "        ],\n" +
+                                    "        \"tags\": []," +
                                     "        \"image_url\": \"https://img.obox.com.ua/26e8fa15-2245-4d50-b4b5-b23eb1eb8bd2/a898e1db-92e9-408e-bae0-9c229b965f0a.jpg\",\n" +
                                     "        \"state\": \"ENABLED\"\n" +
                                     "    }\n" +
