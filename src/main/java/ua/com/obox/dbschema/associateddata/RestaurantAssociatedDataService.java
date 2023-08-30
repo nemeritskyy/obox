@@ -9,6 +9,11 @@ import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.services.AbstractResponseService;
 import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class RestaurantAssociatedDataService extends AbstractResponseService {
@@ -28,13 +33,23 @@ public class RestaurantAssociatedDataService extends AbstractResponseService {
             return null;
         });
 
+        List<String> allergens = new ArrayList<>();
+        if (associatedData.getAllergens() != null)
+            allergens.addAll(Arrays.stream(associatedData.getAllergens().split("::")).toList());
+        Collections.sort(allergens);
+
+        List<String> tags = new ArrayList<>();
+        if (associatedData.getTags() != null)
+            tags.addAll(Arrays.stream(associatedData.getTags().split("::")).toList());
+        Collections.sort(tags);
+
         loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, associatedDataId));
         return RestaurantAssociatedDataResponse.builder()
                 .associatedId(associatedData.getAssociatedId())
                 .restaurantId(associatedData.getRestaurantId())
                 .languageCode(associatedData.getLanguageCode())
-                .allergens(associatedData.getAllergens())
-                .tags(associatedData.getTags())
+                .allergens(allergens)
+                .tags(tags)
                 .build();
     }
 

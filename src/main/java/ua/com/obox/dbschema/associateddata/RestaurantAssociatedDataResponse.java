@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -18,7 +20,7 @@ public class RestaurantAssociatedDataResponse {
     @JsonProperty("language_code")
     private String languageCode;
     @JsonProperty("allergens")
-    private String allergens;
+    private List<String> allergens;
     @JsonProperty("tags")
-    private String tags;
+    private List<String> tags;
 }
