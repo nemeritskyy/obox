@@ -35,7 +35,7 @@ public class TenantService {
         var tenantInfo = tenantRepository.findByTenantId(tenantId);
 
         tenantInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".tenantRestaurantsNotFound", finalAcceptLanguage, tenantId);
+            ExceptionTools.notFoundResponse(".tenantNotFound", finalAcceptLanguage, tenantId);
             return null;
         });
 

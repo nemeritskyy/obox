@@ -9,39 +9,37 @@ import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.dish.DishResponse;
 import ua.com.obox.dbschema.tools.RequiredServiceHelper;
+import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
-import ua.com.obox.dbschema.tools.services.AbstractResponseService;
-import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
+import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class CategoryService extends AbstractResponseService {
+public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final MenuRepository menuRepository;
     private final DishRepository dishRepository;
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final RequiredServiceHelper requiredServiceHelper;
-    private String loggingMessage;
-    private String responseMessage;
+    private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
 
-    public List<DishResponse> getAllDishesByCategoryId(String categoryId) {
-        Category category;
-        loggingMessage = "getAllDishesByCategoryId";
-        responseMessage = String.format("Dishes with Category id %s", categoryId);
+    public List<DishResponse> getAllDishesByCategoryId(String categoryId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
         var categoryInfo = categoryRepository.findByCategoryId(categoryId);
 
-        category = categoryInfo.orElseThrow(() -> {
-            notFoundResponse(categoryId);
+        categoryInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".categoryNotFound", finalAcceptLanguage, categoryId);
             return null;
         });
 
@@ -72,22 +70,21 @@ public class CategoryService extends AbstractResponseService {
                 })
                 .collect(Collectors.toList());
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s %s %d", loggingMessage, categoryId, Message.FIND_COUNT.getMessage(), responseList.size()));
+        loggingService.log(LogLevel.INFO, String.format("getAllDishesByCategoryId %s %s %d", categoryId, Message.FIND_COUNT.getMessage(), responseList.size()));
         return responseList;
     }
 
-    public CategoryResponse getCategoryById(String categoryId) {
-        Category category;
-        loggingMessage = "getCategoryById";
-        responseMessage = String.format("Category with id %s", categoryId);
+    public CategoryResponse getCategoryById(String categoryId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
         var categoryInfo = categoryRepository.findByCategoryId(categoryId);
 
-        category = categoryInfo.orElseThrow(() -> {
-            notFoundResponse(categoryId);
+        Category category = categoryInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".categoryNotFound", finalAcceptLanguage, categoryId);
             return null;
         });
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, categoryId));
+        loggingService.log(LogLevel.INFO, String.format("getCategoryById %s", categoryId));
         return CategoryResponse.builder()
                 .categoryId(category.getCategoryId())
                 .name(category.getName())
@@ -95,35 +92,26 @@ public class CategoryService extends AbstractResponseService {
                 .build();
     }
 
-    public CategoryResponseId createCategory(Category request) {
-        Menu menu;
-        Category category;
+    public CategoryResponseId createCategory(Category request, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
-        loggingMessage = "createCategory";
-        responseMessage = String.format("Menu with id %s", request.getMenu_id());
 
         request.setMenuIdForCategory(request.getMenu_id());
 
-        menu = menuRepository.findByMenuId(request.getMenu().getMenuId())
+        Menu menu = menuRepository.findByMenuId(request.getMenu().getMenuId())
                 .orElseGet(() -> {
-                    if (request.getMenu().getMenuId() == null) {
-                        responseMessage = "Menu id " + Message.NOT_EMPTY.getMessage();
-                    } else {
-                        responseMessage = responseMessage + Message.NOT_FOUND.getMessage();
-                    }
-                    fieldErrors.put("menu_id", responseMessage);
+                    fieldErrors.put("menu_id", String.format(translation.getString(finalAcceptLanguage + ".menuNotFound"), request.getMenu().getMenuId()));
                     return null;
                 });
 
-        category = Category.builder()
+        Category category = Category.builder()
                 .menu(menu)
                 .build();
 
-        if (request.getName() != null && !categoryRepository.findAllByMenu_MenuIdAndName(request.getMenu_id(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
-            loggingMessage = Message.CATEGORY_EXISTS.getMessage();
-            fieldErrors.put("name", Message.CATEGORY_EXISTS.getMessage());
+        if (request.getName() != null && !categoryRepository.findAllByMenu_MenuIdAndName(request.getMenu_id(), Validator.removeExtraSpaces(request.getName())).isEmpty()) {
+            fieldErrors.put("name", translation.getString(finalAcceptLanguage + ".categoryExists"));
         } else {
-            fieldErrors.put("name", serviceHelper.updateNameField(category::setName, request.getName(), "Name", loggingMessage));
+            fieldErrors.put("name", serviceHelper.updateNameFieldTranslationSupport(category::setName, request.getName(), finalAcceptLanguage));
         }
 
         if (fieldErrors.size() > 0)
@@ -131,31 +119,28 @@ public class CategoryService extends AbstractResponseService {
 
         categoryRepository.save(category);
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s UUID=%s %s", loggingMessage, request.getName(), category.getCategoryId(), Message.CREATE.getMessage()));
+        loggingService.log(LogLevel.INFO, String.format("createCategory %s UUID=%s %s", request.getName(), category.getCategoryId(), Message.CREATE.getMessage()));
         return CategoryResponseId.builder()
                 .categoryId(category.getCategoryId())
                 .build();
     }
 
-    public void patchCategoryById(String categoryId, Category request) {
-        Category category;
+    public void patchCategoryById(String categoryId, Category request, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
-        loggingMessage = "patchCategoryById";
-        responseMessage = String.format("Category with id %s", categoryId);
         var categoryInfo = categoryRepository.findByCategoryId(categoryId);
 
-        category = categoryInfo.orElseThrow(() -> {
-            notFoundResponse(categoryId);
+        Category category = categoryInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".categoryNotFound", finalAcceptLanguage, categoryId);
             return null;
         });
 
-        if (request.getName() != null && !category.getName().equals(request.getName().trim().replaceAll("\\s+", " "))) {
-            if (!categoryRepository.findAllByMenu_MenuIdAndName(category.getMenu().getMenuId(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
-                loggingMessage = Message.CATEGORY_EXISTS.getMessage();
-                fieldErrors.put("name", Message.CATEGORY_EXISTS.getMessage());
+        if (request.getName() != null && !category.getName().equals(Validator.removeExtraSpaces(request.getName()))) {
+            if (!categoryRepository.findAllByMenu_MenuIdAndName(category.getMenu().getMenuId(), Validator.removeExtraSpaces(request.getName())).isEmpty()) {
+                fieldErrors.put("name", translation.getString(finalAcceptLanguage + ".categoryExists"));
             } else {
-                fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), category, loggingMessage));
+                fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), category, finalAcceptLanguage));
             }
         }
 
@@ -163,30 +148,20 @@ public class CategoryService extends AbstractResponseService {
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         categoryRepository.save(category);
-        loggingService.log(LogLevel.INFO, String.format("%s %s %s", loggingMessage, categoryId, Message.UPDATE.getMessage()));
+        loggingService.log(LogLevel.INFO, String.format("patchCategoryById %s %s", categoryId, Message.UPDATE.getMessage()));
     }
 
-    public void deleteCategoryById(String categoryId) {
-        Category category;
-        loggingMessage = "deleteCategoryById";
-        responseMessage = String.format("Category with id %s", categoryId);
+    public void deleteCategoryById(String categoryId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
         var categoryInfo = categoryRepository.findByCategoryId(categoryId);
 
-        category = categoryInfo.orElseThrow(() -> {
-            notFoundResponse(categoryId);
+        Category category = categoryInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".categoryNotFound", finalAcceptLanguage, categoryId);
             return null;
         });
 
         categoryRepository.delete(category);
-        loggingService.log(LogLevel.INFO, String.format("%s %s NAME=%s %s", loggingMessage, categoryId, category.getName(), Message.DELETE.getMessage()));
-    }
-
-    @Override
-    public void notFoundResponse(String entityId) {
-        LoggingResponseHelper.loggingThrowException(
-                entityId,
-                LogLevel.ERROR, HttpStatus.NOT_FOUND,
-                loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
-                loggingService);
+        loggingService.log(LogLevel.INFO, String.format("deleteCategoryById %s NAME=%s %s", categoryId, category.getName(), Message.DELETE.getMessage()));
     }
 }

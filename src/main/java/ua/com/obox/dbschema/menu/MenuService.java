@@ -43,7 +43,7 @@ public class MenuService {
         var menuInfo = menuRepository.findByMenuId(menuId);
 
         menuInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".menuCategoriesNotFound", finalAcceptLanguage, menuId);
+            ExceptionTools.notFoundResponse(".menuNotFound", finalAcceptLanguage, menuId);
             return null;
         });
 

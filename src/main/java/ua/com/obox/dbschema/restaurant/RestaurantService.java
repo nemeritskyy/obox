@@ -45,7 +45,7 @@ public class RestaurantService{
         var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
 
         restaurantInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".restaurantMenusNotFound", finalAcceptLanguage, restaurantId);
+            ExceptionTools.notFoundResponse(".restaurantNotFound", finalAcceptLanguage, restaurantId);
             return null;
         });
 
