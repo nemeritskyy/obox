@@ -7,6 +7,7 @@ import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 import javax.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
 import java.util.ResourceBundle;
 
 @RequiredArgsConstructor
@@ -76,16 +77,26 @@ public class Validator {
         if (imageData.length >= 8) {
             byte[] jpegSignature = {(byte) 0xFF, (byte) 0xD8};
             byte[] pngSignature = {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+            byte[] heicSignature = {(byte) 0x49, (byte) 0x49, (byte) 0xBC};
 
             if (startsWith(imageData, jpegSignature)) {
                 return ".jpg";
             } else if (startsWith(imageData, pngSignature)) {
                 return ".png";
+            } else if (startsWith(imageData, heicSignature)) {
+                return ".heic";
+            }
+
+            String svgContent = new String(imageData, StandardCharsets.UTF_8);
+            if (svgContent.trim().startsWith("<?xml")) {
+                return ".svg";
             }
         }
+
         loggingService.log(LogLevel.ERROR, Message.BAD_IMAGE_TYPE.getMessage());
         return null;
     }
+
 
     private static boolean startsWith(byte[] array, byte[] prefix) {
         if (array.length < prefix.length) {
