@@ -1,35 +1,28 @@
 package ua.com.obox.dbschema.associateddata;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
-import ua.com.obox.dbschema.tools.services.AbstractResponseService;
-import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
+import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
-public class RestaurantAssociatedDataService extends AbstractResponseService {
+public class RestaurantAssociatedDataService {
     private final RestaurantAssociatedDataRepository dataRepository;
     private final LoggingService loggingService;
-    private String loggingMessage;
-    private String responseMessage;
 
-    public RestaurantAssociatedDataResponse getAssociatedDataById(String associatedDataId) {
-        RestaurantAssociatedData associatedData;
-        loggingMessage = "getAssociatedDataById";
-        responseMessage = String.format("Associated data with id %s", associatedDataId);
+    public RestaurantAssociatedDataResponse getAssociatedDataById(String associatedDataId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
         var data = dataRepository.findByAssociatedId(associatedDataId);
 
-        associatedData = data.orElseThrow(() -> {
-            notFoundResponse(associatedDataId);
+        RestaurantAssociatedData associatedData = data.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".associatedNotFound", finalAcceptLanguage, associatedDataId);
             return null;
         });
 
@@ -43,7 +36,7 @@ public class RestaurantAssociatedDataService extends AbstractResponseService {
             tags.addAll(Arrays.stream(associatedData.getTags().split("::")).toList());
         Collections.sort(tags);
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, associatedDataId));
+        loggingService.log(LogLevel.INFO, String.format("getAssociatedDataById %s", associatedDataId));
         return RestaurantAssociatedDataResponse.builder()
                 .associatedId(associatedData.getAssociatedId())
                 .restaurantId(associatedData.getRestaurantId())
@@ -53,28 +46,18 @@ public class RestaurantAssociatedDataService extends AbstractResponseService {
                 .build();
     }
 
-    public void deleteAssociatedDataByRestaurantId(String restaurantId) {
-        RestaurantAssociatedData associatedData;
-        loggingMessage = "deleteAssociatedDataByRestaurantId";
-        responseMessage = String.format("Associated data with restaurant id %s", restaurantId);
+    public void deleteAssociatedDataByRestaurantId(String restaurantId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
         var dataInfo = dataRepository.findByRestaurantId(restaurantId);
 
-        associatedData = dataInfo.orElseThrow(() -> {
-            notFoundResponse(restaurantId);
+        RestaurantAssociatedData associatedData = dataInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".associatedNotFound", finalAcceptLanguage, restaurantId);
             return null;
         });
 
         dataRepository.delete(associatedData);
-        loggingService.log(LogLevel.INFO, String.format("%s UUID=%s RESTAURANT=%s LANGUAGE CODE=%s %s",
-                loggingMessage, associatedData.getAssociatedId(), restaurantId, associatedData.getLanguageCode(), Message.DELETE.getMessage()));
-    }
-
-    @Override
-    public void notFoundResponse(String entityId) {
-        LoggingResponseHelper.loggingThrowException(
-                entityId,
-                LogLevel.ERROR, HttpStatus.NOT_FOUND,
-                loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
-                loggingService);
+        loggingService.log(LogLevel.INFO, String.format("deleteAssociatedDataByRestaurantId UUID=%s RESTAURANT=%s LANGUAGE CODE=%s %s",
+                associatedData.getAssociatedId(), restaurantId, associatedData.getLanguageCode(), Message.DELETE.getMessage()));
     }
 }
