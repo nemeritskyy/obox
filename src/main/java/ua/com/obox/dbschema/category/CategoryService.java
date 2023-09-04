@@ -111,7 +111,7 @@ public class CategoryService {
         if (request.getName() != null && !categoryRepository.findAllByMenu_MenuIdAndName(request.getMenu_id(), Validator.removeExtraSpaces(request.getName())).isEmpty()) {
             fieldErrors.put("name", translation.getString(finalAcceptLanguage + ".categoryExists"));
         } else {
-            fieldErrors.put("name", serviceHelper.updateNameFieldTranslationSupport(category::setName, request.getName(), finalAcceptLanguage));
+            fieldErrors.put("name", serviceHelper.updateNameField(category::setName, request.getName(), finalAcceptLanguage));
         }
 
         if (fieldErrors.size() > 0)

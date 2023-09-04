@@ -97,8 +97,8 @@ public class RestaurantService{
                 .tenant(tenant)
                 .build();
 
-        fieldErrors.put("name", serviceHelper.updateNameFieldTranslationSupport(restaurant::setName, request.getName(), finalAcceptLanguage));
-        fieldErrors.put("address", serviceHelper.updateVarcharFieldTranslationSupport(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
+        fieldErrors.put("name", serviceHelper.updateNameField(restaurant::setName, request.getName(), finalAcceptLanguage));
+        fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
@@ -128,7 +128,7 @@ public class RestaurantService{
             if (request.getName() != null)
                 fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), restaurant, finalAcceptLanguage));
             if (request.getAddress() != null)
-                fieldErrors.put("address", serviceHelper.updateVarcharFieldTranslationSupport(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
+                fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
 
             if (fieldErrors.size() > 0)
                 throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);

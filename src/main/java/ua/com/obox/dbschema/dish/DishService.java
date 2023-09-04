@@ -98,12 +98,12 @@ public class DishService {
         if (request.getName() != null && !dishRepository.findAllByCategory_CategoryIdAndName(request.getCategory_id(), Validator.removeExtraSpaces(request.getName())).isEmpty()) {
             fieldErrors.put("name", translation.getString(finalAcceptLanguage + ".dishExists"));
         } else {
-            fieldErrors.put("name", serviceHelper.updateNameFieldTranslationSupport(dish::setName, request.getName(), finalAcceptLanguage));
+            fieldErrors.put("name", serviceHelper.updateNameField(dish::setName, request.getName(), finalAcceptLanguage));
         }
         fieldErrors.put("price", serviceHelper.updatePriceField(dish::setPrice, request.getPrice(), 100_000, "price", finalAcceptLanguage));
         fieldErrors.put("weight", serviceHelper.updateIntegerField(dish::setWeight, request.getWeight(), 100_000, "weight", finalAcceptLanguage));
         fieldErrors.put("calories", serviceHelper.updateIntegerField(dish::setCalories, request.getCalories(), 30_000, "calories", finalAcceptLanguage));
-        fieldErrors.put("description", serviceHelper.updateVarcharFieldTranslationSupport(dish::setDescription, request.getDescription(), "description", finalAcceptLanguage));
+        fieldErrors.put("description", serviceHelper.updateVarcharField(dish::setDescription, request.getDescription(), "description", finalAcceptLanguage));
 
         if (request.getAllergens() != null) {
             dish.setAllergens(request.getAllergens());
@@ -169,7 +169,7 @@ public class DishService {
             }
 
             if (request.getDescription() != null)
-                fieldErrors.put("description", serviceHelper.updateVarcharFieldTranslationSupport(dish::setDescription, request.getDescription(), "description", finalAcceptLanguage));
+                fieldErrors.put("description", serviceHelper.updateVarcharField(dish::setDescription, request.getDescription(), "description", finalAcceptLanguage));
 
             if (request.getListAllergens() != null) {
                 System.out.println(request.getListAllergens());

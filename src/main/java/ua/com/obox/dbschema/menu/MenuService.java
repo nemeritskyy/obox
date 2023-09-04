@@ -96,10 +96,10 @@ public class MenuService {
         if (request.getName() != null && !menuRepository.findAllByRestaurant_RestaurantIdAndName(request.getRestaurant_id(), Validator.removeExtraSpaces(request.getName())).isEmpty()) {
             fieldErrors.put("name", translation.getString(finalAcceptLanguage + ".menuExists"));
         } else {
-            fieldErrors.put("name", serviceHelper.updateNameFieldTranslationSupport(menu::setName, request.getName(), finalAcceptLanguage));
+            fieldErrors.put("name", serviceHelper.updateNameField(menu::setName, request.getName(), finalAcceptLanguage));
         }
 
-        fieldErrors.put("language_code", serviceHelper.updateLanguageCode(menu::setLanguage_code, request.getLanguage_code(), finalAcceptLanguage));
+        fieldErrors.put("language_code", serviceHelper.updateLanguageCode(request.getLanguage_code(), finalAcceptLanguage));
 
 
         if (fieldErrors.size() > 0)

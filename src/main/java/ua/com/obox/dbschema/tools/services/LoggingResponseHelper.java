@@ -6,13 +6,13 @@ import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 public class LoggingResponseHelper {
-    public static void loggingThrowException(String entityId,
+    public static void loggingThrowException(
                                              LogLevel logLevel,
                                              HttpStatus httpStatus,
+                                             String translationMessage,
                                              String loggingMessage,
-                                             String responseMessage,
                                              LoggingService loggingService) {
-        loggingService.log(logLevel, loggingMessage + " param: " + entityId + " " + httpStatus.toString());
-        throw new ResponseStatusException(httpStatus, responseMessage);
+        loggingService.log(logLevel, loggingMessage);
+        throw new ResponseStatusException(httpStatus, translationMessage);
     }
 }

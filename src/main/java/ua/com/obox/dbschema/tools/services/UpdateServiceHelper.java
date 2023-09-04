@@ -3,10 +3,10 @@ package ua.com.obox.dbschema.tools.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.tools.Validator;
-import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
+import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
 @Service
@@ -14,32 +14,33 @@ public class UpdateServiceHelper {
     @Autowired
     LoggingService loggingService;
 
-    public String updateVarcharField(Consumer<String> setter, String value, String field, String loggingMessage) {
-        if (value == null || value.trim().replaceAll("\\s+", " ").isEmpty()) {
+    private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
+
+    public String updateNameField(Consumer<String> setter, String value, String acceptLanguage) {
+        String name = Validator.validateNameTranslationSupport(value, acceptLanguage);
+        if (name == null)
+            setter.accept(removeExtraSpaces(value));
+        return name;
+    }
+
+    public String updateVarcharField(Consumer<String> setter, String value, String fieldName, String acceptLanguage) {
+        if (value == null || removeExtraSpaces(value).isEmpty()) {
             setter.accept(null);
             return null;
         }
-
-        String checkField = Validator.validateVarchar(loggingMessage, field, value, loggingService);
+        String checkField = Validator.validateVarcharTranslationSupport(value, fieldName, acceptLanguage);
         if (checkField == null) {
-            setter.accept(value.trim().replaceAll("\\s+", " "));
+            setter.accept(removeExtraSpaces(value));
         }
         return checkField;
     }
 
-    public String updateNameField(Consumer<String> setter, String value, String field, String loggingMessage) {
-        String name = Validator.validateName(loggingMessage, value, loggingService);
-        if (name == null)
-            setter.accept(value.trim().replaceAll("\\s+", " "));
-        return name;
-    }
-
-    public String updateIntegerField(Consumer<Integer> setter, Integer value, String field, String loggingMessage, int maxValue) {
+    public String updateIntegerField(Consumer<Integer> setter, Integer value, int maxValue, String fieldName, String acceptLanguage) {
         if (value != null) {
             if (value == 0) {
                 setter.accept(null);
             } else {
-                String result = Validator.positiveInteger(field, value, maxValue, loggingService);
+                String result = Validator.positiveInteger(fieldName, value, maxValue, acceptLanguage);
                 if (result == null) {
                     setter.accept(value);
                 }
@@ -49,32 +50,35 @@ public class UpdateServiceHelper {
         return null;
     }
 
-    public String updatePriceField(Consumer<Double> setter, Double value, String field, String loggingMessage, int maxValue) {
+    public String updatePriceField(Consumer<Double> setter, Double value, int maxValue, String fieldName, String acceptLanguage) {
         if (value != null) {
-            if (value == 0){
-                loggingService.log(LogLevel.ERROR, String.format("%s %s %s", loggingMessage, field, Message.PRICE_NOT_ZERO.getMessage()));
-                return String.format("%s %s", field, Message.PRICE_NOT_ZERO.getMessage());
+            if (value == 0) {
+                loggingService.log(LogLevel.ERROR, translation.getString("en-US.priceRequired"));
+                return translation.getString(acceptLanguage + ".priceRequired");
             }
-            String result = Validator.positiveInteger(field, value, maxValue, loggingService);
+            String result = Validator.positiveInteger(fieldName, value, maxValue, acceptLanguage);
             if (result == null) {
                 setter.accept(value);
             }
             return result;
         } else {
-            loggingService.log(LogLevel.ERROR, String.format("%s %s %s", loggingMessage, field, Message.NOT_EMPTY.getMessage()));
-            return String.format("%s %s", field, Message.NOT_EMPTY.getMessage());
+            loggingService.log(LogLevel.ERROR, translation.getString("en-US.priceRequired"));
+            return translation.getString(acceptLanguage + ".priceRequired");
         }
     }
 
-    public String updateState(Consumer<String> setter, String value, String field, String loggingMessage) {
-        String state = Validator.validateState(loggingMessage, value, loggingService);
+    public String updateState(Consumer<String> setter, String value, String acceptLanguage) {
+        String state = Validator.validateState(value, acceptLanguage);
         if (state == null)
             setter.accept(value);
         return state;
     }
 
-    public String updateLanguageCode(Consumer<String> setter, String value) {
-        String languageCode = Validator.languageCode("createMenu", value, loggingService);
-        return languageCode;
+    public String updateLanguageCode(String value, String acceptLanguage) {
+        return Validator.languageCode("createMenu", value, acceptLanguage);
+    }
+
+    public static String removeExtraSpaces(String str) {
+        return str.trim().replaceAll("\\s+", " ");
     }
 }

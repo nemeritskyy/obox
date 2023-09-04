@@ -65,7 +65,7 @@ public class TenantService {
         });
 
         if (tenant.getState().equals(State.DISABLED))
-            ExceptionTools.forbiddenResponse(".tenantForbidden", finalAcceptLanguage, tenantId);
+            ExceptionTools.forbiddenResponse(finalAcceptLanguage, tenantId);
 
         loggingService.log(LogLevel.INFO, String.format("getTenantById %s", tenantId));
         return TenantResponse.builder()
@@ -82,7 +82,7 @@ public class TenantService {
                 .state(State.ENABLED)
                 .build();
 
-        fieldErrors.put("name", serviceHelper.updateNameFieldTranslationSupport(tenant::setName, request.getName(), finalAcceptLanguage));
+        fieldErrors.put("name", serviceHelper.updateNameField(tenant::setName, request.getName(), finalAcceptLanguage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
