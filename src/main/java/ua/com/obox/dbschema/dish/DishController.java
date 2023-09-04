@@ -41,7 +41,6 @@ public class DishController {
                                             "Spicy",
                                             "Vegan"
                                         ],
-                                        "image_url": "https://img.obox.com.ua/915e9be8-a36b-40d9-bf9b-aeedc180958e/762dbe8e-4cfc-40f0-af3f-02cfc67da709.jpg",
                                         "state": "ENABLED"
                                     }"""
                     ))),
@@ -109,8 +108,7 @@ public class DishController {
                                                                      "Spicy",
                                                                      "Vegan"
                                                                  ],
-                                                               "state": "ENABLED or DISABLED",
-                                                               "images": "Base64 only JPG and PNG (not necessary)"
+                                                               "state": "ENABLED or DISABLED"
                                                              }""")
                                                      Dish request, @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
@@ -151,8 +149,7 @@ public class DishController {
                     "Spicy",
                     "Vegan"
                 ],
-              "state": "ENABLED or DISABLED",
-              "images": "Base64 only JPG and PNG (not necessary)"
+              "state": "ENABLED or DISABLED"
             }""")
     Dish request, @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");

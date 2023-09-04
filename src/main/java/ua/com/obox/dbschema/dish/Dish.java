@@ -3,14 +3,15 @@ package ua.com.obox.dbschema.dish;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
+import ua.com.obox.dbschema.attachment.Attachment;
+import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.EmptyIntegerDeserializer;
-import ua.com.obox.dbschema.tools.ftp.UploadDishImageFTP;
-import ua.com.obox.dbschema.tools.logging.EmptyStringDeserializer;
+import ua.com.obox.dbschema.tools.attachment.ApplicationContextProvider;
+import ua.com.obox.dbschema.tools.ftp.AttachmentFTP;
 
 import javax.persistence.*;
 import java.util.List;
@@ -41,8 +42,6 @@ public class Dish {
     @JsonDeserialize(using = EmptyIntegerDeserializer.class)
     private Integer weight;
     @JsonIgnore
-    private String imageUrl;
-    @JsonIgnore
     private String allergens;
     @Transient
     @JsonProperty("allergens")
@@ -57,10 +56,6 @@ public class Dish {
     private String associatedId;
     @Transient
     private String category_id;
-    @Transient
-    @Schema(description = "Dish picture")
-    @JsonDeserialize(using = EmptyStringDeserializer.class)
-    private String images;
 
     public void setListAllergens(List<String> listAllergens) {
         this.listAllergens = listAllergens;
@@ -81,12 +76,18 @@ public class Dish {
 
     @PreRemove
     public void beforeRemove() {
-        if (this.getImageUrl() != null) {
+        AttachmentRepository attachmentRepository = ApplicationContextProvider.getBean(AttachmentRepository.class);
+        List<Attachment> attachments = attachmentRepository.findAllByReferenceId(this.dishId);
+        if (!attachments.isEmpty()) {
             try {
-                UploadDishImageFTP.deleteImage(this.getAssociatedId(), this.getImageUrl());
+                for (Attachment attachment : attachments) {
+                    AttachmentFTP.deleteAttachment(attachment.getAttachmentUrl());
+                    attachmentRepository.delete(attachment);
+                }
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
     }
+
 }
