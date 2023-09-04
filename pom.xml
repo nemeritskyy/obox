@@ -10,13 +10,51 @@
     </parent>
     <groupId>ua.com.obox</groupId>
     <artifactId>obox</artifactId>
-    <version>0.0.1-HEROKUDEPLOY</version>
+    <version>0.0.24-DEV</version>
     <packaging>war</packaging>
     <name>obox</name>
     <description>obox</description>
     <properties>
         <java.version>19</java.version>
     </properties>
+    <profiles>
+        <profile>
+            <id>local</id>
+            <properties>
+                <activatedProperties>local</activatedProperties>
+                <heroku.appName></heroku.appName>
+            </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+        <profile>
+            <id>prod</id>
+            <properties>
+                <activatedProperties>prod</activatedProperties>
+                <heroku.appName>oboxapp-prod</heroku.appName>
+            </properties>
+        </profile>
+        <profile>
+            <id>dev</id>
+            <properties>
+                <activatedProperties>dev</activatedProperties>
+                <heroku.appName>oboxapp-dev</heroku.appName>
+            </properties>
+<!--            <build>-->
+<!--                <plugins>-->
+<!--                    <plugin>-->
+<!--                        <groupId>org.apache.maven.plugins</groupId>-->
+<!--                        <artifactId>maven-surefire-plugin</artifactId>-->
+<!--                        <version>3.0.0-M5</version>-->
+<!--                        <configuration>-->
+<!--                            <skipTests>true</skipTests>-->
+<!--                        </configuration>-->
+<!--                    </plugin>-->
+<!--                </plugins>-->
+<!--            </build>-->
+        </profile>
+    </profiles>
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -116,6 +154,19 @@
         </dependency>
     </dependencies>
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+                <excludes>
+                    <exclude>config/*</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/resources/config/${activatedProperties}</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
         <finalName>${project.artifactId}</finalName>
         <plugins>
             <plugin>
@@ -167,7 +218,7 @@
                 <artifactId>heroku-maven-plugin</artifactId>
                 <version>3.0.7</version>
                 <configuration>
-                    <appName>oboxapp</appName>
+                    <appName>${heroku.appName}</appName>
                 </configuration>
             </plugin>
         </plugins>
