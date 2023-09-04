@@ -2,6 +2,7 @@ package ua.com.obox.dbschema.dish;
 
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Session;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.category.Category;
@@ -35,6 +36,8 @@ public class DishService {
     private final UpdateServiceHelper serviceHelper;
     private final RequiredServiceHelper requiredServiceHelper;
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
+    @Value("${application.image-dns}")
+    private String imageDns;
 
     public DishResponse getDishById(String dishId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
@@ -67,7 +70,7 @@ public class DishService {
                     .price(dish.getPrice())
                     .weight(dish.getWeight())
                     .calories(dish.getCalories())
-                    .imageUrl(dish.getImageUrl() == null ? null : String.format("%s/%s/%s", "https://img.obox.com.ua", dish.getAssociatedId(), dish.getImageUrl()))
+                    .imageUrl(dish.getImageUrl() == null ? null : String.format("%s/%s/%s", imageDns, dish.getAssociatedId(), dish.getImageUrl()))
                     .state(dish.getState())
                     .allergens(allergens)
                     .tags(tags)

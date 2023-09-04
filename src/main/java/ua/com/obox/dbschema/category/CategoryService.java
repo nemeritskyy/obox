@@ -1,6 +1,7 @@
 package ua.com.obox.dbschema.category;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.menu.Menu;
@@ -32,6 +33,8 @@ public class CategoryService {
     private final UpdateServiceHelper serviceHelper;
     private final RequiredServiceHelper requiredServiceHelper;
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
+    @Value("${application.image-dns}")
+    private String imageDns;
 
     public List<DishResponse> getAllDishesByCategoryId(String categoryId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
@@ -64,7 +67,7 @@ public class CategoryService {
                             .calories(dish.getCalories())
                             .allergens(allergensList)
                             .tags(tagsList)
-                            .imageUrl(dish.getImageUrl() == null ? null : String.format("%s/%s/%s", "https://img.obox.com.ua", dish.getAssociatedId(), dish.getImageUrl()))
+                            .imageUrl(dish.getImageUrl() == null ? null : String.format("%s/%s/%s", imageDns, dish.getAssociatedId(), dish.getImageUrl()))
                             .state(dish.getState())
                             .build();
                 })
