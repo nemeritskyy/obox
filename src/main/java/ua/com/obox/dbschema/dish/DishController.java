@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -56,8 +57,9 @@ public class DishController {
                                     }"""
                     )))
     })
-    public ResponseEntity<DishResponse> getDishById(@PathVariable String dishId) {
-        DishResponse dishResponse = service.getDishById(dishId);
+    public ResponseEntity<DishResponse> getDishById(@PathVariable String dishId, @RequestHeader HttpHeaders httpHeaders) {
+        String acceptLanguage = httpHeaders.getFirst("Accept-Language");
+        DishResponse dishResponse = service.getDishById(dishId, acceptLanguage);
 
         return ResponseEntity.ok(dishResponse);
     }
@@ -110,8 +112,9 @@ public class DishController {
                                                                "state": "ENABLED or DISABLED",
                                                                "images": "Base64 only JPG and PNG (not necessary)"
                                                              }""")
-                                                     Dish request) {
-        DishResponseId response = service.createDish(request);
+                                                     Dish request, @RequestHeader HttpHeaders httpHeaders) {
+        String acceptLanguage = httpHeaders.getFirst("Accept-Language");
+        DishResponseId response = service.createDish(request, acceptLanguage);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -151,8 +154,9 @@ public class DishController {
               "state": "ENABLED or DISABLED",
               "images": "Base64 only JPG and PNG (not necessary)"
             }""")
-    Dish request) {
-        service.patchDishById(dishId, request);
+    Dish request, @RequestHeader HttpHeaders httpHeaders) {
+        String acceptLanguage = httpHeaders.getFirst("Accept-Language");
+        service.patchDishById(dishId, request, acceptLanguage);
         return ResponseEntity.noContent().build();
     }
 
@@ -171,8 +175,9 @@ public class DishController {
                                     }"""
                     )))
     })
-    public ResponseEntity<Void> deleteDishById(@PathVariable String dishId) {
-        service.deleteDishById(dishId);
+    public ResponseEntity<Void> deleteDishById(@PathVariable String dishId, @RequestHeader HttpHeaders httpHeaders) {
+        String acceptLanguage = httpHeaders.getFirst("Accept-Language");
+        service.deleteDishById(dishId, acceptLanguage);
         return ResponseEntity.noContent().build();
     }
 }
