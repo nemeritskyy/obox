@@ -56,16 +56,6 @@ public class Validator {
         return null;
     }
 
-    public static boolean validateImage(String image, LoggingService loggingService) {
-        byte[] imageData = new byte[0];
-        try {
-            imageData = Base64.getDecoder().decode(image);
-        } catch (Exception exception) {
-            System.out.println("Incorrect file");
-        }
-        return detectImageType(imageData, loggingService) != null && image.length() > 30000;
-    }
-
     public static String detectImageType(byte[] imageData, LoggingService loggingService) {
         if (imageData.length >= 8) {
             byte[] jpegSignature = {(byte) 0xFF, (byte) 0xD8};

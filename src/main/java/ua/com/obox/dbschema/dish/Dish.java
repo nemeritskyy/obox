@@ -9,6 +9,7 @@ import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.EmptyIntegerDeserializer;
+import ua.com.obox.dbschema.tools.ftp.UploadDishImageFTP;
 import ua.com.obox.dbschema.tools.logging.EmptyStringDeserializer;
 
 import javax.persistence.*;
@@ -59,12 +60,33 @@ public class Dish {
     @Transient
     @Schema(description = "Dish picture")
     @JsonDeserialize(using = EmptyStringDeserializer.class)
-    private String image;
+    private String images;
+
+    public void setListAllergens(List<String> listAllergens) {
+        this.listAllergens = listAllergens;
+        this.allergens = String.join("::", listAllergens);
+    }
+
+    public void setListTags(List<String> listTags) {
+        this.listTags = listTags;
+        this.tags = String.join("::", listTags);
+    }
 
     @JsonIgnore
     public void setCategoryIdForDish(String category_id) {
         Category category = new Category();
         category.setCategoryId(category_id);
         this.category = category;
+    }
+
+    @PreRemove
+    public void beforeRemove() {
+        if (this.getImageUrl() != null) {
+            try {
+                UploadDishImageFTP.deleteImage(this.getAssociatedId(), this.getImageUrl());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
     }
 }

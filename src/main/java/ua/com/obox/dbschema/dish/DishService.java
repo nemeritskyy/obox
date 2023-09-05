@@ -7,7 +7,6 @@ import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.tools.RequiredServiceHelper;
-import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
@@ -81,7 +80,6 @@ public class DishService extends AbstractResponseService {
     public DishResponseId createDish(Dish request) {
         String associatedId = null;
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
-        String image = (request.getImage() != null) ? request.getImage() : "";
         Category category;
 
         loggingMessage = "createDish";
@@ -113,19 +111,11 @@ public class DishService extends AbstractResponseService {
         fieldErrors.put("description", serviceHelper.updateVarcharField(dish::setDescription, request.getDescription(), "Description", loggingMessage));
 
         if (request.getAllergens() != null) {
-            List<String> allergensList = Arrays.asList(request.getAllergens());
-            String sortedAndJoinedAllergens = allergensList.stream()
-                    .sorted()
-                    .collect(Collectors.joining("::"));
-            dish.setAllergens(sortedAndJoinedAllergens);
+            dish.setAllergens(request.getAllergens());
         }
 
         if (request.getTags() != null) {
-            List<String> tagsList = Arrays.asList(request.getTags());
-            String sortedAndJoinedTags = tagsList.stream()
-                    .sorted()
-                    .collect(Collectors.joining("::"));
-            dish.setAllergens(sortedAndJoinedTags);
+            dish.setTags(request.getTags());
         }
 
         fieldErrors.put("state", serviceHelper.updateState(dish::setState, request.getState(), "State", loggingMessage));
@@ -137,8 +127,8 @@ public class DishService extends AbstractResponseService {
 
         dishRepository.save(dish);
 
-        if (!image.isEmpty() && Validator.validateImage(image, loggingService)) {
-            dish.setImageUrl(dishImageFTP.uploadImage(request.getImage(), associatedId, dish.getDishId(), loggingService));
+        if (request.getImages() != null) {
+            dish.setImageUrl(dishImageFTP.uploadImage(request.getImages(), associatedId, dish.getDishId(), loggingService));
         }
 
         loggingService.log(LogLevel.INFO, String.format("%s %s UUID=%s %s", loggingMessage, request.getName(), dish.getDishId(), Message.CREATE.getMessage()));
@@ -150,7 +140,6 @@ public class DishService extends AbstractResponseService {
     public void patchDishById(String dishId, Dish request) {
         Dish dish;
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
-        String image = (request.getImage() != null) ? request.getImage() : "";
         loggingMessage = "patchDishById";
         responseMessage = String.format("Dish with id %s", dishId);
 
@@ -220,9 +209,9 @@ public class DishService extends AbstractResponseService {
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
-        if (!image.isEmpty() && Validator.validateImage(image, loggingService)) {
-            dishImageFTP.deleteImage(dish.getAssociatedId(), dish.getImageUrl(), loggingService); // delete old image
-            dish.setImageUrl(dishImageFTP.uploadImage(request.getImage(), dish.getAssociatedId(), dish.getDishId(), loggingService)); // upload new image
+        if (request.getImages() != null) {
+            UploadDishImageFTP.deleteImage(dish.getAssociatedId(), dish.getImageUrl()); // delete old image
+            dish.setImageUrl(dishImageFTP.uploadImage(request.getImages(), dish.getAssociatedId(), dish.getDishId(), loggingService)); // upload new image
         }
 
         dishRepository.save(dish);
@@ -241,7 +230,7 @@ public class DishService extends AbstractResponseService {
         });
 
         if (dish.getImageUrl() != null) {
-            dishImageFTP.deleteImage(dish.getAssociatedId(), dish.getImageUrl(), loggingService);
+            UploadDishImageFTP.deleteImage(dish.getAssociatedId(), dish.getImageUrl());
         }
 
         dishRepository.delete(dish);
