@@ -1,57 +1,73 @@
 package ua.com.obox.dbschema.tools;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
-import java.util.Base64;
-
+import javax.annotation.PostConstruct;
+import java.util.ResourceBundle;
 
 @RequiredArgsConstructor
+@Service
 public class Validator {
-    public static String validateName(String loggingMessage, String name, LoggingService loggingService) {
+    private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
+    private final LoggingService loggingService;
+    private static LoggingService staticLoggingService;
+
+    @PostConstruct
+    private void init() {
+        staticLoggingService = this.loggingService;
+    }
+
+    public static String validateNameTranslationSupport(String name, String acceptLanguage) {
         if (name == null || name.trim().isEmpty()) {
-            loggingService.log(LogLevel.ERROR, String.format("%s %s %s", loggingMessage, Message.ERROR.getMessage(), Message.REQUIRED.getMessage()));
-            return Message.REQUIRED.getMessage();
+            staticLoggingService.log(LogLevel.ERROR,
+                    translation.getString("en-US.nameRequired")
+            );
+            return translation.getString(acceptLanguage + ".nameRequired");
         }
-        name = name.trim().replaceAll("\\s+", " "); // delete whitespaces
+        name = removeExtraSpaces(name);
         if (name.length() > 200) {
-            loggingService.log(LogLevel.ERROR, String.format("%s %s %s", loggingMessage, Message.ERROR.getMessage(), Message.LIMIT_200.getMessage()));
-            return Message.LIMIT_200.getMessage();
+            staticLoggingService.log(LogLevel.ERROR,
+                    translation.getString("en-US.nameLimit")
+            );
+            return translation.getString(acceptLanguage + ".nameLimit");
         }
         return null;
     }
 
-    public static String validateVarchar(String loggingMessage, String fieldName, String str, LoggingService loggingService) {
-        if (str != null && str.trim().length() == 0 || str != null && str.length() > 255) {
-            loggingService.log(LogLevel.ERROR, String.format("%s %s %s", loggingMessage, Message.ERROR.getMessage(), Message.LIMIT_255.getMessage()));
-            return String.format("%s %s", fieldName, Message.LIMIT_255.getMessage());
+    public static String validateVarcharTranslationSupport(String str, String fieldName, String acceptLanguage) {
+        if (str != null && str.trim().isEmpty() || str != null && removeExtraSpaces(str).length() > 255) {
+            staticLoggingService.log(LogLevel.ERROR,
+                    String.format(translation.getString("en-US.varcharLimit"), translation.getString("en-US." + fieldName))
+            );
+            return String.format(translation.getString(acceptLanguage + ".varcharLimit"), translation.getString(acceptLanguage + "." + fieldName));
         }
         return null;
     }
 
-    public static String languageCode(String loggingMessage, String code, LoggingService loggingService) {
+    public static String languageCode(String loggingMessage, String code, String acceptLanguage) {
         if (code == null || code.length() < 2 || code.length() > 3) {
-            loggingService.log(LogLevel.ERROR, String.format("%s %s", loggingMessage, Message.LANGUAGE.getMessage()));
-            return Message.LANGUAGE.getMessage();
+            staticLoggingService.log(LogLevel.ERROR, String.format("%s %s", loggingMessage, translation.getString("en-US.languageCode")));
+            return translation.getString(acceptLanguage + ".languageCode");
         }
         return null;
     }
 
-    public static String positiveInteger(String field, Number inputInteger, int maxInteger, LoggingService loggingService) {
+    public static String positiveInteger(String field, Number inputInteger, int maxInteger, String acceptLanguage) {
         if (inputInteger != null && inputInteger.doubleValue() < 0 || inputInteger != null && inputInteger.doubleValue() > maxInteger) {
-            String response = String.format("%s %s %d", field, Message.LIMIT.getMessage(), maxInteger);
-            loggingService.log(LogLevel.ERROR, response);
-            return response;
+            staticLoggingService.log(LogLevel.ERROR, String.format(translation.getString("en-US.integerRange"), translation.getString("en-US." + field), maxInteger));
+            return String.format(translation.getString(acceptLanguage + ".integerRange"), translation.getString(acceptLanguage + "." + field), maxInteger);
         }
         return null;
     }
 
-    public static String validateState(String loggingMessage, String state, LoggingService loggingService) {
+    public static String validateState(String state, String acceptLanguage) {
         if (state == null || (!state.equals(State.ENABLED) && !state.equals(State.DISABLED))) {
-            loggingService.log(LogLevel.ERROR, String.format("%s %s", loggingMessage, Message.BAD_STATE.getMessage()));
-            return Message.BAD_STATE.getMessage();
+            staticLoggingService.log(LogLevel.ERROR, translation.getString("en-US.state"));
+            return String.format(translation.getString(acceptLanguage + ".state"));
         }
         return null;
     }
@@ -81,5 +97,9 @@ public class Validator {
             }
         }
         return true;
+    }
+
+    public static String removeExtraSpaces(String str) {
+        return str.trim().replaceAll("\\s+", " ");
     }
 }

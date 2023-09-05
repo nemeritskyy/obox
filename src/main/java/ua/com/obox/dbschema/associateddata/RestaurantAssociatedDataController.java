@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -64,15 +65,17 @@ public class RestaurantAssociatedDataController {
                                         "path": "/associated/b7830129-53f1-4e1b-xa55-398462697ac0"
                                     }""")))
     })
-    public ResponseEntity<RestaurantAssociatedDataResponse> getAssociatedDataById(@PathVariable String associatedDataId) {
-        RestaurantAssociatedDataResponse associatedDataResponse = associatedDataService.getAssociatedDataById(associatedDataId);
+    public ResponseEntity<RestaurantAssociatedDataResponse> getAssociatedDataById(@PathVariable String associatedDataId, @RequestHeader HttpHeaders httpHeaders) {
+        String acceptLanguage = httpHeaders.getFirst("Accept-Language");
+        RestaurantAssociatedDataResponse associatedDataResponse = associatedDataService.getAssociatedDataById(associatedDataId, acceptLanguage);
         return ResponseEntity.ok(associatedDataResponse);
     }
 
     @DeleteMapping("/{restaurantId}")
     @Hidden
-    public ResponseEntity<Void> deleteAssociatedDataByRestaurantId(@PathVariable String restaurantId) {
-        associatedDataService.deleteAssociatedDataByRestaurantId(restaurantId);
+    public ResponseEntity<Void> deleteAssociatedDataByRestaurantId(@PathVariable String restaurantId, @RequestHeader HttpHeaders httpHeaders) {
+        String acceptLanguage = httpHeaders.getFirst("Accept-Language");
+        associatedDataService.deleteAssociatedDataByRestaurantId(restaurantId, acceptLanguage);
         return ResponseEntity.noContent().build();
     }
 

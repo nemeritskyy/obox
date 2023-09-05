@@ -10,22 +10,24 @@ import ua.com.obox.dbschema.category.CategoryResponse;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.tools.RequiredServiceHelper;
+import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
-import ua.com.obox.dbschema.tools.services.AbstractResponseService;
-import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
+import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class MenuService extends AbstractResponseService {
+public class MenuService {
     private final MenuRepository menuRepository;
     private final RestaurantRepository restaurantRepository;
     private final CategoryRepository categoryRepository;
@@ -33,18 +35,15 @@ public class MenuService extends AbstractResponseService {
     private final RestaurantAssociatedDataRepository dataRepository;
     private final UpdateServiceHelper serviceHelper;
     private final RequiredServiceHelper requiredServiceHelper;
-    private String loggingMessage;
-    private String responseMessage;
+    private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
 
-    public List<CategoryResponse> getAllCategoriesByMenuId(String menuId) {
-        Menu menu;
-        loggingMessage = "getAllCategoriesByMenuId";
-        responseMessage = String.format("Menu with id %s", menuId);
+    public List<CategoryResponse> getAllCategoriesByMenuId(String menuId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
         var menuInfo = menuRepository.findByMenuId(menuId);
 
-        menu = menuInfo.orElseThrow(() -> {
-            notFoundResponse(menuId);
+        menuInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".menuNotFound", finalAcceptLanguage, menuId);
             return null;
         });
 
@@ -57,22 +56,21 @@ public class MenuService extends AbstractResponseService {
                         .menuId(category.getMenu().getMenuId())
                         .build()).collect(Collectors.toList());
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s %s %d", loggingMessage, menuId, Message.FIND_COUNT.getMessage(), responseList.size()));
+        loggingService.log(LogLevel.INFO, String.format("getAllCategoriesByMenuId %s %s %d", menuId, Message.FIND_COUNT.getMessage(), responseList.size()));
         return responseList;
     }
 
-    public MenuResponse getMenuById(String menuId) {
-        Menu menu;
-        loggingMessage = "getMenuById";
-        responseMessage = String.format("Menu with id %s", menuId);
+    public MenuResponse getMenuById(String menuId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
         var menuInfo = menuRepository.findByMenuId(menuId);
 
-        menu = menuInfo.orElseThrow(() -> {
-            notFoundResponse(menuId);
+        Menu menu = menuInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".menuNotFound", finalAcceptLanguage, menuId);
             return null;
         });
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, menuId));
+        loggingService.log(LogLevel.INFO, String.format("getMenuById %s", menuId));
         return MenuResponse.builder()
                 .menuId(menu.getMenuId())
                 .name(menu.getName())
@@ -81,31 +79,27 @@ public class MenuService extends AbstractResponseService {
                 .build();
     }
 
-    public MenuResponseId createMenu(Menu request) {
-        Restaurant restaurant;
-        Menu menu;
+    public MenuResponseId createMenu(Menu request, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
-        loggingMessage = "createMenu";
-        responseMessage = String.format("Restaurant with id %s", request.getRestaurant_id());
 
-        restaurant = restaurantRepository.findByRestaurantId(request.getRestaurant_id())
+        Restaurant restaurant = restaurantRepository.findByRestaurantId(request.getRestaurant_id())
                 .orElseGet(() -> {
-                    fieldErrors.put("restaurant_id", responseMessage + Message.NOT_FOUND.getMessage());
+                    fieldErrors.put("restaurant_id", String.format(translation.getString(finalAcceptLanguage + ".restaurantNotFound"), request.getRestaurant_id()));
                     return null;
                 });
 
-        menu = Menu.builder()
+        Menu menu = Menu.builder()
                 .restaurant(restaurant)
                 .build();
 
-        if (request.getName() != null && !menuRepository.findAllByRestaurant_RestaurantIdAndName(request.getRestaurant_id(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
-            loggingMessage = Message.MENU_EXISTS.getMessage();
-            fieldErrors.put("name", Message.MENU_EXISTS.getMessage());
+        if (request.getName() != null && !menuRepository.findAllByRestaurant_RestaurantIdAndName(request.getRestaurant_id(), Validator.removeExtraSpaces(request.getName())).isEmpty()) {
+            fieldErrors.put("name", translation.getString(finalAcceptLanguage + ".menuExists"));
         } else {
-            fieldErrors.put("name", serviceHelper.updateNameField(menu::setName, request.getName(), "Name", loggingMessage));
+            fieldErrors.put("name", serviceHelper.updateNameField(menu::setName, request.getName(), finalAcceptLanguage));
         }
 
-        fieldErrors.put("language_code", serviceHelper.updateLanguageCode(menu::setLanguage_code, request.getLanguage_code()));
+        fieldErrors.put("language_code", serviceHelper.updateLanguageCode(request.getLanguage_code(), finalAcceptLanguage));
 
 
         if (fieldErrors.size() > 0)
@@ -115,32 +109,29 @@ public class MenuService extends AbstractResponseService {
 
         menuRepository.save(menu);
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s UUID=%s %s", loggingMessage, request.getName(), menu.getMenuId(), Message.CREATE.getMessage()));
+        loggingService.log(LogLevel.INFO, String.format("createMenu %s UUID=%s %s", request.getName(), menu.getMenuId(), Message.CREATE.getMessage()));
 
         return MenuResponseId.builder()
                 .menuId(menu.getMenuId())
                 .build();
     }
 
-    public void patchMenuById(String menuId, Menu request) {
-        Menu menu;
+    public void patchMenuById(String menuId, Menu request, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
-        loggingMessage = "patchMenuById";
-        responseMessage = String.format("Menu with id %s", menuId);
         var menuInfo = menuRepository.findByMenuId(menuId);
 
-        menu = menuInfo.orElseThrow(() -> {
-            notFoundResponse(menuId);
+        Menu menu = menuInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".menuNotFound", finalAcceptLanguage, menuId);
             return null;
         });
 
-        if (request.getName() != null && !menu.getName().equals(request.getName().trim().replaceAll("\\s+", " "))) {
-            if (!menuRepository.findAllByRestaurant_RestaurantIdAndName(menu.getRestaurant().getRestaurantId(), request.getName().trim().replaceAll("\\s+", " ")).isEmpty()) {
-                loggingMessage = Message.MENU_EXISTS.getMessage();
-                fieldErrors.put("name", Message.MENU_EXISTS.getMessage());
+        if (request.getName() != null && !menu.getName().equals(Validator.removeExtraSpaces(request.getName()))) {
+            if (!menuRepository.findAllByRestaurant_RestaurantIdAndName(menu.getRestaurant().getRestaurantId(), Validator.removeExtraSpaces(request.getName())).isEmpty()) {
+                fieldErrors.put("name", translation.getString(finalAcceptLanguage + ".menuExists"));
             } else {
-                fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), menu, loggingMessage));
+                fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), menu, finalAcceptLanguage));
             }
         }
 
@@ -148,30 +139,19 @@ public class MenuService extends AbstractResponseService {
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         menuRepository.save(menu);
-        loggingService.log(LogLevel.INFO, String.format("%s %s %s", loggingMessage, menuId, Message.UPDATE.getMessage()));
+        loggingService.log(LogLevel.INFO, String.format("patchMenuById %s %s", menuId, Message.UPDATE.getMessage()));
     }
 
-    public void deleteMenuById(String menuId) {
-        Menu menu;
-        loggingMessage = "deleteMenuById";
-        responseMessage = String.format("Menu with id %s", menuId);
+    public void deleteMenuById(String menuId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
         var menuInfo = menuRepository.findByMenuId(menuId);
-        menu = menuInfo.orElseThrow(() -> {
-            notFoundResponse(menuId);
+        Menu menu = menuInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".menuNotFound", finalAcceptLanguage, menuId);
             return null;
         });
 
         menuRepository.delete(menu);
-        loggingService.log(LogLevel.INFO, String.format("%s %s NAME=%s %s", loggingMessage, menuId, menu.getName(), Message.DELETE.getMessage()));
-    }
-
-    @Override
-    public void notFoundResponse(String entityId) {
-        LoggingResponseHelper.loggingThrowException(
-                entityId,
-                LogLevel.ERROR, HttpStatus.NOT_FOUND,
-                loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
-                loggingService);
+        loggingService.log(LogLevel.INFO, String.format("deleteMenuById %s NAME=%s %s", menuId, menu.getName(), Message.DELETE.getMessage()));
     }
 }

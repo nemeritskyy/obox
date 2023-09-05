@@ -10,24 +10,25 @@ import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.menu.MenuResponse;
 import ua.com.obox.dbschema.tenant.Tenant;
 import ua.com.obox.dbschema.tenant.TenantRepository;
+import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
-import ua.com.obox.dbschema.tools.services.AbstractResponseService;
-import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
+import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class RestaurantService extends AbstractResponseService {
+public class RestaurantService{
     @PersistenceContext
     private EntityManager entityManager;
     private final RestaurantRepository restaurantRepository;
@@ -36,18 +37,15 @@ public class RestaurantService extends AbstractResponseService {
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final RequiredServiceHelper requiredServiceHelper;
-    private String loggingMessage;
-    private String responseMessage;
+    private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
 
-    public List<MenuResponse> getAllMenusByRestaurantId(String restaurantId) {
-        Restaurant restaurant;
-        loggingMessage = "getAllMenusByRestaurantId";
-        responseMessage = String.format("Menus with Restaurant id %s", restaurantId);
+    public List<MenuResponse> getAllMenusByRestaurantId(String restaurantId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
         var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
 
-        restaurant = restaurantInfo.orElseThrow(() -> {
-            notFoundResponse(restaurantId);
+        restaurantInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".restaurantNotFound", finalAcceptLanguage, restaurantId);
             return null;
         });
 
@@ -61,22 +59,21 @@ public class RestaurantService extends AbstractResponseService {
                         .language(menu.getLanguage_code())
                         .build()).collect(Collectors.toList());
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s %s %d", loggingMessage, restaurantId, Message.FIND_COUNT.getMessage(), responseList.size()));
+        loggingService.log(LogLevel.INFO, String.format("getAllMenusByRestaurantId %s %s %d", restaurantId, Message.FIND_COUNT.getMessage(), responseList.size()));
         return responseList;
     }
 
-    public RestaurantResponse getRestaurantById(String restaurantId) {
-        Restaurant restaurant;
-        loggingMessage = "getRestaurantById";
-        responseMessage = String.format("Restaurant with id %s", restaurantId);
+    public RestaurantResponse getRestaurantById(String restaurantId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
         var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
 
-        restaurant = restaurantInfo.orElseThrow(() -> {
-            notFoundResponse(restaurantId);
+        Restaurant restaurant = restaurantInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".restaurantNotFound", finalAcceptLanguage, restaurantId);
             return null;
         });
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s", loggingMessage, restaurantId));
+        loggingService.log(LogLevel.INFO, String.format("getRestaurantById %s", restaurantId));
         return RestaurantResponse.builder()
                 .restaurantId(restaurant.getRestaurantId())
                 .address(restaurant.getAddress())
@@ -85,88 +82,73 @@ public class RestaurantService extends AbstractResponseService {
                 .build();
     }
 
-    public RestaurantResponseId createRestaurant(Restaurant request) {
-        Tenant tenant;
+    public RestaurantResponseId createRestaurant(Restaurant request, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
-        Restaurant restaurant;
-        loggingMessage = "createRestaurant";
-        responseMessage = String.format("Tenant with id %s", request.getTenant_id());
 
         request.setTenantIdForRestaurant(request.getTenant_id());
 
-        tenant = tenantRepository.findByTenantId(request.getTenant().getTenantId()).orElseGet(() -> {
-            fieldErrors.put("tenant_id", responseMessage + Message.NOT_FOUND.getMessage());
+        Tenant tenant = tenantRepository.findByTenantId(request.getTenant().getTenantId()).orElseGet(() -> {
+            fieldErrors.put("tenant_id", String.format(translation.getString(finalAcceptLanguage + ".tenantNotFound"), request.getTenant_id()));
             return null;
         });
 
-        restaurant = Restaurant.builder()
+        Restaurant restaurant = Restaurant.builder()
                 .tenant(tenant)
                 .build();
 
-        fieldErrors.put("name", serviceHelper.updateNameField(restaurant::setName, request.getName(), "Name", loggingMessage));
-        fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "Address", loggingMessage));
+        fieldErrors.put("name", serviceHelper.updateNameField(restaurant::setName, request.getName(), finalAcceptLanguage));
+        fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         restaurantRepository.save(restaurant);
 
-        loggingService.log(LogLevel.INFO, String.format("%s %s UUID=%s %s", loggingMessage, request.getName(), restaurant.getRestaurantId(), Message.CREATE.getMessage()));
+        loggingService.log(LogLevel.INFO, String.format("createRestaurant %s UUID=%s %s", request.getName(), restaurant.getRestaurantId(), Message.CREATE.getMessage()));
         return RestaurantResponseId.builder()
                 .restaurantId(restaurant.getRestaurantId())
                 .build();
     }
 
-    public void patchRestaurantById(String restaurantId, Restaurant request) {
-        Restaurant restaurant;
+    public void patchRestaurantById(String restaurantId, Restaurant request, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
-        loggingMessage = "patchRestaurantById";
-        responseMessage = String.format("Restaurant with id %s", restaurantId);
 
         try (Session session = entityManager.unwrap(Session.class)) {
             var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
 
-            restaurant = restaurantInfo.orElseThrow(() -> {
-                notFoundResponse(restaurantId);
+            Restaurant restaurant = restaurantInfo.orElseThrow(() -> {
+                ExceptionTools.notFoundResponse(".restaurantNotFound", finalAcceptLanguage, restaurantId);
                 return null;
             });
 
             session.evict(restaurant); // unbind the session
+
+            if (request.getName() != null)
+                fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), restaurant, finalAcceptLanguage));
+            if (request.getAddress() != null)
+                fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
+
+            if (fieldErrors.size() > 0)
+                throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+
+            restaurantRepository.save(restaurant);
         }
-
-        if (request.getName() != null)
-            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), restaurant, loggingMessage));
-        if (request.getAddress() != null)
-            fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "Address", loggingMessage));
-
-        if (fieldErrors.size() > 0)
-            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
-
-        restaurantRepository.save(restaurant);
-        loggingService.log(LogLevel.INFO, String.format("%s %s %s", loggingMessage, restaurantId, Message.UPDATE.getMessage()));
+        loggingService.log(LogLevel.INFO, String.format("patchRestaurantById %s %s", restaurantId, Message.UPDATE.getMessage()));
     }
 
-    public void deleteRestaurantById(String restaurantId) {
-        Restaurant restaurant;
-        loggingMessage = "restaurantId";
-        responseMessage = String.format("Restaurant with id %s", restaurantId);
+    public void deleteRestaurantById(String restaurantId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
         var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
 
-        restaurant = restaurantInfo.orElseThrow(() -> {
-            notFoundResponse(restaurantId);
+        Restaurant restaurant = restaurantInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".restaurantNotFound", finalAcceptLanguage, restaurantId);
             return null;
         });
 
         restaurantRepository.delete(restaurant);
-        loggingService.log(LogLevel.INFO, String.format("%s %s NAME=%s %s", loggingMessage, restaurantId, restaurant.getName(), Message.DELETE.getMessage()));
-    }
-
-    @Override
-    public void notFoundResponse(String entityId) {
-        LoggingResponseHelper.loggingThrowException(
-                entityId,
-                LogLevel.ERROR, HttpStatus.NOT_FOUND,
-                loggingMessage, responseMessage + Message.NOT_FOUND.getMessage(),
-                loggingService);
+        loggingService.log(LogLevel.INFO, String.format("restaurantId %s NAME=%s %s", restaurantId, restaurant.getName(), Message.DELETE.getMessage()));
     }
 }

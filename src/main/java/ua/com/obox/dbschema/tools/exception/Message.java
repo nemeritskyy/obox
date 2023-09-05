@@ -14,7 +14,7 @@ public enum Message {
     REQUIRED("Field name is required"),
     LIMIT_200("Name field must contain from 1 to 200 characters"),
     LIMIT_255("field must contain from 1 to 255 characters"),
-    LIMIT("must be in the range of 0 to"),
+    LIMIT("must be in the range of 1 to"),
     BAD_STATE("The state is incorrect"),
     ERROR("ERROR"),
     DELETE("deleted"),
