@@ -77,19 +77,20 @@ public class Validator {
         if (imageData.length >= 8) {
             byte[] jpegSignature = {(byte) 0xFF, (byte) 0xD8};
             byte[] pngSignature = {(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
-            byte[] heicSignature = {(byte) 0x49, (byte) 0x49, (byte) 0xBC};
 
             if (startsWith(imageData, jpegSignature)) {
                 return ".jpg";
             } else if (startsWith(imageData, pngSignature)) {
                 return ".png";
-            } else if (startsWith(imageData, heicSignature)) {
-                return ".heic";
             }
 
             String svgContent = new String(imageData, StandardCharsets.UTF_8);
             if (svgContent.trim().startsWith("<?xml")) {
                 return ".svg";
+            }
+
+            if (imageData[4] == 0x66 && imageData[5] == 0x74 && imageData[6] == 0x79 && imageData[7] == 0x70) {
+                return ".heic";
             }
         }
 

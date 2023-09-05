@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.tools.ftp;
 
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPSClient;
 import org.apache.commons.net.util.TrustManagerUtils;
@@ -34,98 +35,108 @@ public class AttachmentFTP {
     public AttachmentFTP(FTPConfiguration ftpConfiguration, DishRepository dishRepository, LoggingService loggingService) {
         this.dishRepository = dishRepository;
         staticLoggingService = loggingService;
-        this.ftpConfiguration = ftpConfiguration;
+        AttachmentFTP.ftpConfiguration = ftpConfiguration;
     }
 
     public String uploadAttachment(String attachment, String referenceId, String referenceType, String attachmentUUID, String acceptLanguage) {
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
         String path = "bad-associated";
-        boolean containsReferenceType = false;
 
-        if (referenceType.equals(ReferenceType.DISH.toString())) {
-            var dishInfo = dishRepository.findByDishId(referenceId);
-
-            Dish dish = dishInfo.orElseGet(() -> {
-                fieldErrors.put("reference_id", String.format(translation.getString(acceptLanguage + ".dishNotFound"), referenceId));
-                return null;
-            });
-            if (dish != null)
-                path = dish.getAssociatedId();
+        if (ReferenceType.DISH.toString().equals(Validator.removeExtraSpaces(referenceType).toUpperCase())) {
+            path = getDishAssociatedPath(referenceId, acceptLanguage, fieldErrors);
         }
 
-        for (ReferenceType type : ReferenceType.values()) {
-            if (type.name().equals(referenceType)) {
-                containsReferenceType = true;
-                break;
-            }
-        }
-        if (!containsReferenceType) {
+        if (!isValidReferenceType(Validator.removeExtraSpaces(referenceType).toUpperCase())) {
             fieldErrors.put("reference_type", translation.getString(acceptLanguage + ".badReferenceType"));
         }
 
-        String[] imageCheckMetaData = attachment.split(",");
-        byte[] imageData = new byte[0];
-        imageData = imageCheckMetaData.length == 1 ? Base64.getDecoder().decode(attachment.getBytes()) : Base64.getDecoder().decode(imageCheckMetaData[1]);
-
+        byte[] imageData = decodeImageData(attachment);
         String fileType = Validator.detectImageType(imageData, staticLoggingService);
 
         if (fileType == null) {
             fieldErrors.put("file_type", translation.getString(acceptLanguage + ".badFileType"));
         }
 
-        if (fieldErrors.size() > 0)
+        if (fieldErrors.size() > 0) {
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+        }
 
         if (fileType != null) {
             String fileName = attachmentUUID + fileType;
-
-            FTPSClient ftpClient = new FTPSClient();
-            ftpClient.setTrustManager(TrustManagerUtils.getAcceptAllTrustManager());
-            try {
-                loggingMessage = "Before connecting to FTP server";
-                ftpClient.connect(ftpConfiguration.getServer(), ftpConfiguration.getPort());
-                loggingMessage = "Logging in to FTP server";
-                ftpClient.login(ftpConfiguration.getUser(), ftpConfiguration.getPass());
-                loggingMessage = "Logged in to FTP server";
-
-                ftpClient.setFileType(ftpClient.BINARY_FILE_TYPE);
-                ftpClient.enterLocalPassiveMode();
-
-                InputStream inputStream = new ByteArrayInputStream(imageData);
-
-                if (!ftpClient.changeWorkingDirectory(path)) {
-                    ftpClient.makeDirectory(path);
-                }
-
-                ftpClient.changeWorkingDirectory(path);
-
-                loggingMessage = "Start uploading file: " + fileName;
-                boolean done = ftpClient.storeFile(fileName, inputStream);
-                System.out.println("load to: " + fileName);
-                inputStream.close();
-                if (done) {
-                    loggingMessage = "The file " + fileName + " is uploaded successfully.";
-                } else {
-                    loggingMessage = "Failed to upload the file " + fileName;
-                }
-            } catch (IOException ex) {
-                loggingMessage = "Error: " + ex.getMessage();
-                ex.printStackTrace();
-            } finally {
-                staticLoggingService.log(LogLevel.INFO, loggingMessage + " uuid=" + referenceId);
-                try {
-                    if (ftpClient.isConnected()) {
-                        ftpClient.logout();
-                        ftpClient.disconnect();
-                    }
-                } catch (IOException ex) {
-                    staticLoggingService.log(LogLevel.ERROR, ex + " uuid=" + referenceId);
-                    ex.printStackTrace();
-                }
-            }
+            uploadFileToFTP(path, fileName, imageData);
             return path + "/" + fileName;
         }
         return null;
+    }
+
+    private String getDishAssociatedPath(String referenceId, String acceptLanguage, Map<String, String> fieldErrors) {
+        var dishInfo = dishRepository.findByDishId(referenceId);
+        Dish dish = dishInfo.orElseGet(() -> {
+            fieldErrors.put("reference_id", String.format(translation.getString(acceptLanguage + ".dishNotFound"), referenceId));
+            return null;
+        });
+        return dish != null ? dish.getAssociatedId() : "bad-associated";
+    }
+
+    private boolean isValidReferenceType(String referenceType) {
+        for (ReferenceType type : ReferenceType.values()) {
+            if (type.name().equals(referenceType)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private byte[] decodeImageData(String attachment) {
+        String[] imageCheckMetaData = attachment.split(",");
+        return imageCheckMetaData.length == 1 ? Base64.getDecoder().decode(attachment.getBytes()) : Base64.getDecoder().decode(imageCheckMetaData[1]);
+    }
+
+    private void uploadFileToFTP(String path, String fileName, byte[] imageData) {
+        FTPSClient ftpClient = new FTPSClient();
+        ftpClient.setTrustManager(TrustManagerUtils.getAcceptAllTrustManager());
+
+        try {
+            loggingMessage = "Before connecting to FTP server";
+            ftpClient.connect(ftpConfiguration.getServer(), ftpConfiguration.getPort());
+            loggingMessage = "Logging in to FTP server";
+            ftpClient.login(ftpConfiguration.getUser(), ftpConfiguration.getPass());
+            loggingMessage = "Logged in to FTP server";
+
+            ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+            ftpClient.enterLocalPassiveMode();
+
+            InputStream inputStream = new ByteArrayInputStream(imageData);
+
+            if (!ftpClient.changeWorkingDirectory(path)) {
+                ftpClient.makeDirectory(path);
+            }
+
+            ftpClient.changeWorkingDirectory(path);
+
+            loggingMessage = "Start uploading file: " + fileName;
+            boolean done = ftpClient.storeFile(fileName, inputStream);
+            inputStream.close();
+            if (done) {
+                loggingMessage = "The file " + fileName + " is uploaded successfully.";
+            } else {
+                loggingMessage = "Failed to upload the file " + fileName;
+            }
+        } catch (IOException ex) {
+            loggingMessage = "Error: " + ex.getMessage();
+            ex.printStackTrace();
+        } finally {
+            staticLoggingService.log(LogLevel.INFO, loggingMessage);
+            try {
+                if (ftpClient.isConnected()) {
+                    ftpClient.logout();
+                    ftpClient.disconnect();
+                }
+            } catch (IOException ex) {
+                staticLoggingService.log(LogLevel.ERROR, String.valueOf(ex));
+                ex.printStackTrace();
+            }
+        }
     }
 
     public static void deleteAttachment(String attachmentUrl) {

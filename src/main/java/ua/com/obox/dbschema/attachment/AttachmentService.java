@@ -3,6 +3,7 @@ package ua.com.obox.dbschema.attachment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.ftp.AttachmentFTP;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
@@ -22,7 +23,7 @@ public class AttachmentService {
     public List<AttachmentResponse> getAllAttachmentsByEntityId(String entityId, String acceptLanguage) {
         List<Attachment> attachments = attachmentRepository.findAllByReferenceId(entityId);
 
-        List<AttachmentResponse> responseList = attachments.stream()
+        return attachments.stream()
                 .map(attachment -> AttachmentResponse.builder()
                         .attachmentId(attachment.getAttachmentId())
                         .referenceId(attachment.getReferenceId())
@@ -30,7 +31,6 @@ public class AttachmentService {
                         .attachmentUrl(String.format("%s/%s", attachmentsDns, attachment.getAttachmentUrl()))
                         .build())
                 .collect(Collectors.toList());
-        return responseList;
     }
 
     public AttachmentResponse getAttachmentById(String attachmentId, String acceptLanguage) {
@@ -57,7 +57,7 @@ public class AttachmentService {
         Attachment attachment = Attachment.builder()
                 .attachmentId(attachmentUUID)
                 .referenceId(request.getReferenceId())
-                .referenceType(request.getReferenceType())
+                .referenceType(Validator.removeExtraSpaces(request.getReferenceType()).toUpperCase())
                 .attachmentUrl(attachmentUrl)
                 .build();
         attachmentRepository.save(attachment);
