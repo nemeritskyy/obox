@@ -35,6 +35,8 @@ public class DishResponse {
     private List<String> allergens;
     @JsonProperty("tags")
     private List<String> tags;
+    @JsonProperty("image")
+    private String image;
     @JsonProperty("state")
     private String state;
 }

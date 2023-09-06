@@ -48,6 +48,21 @@ public class DishController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PostMapping("/{dishId}/set-primary-image")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "No Content"),
+            @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
+                    schema = @Schema(example = POST_ADD_PRIMARY_IMAGE_400))),
+            @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
+                    schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
+    })
+    public ResponseEntity<DishResponseId> setPrimaryImage(@RequestBody @Schema(example = POST_ADD_PRIMARY_IMAGE)
+                                                          Dish request, @RequestHeader HttpHeaders httpHeaders, @PathVariable String dishId) {
+        String acceptLanguage = httpHeaders.getFirst("Accept-Language");
+        service.setPrimaryImage(request, dishId, acceptLanguage);
+        return ResponseEntity.noContent().build();
+    }
+
     @PatchMapping("{dishId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),

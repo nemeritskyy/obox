@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.attachment.Attachment;
+import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.tools.RequiredServiceHelper;
@@ -29,6 +31,7 @@ public class DishService {
     private EntityManager entityManager;
     private final DishRepository dishRepository;
     private final CategoryRepository categoryRepository;
+    private final AttachmentRepository attachmentRepository;
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final RequiredServiceHelper requiredServiceHelper;
@@ -69,6 +72,7 @@ public class DishService {
                     .allergens(allergens)
                     .tags(tags)
                     .associatedId(dish.getAssociatedId())
+                    .image(dish.getImage())
                     .build();
         }
     }
@@ -211,6 +215,31 @@ public class DishService {
 
         dishRepository.delete(dish);
         loggingService.log(LogLevel.INFO, String.format("deleteDishById %s NAME=%s %s", dishId, dish.getName(), Message.DELETE.getMessage()));
+    }
+
+    public void setPrimaryImage(Dish request, String dishId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        Map<String, String> fieldErrors = new ResponseErrorMap<>();
+
+        var dishInfo = dishRepository.findByDishId(dishId);
+
+        Dish dish = dishInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".dishNotFound", finalAcceptLanguage, dishId);
+            return null;
+        });
+
+        var attachmentInfo = attachmentRepository.findByAttachmentId(request.getImage());
+
+        attachmentInfo.orElseGet(() -> {
+            fieldErrors.put("image", String.format(translation.getString(finalAcceptLanguage + ".attachmentNotFound"), request.getImage()));
+            return null;
+        });
+
+        if (fieldErrors.size() > 0)
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+
+        dish.setImage(request.getImage());
+        loggingService.log(LogLevel.INFO, String.format("setPrimaryImage set primary image %s for dish with id %s", request.getImage(), dishId));
     }
 }
 

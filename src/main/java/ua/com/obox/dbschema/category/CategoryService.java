@@ -65,6 +65,7 @@ public class CategoryService {
                             .allergens(allergensList)
                             .tags(tagsList)
                             .state(dish.getState())
+                            .image(dish.getImage())
                             .build();
                 })
                 .collect(Collectors.toList());

@@ -3,6 +3,8 @@ package ua.com.obox.dbschema.attachment;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.dish.Dish;
+import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.ftp.AttachmentFTP;
@@ -16,6 +18,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AttachmentService {
     private final AttachmentRepository attachmentRepository;
+    private final DishRepository dishRepository;
     private final AttachmentFTP attachmentFTP;
     @Value("${application.image-dns}")
     private String attachmentsDns;
@@ -75,6 +78,13 @@ public class AttachmentService {
             ExceptionTools.notFoundResponse(".attachmentNotFound", finalAcceptLanguage, attachmentId);
             return null;
         });
+
+        var dishInfo = dishRepository.findByImage(attachment.getAttachmentId());
+
+        if (dishInfo.isPresent()){
+            Dish dish = dishInfo.get();
+            dish.setImage(null);
+        }
 
         AttachmentFTP.deleteAttachment(attachment.getAttachmentUrl());
 
