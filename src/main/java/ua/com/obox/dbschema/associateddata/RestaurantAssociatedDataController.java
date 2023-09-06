@@ -11,6 +11,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import static ua.com.obox.dbschema.tools.examples.RestaurantAssociatedDataResponseExample.*;
+
 @RestController
 @RequestMapping("/associated")
 @RequiredArgsConstructor
@@ -21,49 +23,9 @@ public class RestaurantAssociatedDataController {
     @GetMapping("/{associatedDataId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example =
-                            """
-                                    {
-                                        "associated_id": "b7830129-53f1-4e1b-8a55-398462697ac0",
-                                        "restaurant_id": "9aff3e00-451c-490e-b48b-c4315785b75e",
-                                        "language_code": "en",
-                                        "allergens": [
-                                            "Celery",
-                                            "Cereals containing gluten",
-                                            "Crustaceans",
-                                            "Eggs",
-                                            "Fish",
-                                            "Honey",
-                                            "Lupin",
-                                            "Milk",
-                                            "Molluscs",
-                                            "Mustard",
-                                            "Nuts",
-                                            "Peanuts",
-                                            "Sesame seeds",
-                                            "Soybeans",
-                                            "Sulphur dioxide and sulphites"
-                                        ],
-                                        "tags": [
-                                            "Gluten-free",
-                                            "Medium-spicy",
-                                            "Recommended",
-                                            "Spicy",
-                                            "Vegan",
-                                            "Vegetarian"
-                                        ]
-                                    }"""
-                    ))),
+                    schema = @Schema(example = GET_200_RESPONSE_EXAMPLE))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example =
-                            """
-                                    {
-                                        "timestamp": "2023-08-29T02:52:11.105+00:00",
-                                        "status": 404,
-                                        "error": "Not Found",
-                                        "message": "Associated data with id b7830129-53f1-4e1b-xa55-398462697ac0 not found",
-                                        "path": "/associated/b7830129-53f1-4e1b-xa55-398462697ac0"
-                                    }""")))
+                    schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<RestaurantAssociatedDataResponse> getAssociatedDataById(@PathVariable String associatedDataId, @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
@@ -78,5 +40,4 @@ public class RestaurantAssociatedDataController {
         associatedDataService.deleteAssociatedDataByRestaurantId(restaurantId, acceptLanguage);
         return ResponseEntity.noContent().build();
     }
-
 }

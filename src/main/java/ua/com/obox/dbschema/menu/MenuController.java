@@ -14,6 +14,8 @@ import ua.com.obox.dbschema.category.CategoryResponse;
 
 import java.util.List;
 
+import static ua.com.obox.dbschema.tools.examples.MenuResponseExample.*;
+
 @RestController
 @RequestMapping("/menus")
 @RequiredArgsConstructor
@@ -25,34 +27,9 @@ public class MenuController {
     @GetMapping("/{menuId}/categories")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example =
-                            """
-                                    [
-                                        {
-                                            "category_id": "dec66073-063c-4c58-ac97-2aab5b559dd4",
-                                            "name": "Fresh",
-                                            "menu_id": "05b303aa-8a26-4f80-9c7c-42d13ecc6348"
-                                        },
-                                        {
-                                            "category_id": "fd236b1e-8103-4c06-872c-c796262aa795",
-                                            "name": "Vegetables",
-                                            "menu_id": "05b303aa-8a26-4f80-9c7c-42d13ecc6348"
-                                        }
-                                    ]"""
-
-                    ))),
+                    schema = @Schema(example = GET_ALL_200_RESPONSE_EXAMPLE))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example =
-                            """
-                                    {
-                                        "timestamp": "2023-08-24T12:07:03.855+00:00",
-                                        "status": 404,
-                                        "error": "Not Found",
-                                        "message": "Menu with id 05b303aa-8a26-xf80-9c7c-42d13ecc6348 not found",
-                                        "path": "/menus/05b303aa-8a26-xf80-9c7c-42d13ecc6348/categories"
-                                    }"""
-
-                    )))
+                    schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<List<CategoryResponse>> getAllCategoriesByMenuId(@PathVariable String menuId, @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
@@ -63,28 +40,9 @@ public class MenuController {
     @GetMapping("/{menuId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example =
-                            """
-                                    {
-                                        "menu_id": "05b303aa-8a26-4f80-9c7c-42d13ecc6348",
-                                        "restaurant_id": "9aff3e00-451c-490e-b48b-c4315785b75e",
-                                        "name": "Non alcohol bar",
-                                        "language_code": "en"
-                                    }"""
-
-                    ))),
+                    schema = @Schema(example = GET_200_RESPONSE_EXAMPLE))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example =
-                            """
-                                    {
-                                        "timestamp": "2023-08-25T05:10:43.103+00:00",
-                                        "status": 404,
-                                        "error": "Not Found",
-                                        "message": "Menu with id 05b303aa-8a26-4fx0-9c7c-42d13ecc6348 not found",
-                                        "path": "/menus/05b303aa-8a26-4fx0-9c7c-42d13ecc6348"
-                                    }"""
-
-                    )))
+                    schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<MenuResponse> getMenuById(@PathVariable String menuId, @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
@@ -95,28 +53,9 @@ public class MenuController {
     @PostMapping("/")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Success", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example =
-                            """
-                                    {
-                                        "menu_id": "b4d331ec-ec54-4789-b8f3-1b3435eaa52a"
-                                    }"""
-                    ))),
+                    schema = @Schema(example = POST_201_RESPONSE_EXAMPLE))),
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example =
-                            """
-                                    {
-                                        "timestamp": "2023-08-25T05:11:14.711+00:00",
-                                        "status": 400,
-                                        "error": "Bad Request",
-                                        "message": "400 BAD_REQUEST",
-                                        "path": "/menus/",
-                                        "fields": {
-                                            "language_code": "Bad language code must contain from 2 to 3 characters",
-                                            "restaurant_id": "Restaurant with id null not found",
-                                            "name": "Field name is required"
-                                        }
-                                    }"""
-                    )))
+                    schema = @Schema(example = POST_400_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<MenuResponseId> createMenu(@RequestBody Menu request, @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
@@ -128,30 +67,9 @@ public class MenuController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example =
-                            """
-                                    {
-                                        "timestamp": "2023-08-25T05:15:40.318+00:00",
-                                        "status": 400,
-                                        "error": "Bad Request",
-                                        "message": "400 BAD_REQUEST",
-                                        "path": "/menus/b4d331ec-ec54-4789-b8f3-1b3435eaa52a",
-                                        "fields": {
-                                            "name": "Field name is required"
-                                        }
-                                    }"""
-                    ))),
+                    schema = @Schema(example = PATCH_400_RESPONSE_EXAMPLE))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example =
-                            """
-                                    {
-                                        "timestamp": "2023-08-25T05:15:14.520+00:00",
-                                        "status": 404,
-                                        "error": "Not Found",
-                                        "message": "Menu with id b4d331ec-ec54-47x9-b8f3-1b3435eaa52a not found",
-                                        "path": "/menus/b4d331ec-ec54-47x9-b8f3-1b3435eaa52a"
-                                    }"""
-                    )))
+                    schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<Void> patchMenuById(@PathVariable String menuId, @RequestBody
     @Schema(example = "{\n" +
@@ -167,16 +85,7 @@ public class MenuController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example =
-                            """
-                                    {
-                                        "timestamp": "2023-08-25T05:16:10.781+00:00",
-                                        "status": 404,
-                                        "error": "Not Found",
-                                        "message": "Menu with id 3385cf94-d26e-4c72-acx6-19b2a5e19982 not found",
-                                        "path": "/menus/3385cf94-d26e-4c72-acx6-19b2a5e19982"
-                                    }"""
-                    )))
+                    schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<Void> deleteMenuById(@PathVariable String menuId, @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
