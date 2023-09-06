@@ -2,7 +2,6 @@ package ua.com.obox.dbschema.dish;
 
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Session;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.category.Category;
@@ -13,7 +12,6 @@ import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
-import ua.com.obox.dbschema.tools.ftp.UploadDishImageFTP;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
@@ -32,12 +30,9 @@ public class DishService {
     private final DishRepository dishRepository;
     private final CategoryRepository categoryRepository;
     private final LoggingService loggingService;
-    private final UploadDishImageFTP dishImageFTP;
     private final UpdateServiceHelper serviceHelper;
     private final RequiredServiceHelper requiredServiceHelper;
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
-    @Value("${application.image-dns}")
-    private String imageDns;
 
     public DishResponse getDishById(String dishId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
@@ -70,7 +65,6 @@ public class DishService {
                     .price(dish.getPrice())
                     .weight(dish.getWeight())
                     .calories(dish.getCalories())
-                    .imageUrl(dish.getImageUrl() == null ? null : String.format("%s/%s/%s", imageDns, dish.getAssociatedId(), dish.getImageUrl()))
                     .state(dish.getState())
                     .allergens(allergens)
                     .tags(tags)
@@ -124,10 +118,6 @@ public class DishService {
         dish.setAssociatedId(associatedId);
 
         dishRepository.save(dish);
-
-        if (request.getImages() != null) {
-            dish.setImageUrl(dishImageFTP.uploadImage(request.getImages(), associatedId, dish.getDishId(), loggingService));
-        }
 
         loggingService.log(LogLevel.INFO, String.format("createDish %s UUID=%s %s", request.getName(), dish.getDishId(), Message.CREATE.getMessage()));
         return DishResponseId.builder()
@@ -203,11 +193,6 @@ public class DishService {
             if (fieldErrors.size() > 0)
                 throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
-            if (request.getImages() != null) {
-                UploadDishImageFTP.deleteImage(dish.getAssociatedId(), dish.getImageUrl()); // delete old image
-                dish.setImageUrl(dishImageFTP.uploadImage(request.getImages(), dish.getAssociatedId(), dish.getDishId(), loggingService)); // upload new image
-            }
-
             dishRepository.save(dish);
             loggingService.log(LogLevel.INFO, String.format("patchDishById %s %s", dishId, Message.UPDATE.getMessage()));
         }
@@ -223,10 +208,6 @@ public class DishService {
             ExceptionTools.notFoundResponse(".dishNotFound", finalAcceptLanguage, dishId);
             return null;
         });
-
-        if (dish.getImageUrl() != null) {
-            UploadDishImageFTP.deleteImage(dish.getAssociatedId(), dish.getImageUrl());
-        }
 
         dishRepository.delete(dish);
         loggingService.log(LogLevel.INFO, String.format("deleteDishById %s NAME=%s %s", dishId, dish.getName(), Message.DELETE.getMessage()));

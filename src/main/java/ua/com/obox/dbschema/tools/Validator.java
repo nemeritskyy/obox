@@ -7,6 +7,7 @@ import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 import javax.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
 import java.util.ResourceBundle;
 
 @RequiredArgsConstructor
@@ -82,10 +83,21 @@ public class Validator {
             } else if (startsWith(imageData, pngSignature)) {
                 return ".png";
             }
+
+            String svgContent = new String(imageData, StandardCharsets.UTF_8);
+            if (svgContent.trim().startsWith("<?xml")) {
+                return ".svg";
+            }
+
+            if (imageData[4] == 0x66 && imageData[5] == 0x74 && imageData[6] == 0x79 && imageData[7] == 0x70) {
+                return ".heic";
+            }
         }
+
         loggingService.log(LogLevel.ERROR, Message.BAD_IMAGE_TYPE.getMessage());
         return null;
     }
+
 
     private static boolean startsWith(byte[] array, byte[] prefix) {
         if (array.length < prefix.length) {

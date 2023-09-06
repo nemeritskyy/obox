@@ -33,8 +33,6 @@ public class DishResponse {
     private List<String> allergens;
     @JsonProperty("tags")
     private List<String> tags;
-    @JsonProperty("image_url")
-    private String imageUrl;
     @JsonProperty("state")
     private String state;
 }
