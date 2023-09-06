@@ -56,6 +56,7 @@ public class Dish {
     private String associatedId;
     @Transient
     private String category_id;
+    private String image;
 
     public void setListAllergens(List<String> listAllergens) {
         this.listAllergens = listAllergens;

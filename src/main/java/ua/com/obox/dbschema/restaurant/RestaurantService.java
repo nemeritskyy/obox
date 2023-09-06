@@ -199,6 +199,7 @@ public class RestaurantService {
                                                     dishResponse.setCalories(dish.getCalories());
                                                     dishResponse.setAllergens(allergens);
                                                     dishResponse.setTags(tags);
+                                                    dishResponse.setImage(dish.getImage());
                                                     dishResponse.setState(dish.getState());
                                                     return dishResponse;
                                                 }).collect(Collectors.toList());
