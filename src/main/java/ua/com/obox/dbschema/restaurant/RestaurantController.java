@@ -25,6 +25,19 @@ import static ua.com.obox.dbschema.tools.examples.RestaurantResponseExample.*;
 public class RestaurantController {
     private final RestaurantService service;
 
+    @GetMapping("/{restaurantId}/restaurant-menus-categories-dishes")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",
+                    schema = @Schema(example = GET_ALL_DETAILS))),
+            @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
+                    schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
+    })
+    public ResponseEntity<List<MenuResponse>> getAllMenusCategoriesDishesByRestaurantId(@PathVariable String restaurantId, @RequestHeader HttpHeaders httpHeaders) {
+        String acceptLanguage = httpHeaders.getFirst("Accept-Language");
+        List<MenuResponse> menuResponses = service.getAllMenusCategoriesDishesByRestaurantId(restaurantId, acceptLanguage);
+        return ResponseEntity.ok(menuResponses);
+    }
+
     @GetMapping("/{restaurantId}/menus")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",

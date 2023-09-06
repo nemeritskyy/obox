@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.dish;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -15,6 +16,7 @@ import java.util.List;
 public class DishResponse {
     @JsonProperty("dish_id")
     private String dishId;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("category_id")
     private String categoryId;
     @JsonProperty("associated_id")
