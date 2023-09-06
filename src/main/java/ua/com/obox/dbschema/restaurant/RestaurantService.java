@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.category.CategoryResponse;
+import ua.com.obox.dbschema.dish.DishResponse;
 import ua.com.obox.dbschema.tools.RequiredServiceHelper;
 import ua.com.obox.dbschema.menu.Menu;
 import ua.com.obox.dbschema.menu.MenuRepository;
@@ -21,14 +23,12 @@ import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class RestaurantService{
+public class RestaurantService {
     @PersistenceContext
     private EntityManager entityManager;
     private final RestaurantRepository restaurantRepository;
@@ -150,5 +150,69 @@ public class RestaurantService{
 
         restaurantRepository.delete(restaurant);
         loggingService.log(LogLevel.INFO, String.format("restaurantId %s NAME=%s %s", restaurantId, restaurant.getName(), Message.DELETE.getMessage()));
+    }
+
+    public List<MenuResponse> getAllMenusCategoriesDishesByRestaurantId(String restaurantId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
+        var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
+
+        restaurantInfo.orElseThrow(() -> {
+            ExceptionTools.notFoundResponse(".restaurantNotFound", finalAcceptLanguage, restaurantId);
+            return null;
+        });
+
+        List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantId(restaurantId);
+
+        List<MenuResponse> responseList = menus.stream()
+                .map(menu -> {
+                    MenuResponse menuResponse = new MenuResponse();
+                    menuResponse.setMenuId(menu.getMenuId());
+                    menuResponse.setName(menu.getName());
+                    menuResponse.setLanguage(menu.getLanguage_code());
+
+                    List<CategoryResponse> categoryResponseList = menu.getCategories().stream()
+                            .map(category -> {
+                                CategoryResponse categoryResponse = new CategoryResponse();
+                                categoryResponse.setCategoryId(category.getCategoryId());
+                                categoryResponse.setName(category.getName());
+
+                                List<DishResponse> dishResponseList = category.getDishes().stream()
+                                                .map(dish -> {
+                                                    List<String> allergens = new ArrayList<>();
+                                                    if (dish.getAllergens() != null)
+                                                        allergens.addAll(Arrays.stream(dish.getAllergens().split("::")).toList());
+                                                    Collections.sort(allergens);
+
+                                                    List<String> tags = new ArrayList<>();
+                                                    if (dish.getTags() != null)
+                                                        tags.addAll(Arrays.stream(dish.getTags().split("::")).toList());
+                                                    Collections.sort(tags);
+
+                                                    DishResponse dishResponse = new DishResponse();
+                                                    dishResponse.setDishId(dish.getDishId());
+                                                    dishResponse.setAssociatedId(dish.getAssociatedId());
+                                                    dishResponse.setName(dish.getName());
+                                                    dishResponse.setDescription(dish.getDescription());
+                                                    dishResponse.setPrice(dish.getPrice());
+                                                    dishResponse.setWeight(dish.getWeight());
+                                                    dishResponse.setCalories(dish.getCalories());
+                                                    dishResponse.setAllergens(allergens);
+                                                    dishResponse.setTags(tags);
+                                                    dishResponse.setState(dish.getState());
+                                                    return dishResponse;
+                                                }).collect(Collectors.toList());
+
+                                categoryResponse.setDishes(dishResponseList);
+                                return categoryResponse;
+                            }).collect(Collectors.toList());
+
+                    menuResponse.setCategories(categoryResponseList);
+                    return menuResponse;
+
+                }).collect(Collectors.toList());
+
+        loggingService.log(LogLevel.INFO, String.format("getAllMenusCategoriesDishesByRestaurantId %s ", restaurantId));
+        return responseList;
     }
 }
