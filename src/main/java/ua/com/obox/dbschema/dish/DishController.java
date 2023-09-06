@@ -51,6 +51,8 @@ public class DishController {
     @PatchMapping("{dishId}")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
+            @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
+                    schema = @Schema(example = PATCH_400_RESPONSE_EXAMPLE))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
