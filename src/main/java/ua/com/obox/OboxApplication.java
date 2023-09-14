@@ -8,6 +8,9 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 import org.springframework.context.annotation.Bean;
 import ua.com.obox.authserver.auth.AuthenticationService;
 import ua.com.obox.authserver.auth.RegisterRequest;
+
+import java.util.TimeZone;
+
 import static ua.com.obox.authserver.user.Role.ADMIN;
 import static ua.com.obox.authserver.user.Role.MANAGER;
 
@@ -19,6 +22,7 @@ public class OboxApplication extends SpringBootServletInitializer {
     }
 
     public static void main(String[] args) {
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Kiev"));
         SpringApplication.run(OboxApplication.class, args);
     }
 
