@@ -1,0 +1,53 @@
+spring:
+  messages:
+    encoding: UTF-8;
+  datasource:
+    url: jdbc:mysql://localhost:3306/my_db?useSSL=false
+    username: root
+    password: oboxroot
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: GMT+3
+    database: mysql
+    database-platform: org.hibernate.dialect.MySQL5Dialect
+  mail:
+    host: mail.obox.com.ua
+    port: 587
+    username: support@obox.com.ua
+    password: x
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls.enable: true
+  servlet:
+    multipart:
+      enabled: true # Включаем поддержку multipart
+      max-file-size: 10MB # Максимальный размер каждого файла
+      max-request-size: 20MB # Максимальный размер запроса (сумма всех файлов)
+      file-size-threshold: 0 # Пороговый размер файлов, при котором они будут записаны во временное хранилище вместо постоянного места
+ftp:
+  server: obox.pp.ua
+  port: 21
+  username: x@obox.pp.ua
+  password: x
+server:
+  error:
+    include-stacktrace: never
+    include-message: always
+application:
+  url: https://api.obox.pp.ua
+  image-dns: https://attachments.obox.pp.ua
+  security:
+    jwt:
+      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      expiration: 86400000 # a day
+      refresh-token:
+        expiration: 604800000 # 7 days

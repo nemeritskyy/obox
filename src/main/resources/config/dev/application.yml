@@ -1,9 +1,14 @@
 spring:
+  messages:
+    encoding: UTF-8;
   datasource:
-    url: jdbc:mysql://localhost:3306/my_db?useSSL=false
-    username: root
-    password: oboxroot
+    url: jdbc:mysql://91.203.4.26:3306/x?useSSL=false
+    username: x
+    password: x
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      max-lifetime: 90000
+      keepaliveTime: 30000
   jpa:
     hibernate:
       ddl-auto: update
@@ -32,17 +37,17 @@ spring:
       max-request-size: 20MB # Максимальный размер запроса (сумма всех файлов)
       file-size-threshold: 0 # Пороговый размер файлов, при котором они будут записаны во временное хранилище вместо постоянного места
 ftp:
-  server: obox.com.ua
+  server: obox.pp.ua
   port: 21
-  username: boss@obox.com.ua
+  username: x@obox.pp.ua
   password: x
 server:
   error:
     include-stacktrace: never
     include-message: always
 application:
-  url: https://api.obox.com.ua
-  image-dns: https://img.obox.com.ua
+  url: https://api.obox.pp.ua
+  image-dns: https://attachments.obox.pp.ua
   security:
     jwt:
       secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
