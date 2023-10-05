@@ -57,6 +57,7 @@ public class RestaurantService {
                         .name(menu.getName())
                         .restaurantId(menu.getRestaurant().getRestaurantId())
                         .language(menu.getLanguage_code())
+                        .state(menu.getState())
                         .build()).collect(Collectors.toList());
 
         loggingService.log(LogLevel.INFO, String.format("getAllMenusByRestaurantId %s %s %d", restaurantId, Message.FIND_COUNT.getMessage(), responseList.size()));

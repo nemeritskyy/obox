@@ -52,8 +52,10 @@ public class MenuService {
         List<CategoryResponse> responseList = categories.stream()
                 .map(category -> CategoryResponse.builder()
                         .categoryId(category.getCategoryId())
-                        .name(category.getName())
                         .menuId(category.getMenu().getMenuId())
+                        .name(category.getName())
+                        .description(category.getDescription())
+                        .state(category.getState())
                         .build()).collect(Collectors.toList());
 
         loggingService.log(LogLevel.INFO, String.format("getAllCategoriesByMenuId %s %s %d", menuId, Message.FIND_COUNT.getMessage(), responseList.size()));
@@ -76,6 +78,7 @@ public class MenuService {
                 .name(menu.getName())
                 .restaurantId(menu.getRestaurant().getRestaurantId())
                 .language(menu.getLanguage_code())
+                .state(menu.getState())
                 .build();
     }
 
@@ -101,6 +104,7 @@ public class MenuService {
 
         fieldErrors.put("language_code", serviceHelper.updateLanguageCode(request.getLanguage_code(), finalAcceptLanguage));
 
+        fieldErrors.put("state", serviceHelper.updateState(menu::setState, request.getState(), finalAcceptLanguage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
@@ -134,6 +138,9 @@ public class MenuService {
                 fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), menu, finalAcceptLanguage));
             }
         }
+
+        if (request.getState() != null)
+            fieldErrors.put("state", serviceHelper.updateState(menu::setState, request.getState(), finalAcceptLanguage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);

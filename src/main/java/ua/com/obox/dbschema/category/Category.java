@@ -5,6 +5,7 @@ import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.menu.Menu;
 import ua.com.obox.dbschema.dish.Dish;
+import ua.com.obox.dbschema.tools.State;
 
 import javax.persistence.*;
 import java.util.List;
@@ -28,6 +29,9 @@ public class Category {
     @JsonIgnore
     private Menu menu;
     private String name;
+    private String description;
+    @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
+    private String state;
 
     @Transient
     private String menu_id;

@@ -87,8 +87,10 @@ public class CategoryService {
         loggingService.log(LogLevel.INFO, String.format("getCategoryById %s", categoryId));
         return CategoryResponse.builder()
                 .categoryId(category.getCategoryId())
-                .name(category.getName())
                 .menuId(category.getMenu().getMenuId())
+                .name(category.getName())
+                .description(category.getDescription())
+                .state(category.getState())
                 .build();
     }
 
@@ -113,6 +115,10 @@ public class CategoryService {
         } else {
             fieldErrors.put("name", serviceHelper.updateNameField(category::setName, request.getName(), finalAcceptLanguage));
         }
+
+        fieldErrors.put("description", serviceHelper.updateVarcharField(category::setDescription, request.getDescription(), "description", finalAcceptLanguage));
+
+        fieldErrors.put("state", serviceHelper.updateState(category::setState, request.getState(), finalAcceptLanguage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
@@ -143,6 +149,12 @@ public class CategoryService {
                 fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), category, finalAcceptLanguage));
             }
         }
+
+        if (request.getDescription() != null)
+            fieldErrors.put("description", serviceHelper.updateVarcharField(category::setDescription, request.getDescription(), "description", finalAcceptLanguage));
+
+        if (request.getState() != null)
+            fieldErrors.put("state", serviceHelper.updateState(category::setState, request.getState(), finalAcceptLanguage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);

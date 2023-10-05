@@ -79,6 +79,8 @@ public class AttachmentService {
             return null;
         });
 
+        attachmentRepository.delete(attachment);
+
         var dishInfo = dishRepository.findByImage(attachment.getAttachmentId());
 
         if (dishInfo.isPresent()){
@@ -87,7 +89,5 @@ public class AttachmentService {
         }
 
         AttachmentFTP.deleteAttachment(attachment.getAttachmentUrl());
-
-        attachmentRepository.delete(attachment);
     }
 }
