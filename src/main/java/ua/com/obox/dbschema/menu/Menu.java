@@ -7,6 +7,7 @@ import ua.com.obox.dbschema.associateddata.RestaurantAssociatedData;
 import ua.com.obox.dbschema.associateddata.RestaurantAssociatedDataRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.restaurant.Restaurant;
+import ua.com.obox.dbschema.tools.State;
 
 import javax.persistence.*;
 import java.util.List;
@@ -30,6 +31,9 @@ public class Menu {
     @JsonIgnore
     private Restaurant restaurant;
     private String name;
+    @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
+    private String state;
+    
     @Transient
     private String restaurant_id;
     @OneToMany(mappedBy = "menu", fetch = FetchType.LAZY, cascade = CascadeType.ALL)

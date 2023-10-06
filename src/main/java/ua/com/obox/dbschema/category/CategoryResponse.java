@@ -19,10 +19,15 @@ public class CategoryResponse {
     private String categoryId;
     @JsonProperty("name")
     private String name;
+    @JsonProperty("description")
+    private String description;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("menu_id")
     private String menuId;
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonProperty("state")
+    private String state;
+
     @JsonProperty("dishes")
     private List<DishResponse> dishes;
 }

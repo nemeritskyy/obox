@@ -24,6 +24,9 @@ public class MenuResponse {
     private String name;
     @JsonProperty("language_code")
     private String language;
+    @JsonProperty("state")
+    private String state;
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("categories")
     private List<CategoryResponse> categories;
