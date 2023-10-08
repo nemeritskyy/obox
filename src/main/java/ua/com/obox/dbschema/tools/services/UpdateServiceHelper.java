@@ -35,6 +35,18 @@ public class UpdateServiceHelper {
         return checkField;
     }
 
+    public String updateWeightField(Consumer<String> setter, String value, String acceptLanguage) {
+        if (value == null || removeSpacesAndDuplicateSeparators(value).isEmpty()) {
+            setter.accept(null);
+            return null;
+        }
+        String checkField = Validator.validateWeight(removeSpacesAndDuplicateSeparators(value), acceptLanguage);
+        if (checkField == null) {
+            setter.accept(removeSpacesAndDuplicateSeparators(value));
+        }
+        return checkField;
+    }
+
     public String updateIntegerField(Consumer<Integer> setter, Integer value, int maxValue, String fieldName, String acceptLanguage) {
         if (value != null) {
             if (value == 0) {
@@ -67,6 +79,18 @@ public class UpdateServiceHelper {
         }
     }
 
+    public String updateWeightUnit(Consumer<String> setter, String value, String acceptLanguage) {
+        if (value == null || removeExtraSpaces(value).isEmpty()) {
+            setter.accept(null);
+            return null;
+        }
+        String checkField = Validator.validateWeightUnit(value, acceptLanguage);
+        if (checkField == null) {
+            setter.accept(removeExtraSpaces(value));
+        }
+        return checkField;
+    }
+
     public String updateState(Consumer<String> setter, String value, String acceptLanguage) {
         String state = Validator.validateState(value, acceptLanguage);
         if (state == null)
@@ -80,5 +104,9 @@ public class UpdateServiceHelper {
 
     public static String removeExtraSpaces(String str) {
         return str.trim().replaceAll("\\s+", " ");
+    }
+
+    public static String removeSpacesAndDuplicateSeparators(String str) {
+        return str.replaceAll("\s+", "").replaceAll("/{2,}", "/").replaceAll("^\\/|\\/$", "");
     }
 }

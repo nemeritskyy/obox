@@ -10,6 +10,7 @@ import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.menu.Menu;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.tenant.Tenant;
+import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
@@ -73,7 +74,7 @@ public class RequiredServiceHelper {
 
     public String updatePriceIfNeeded(Double price, Dish dish, String acceptLanguage) {
         if (price != null) {
-            return serviceHelper.updatePriceField(dish::setPrice, price, 100_000, "price", acceptLanguage);
+            return serviceHelper.updatePriceField(dish::setPrice, price, ValidationConfiguration.MAX_PRICE, "price", acceptLanguage);
         }
         return null;
     }
