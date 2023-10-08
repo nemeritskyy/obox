@@ -72,7 +72,8 @@ public class MenuControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "restaurant_id", restaurantId,
                 "name", nameSpace,
-                "language_code", languageCode
+                "language_code", languageCode,
+                "state","ENABLED"
         );
 
         menuId = PostRequest.performGetIdAfterPost("$.menu_id", URL_MENU, requestBody, mockMvc);
@@ -95,7 +96,8 @@ public class MenuControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "restaurant_id", restaurantId,
                 "name", name,
-                "language_code", languageCode
+                "language_code", languageCode,
+                "state","ENABLED"
         );
         PostRequest
                 .performPostRequest(URL_MENU, requestBody, mockMvc)

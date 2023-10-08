@@ -18,6 +18,7 @@ public class TestValuesDishes {
                         "price", 1,
                         "weight", 1,
                         "calories", 1,
+                        "in_stock", "ENABLED",
                         "state", "ENABLED"
                 ),
                 Map.of( // Post. 3
@@ -27,6 +28,7 @@ public class TestValuesDishes {
                         "price", 1,
                         "weight", 1,
                         "calories", 1,
+                        "in_stock", "ENABLED",
                         "state", "ENABLED"
                 ),
                 Map.of( // Post. 11
@@ -36,6 +38,7 @@ public class TestValuesDishes {
                         "price", 100_000,
                         "weight", 1,
                         "calories", 1,
+                        "in_stock", "ENABLED",
                         "state", "ENABLED"
                 ),
                 Map.of( // Post. 14
@@ -45,6 +48,7 @@ public class TestValuesDishes {
                         "price", 99.99,
                         "weight", 1,
                         "calories", 1,
+                        "in_stock", "ENABLED",
                         "state", "ENABLED"
                 ),
                 Map.of( // Post. 19
@@ -54,6 +58,7 @@ public class TestValuesDishes {
                         "price", 1,
                         "weight", 1,
                         "calories", 1,
+                        "in_stock", "ENABLED",
                         "state", "DISABLED"
                 ),
                 Map.of( // Post. 20
@@ -63,6 +68,7 @@ public class TestValuesDishes {
                         "price", 1,
                         "weight", 1,
                         "calories", 1,
+                        "in_stock", "ENABLED",
                         "state", "ENABLED"
                 ),
                 Map.of( // Post. 22
@@ -72,6 +78,7 @@ public class TestValuesDishes {
                         "price", 1,
                         "weight", 100_000,
                         "calories", 1,
+                        "in_stock", "ENABLED",
                         "state", "ENABLED"
                 ),
                 Map.of( // Post. 26
@@ -79,8 +86,9 @@ public class TestValuesDishes {
                         "name", "dish8",
                         "description", "description",
                         "price", 1,
-                        "weight", 100.5,
+                        "weight", 100/50,
                         "calories", 30_000,
+                        "in_stock", "ENABLED",
                         "state", "ENABLED"
                 )
         );
