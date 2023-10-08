@@ -28,7 +28,11 @@ public class DishResponse {
     @JsonProperty("price")
     private Double price;
     @JsonProperty("weight")
-    private Integer weight;
+    private String weight;
+    @JsonProperty("weight_unit")
+    private String weightUnit;
+    @JsonProperty("cooking_time")
+    private Integer cookingTime;
     @JsonProperty("calories")
     private Integer calories;
     @JsonProperty("allergens")
@@ -37,6 +41,8 @@ public class DishResponse {
     private List<String> tags;
     @JsonProperty("image")
     private String image;
+    @JsonProperty("in_stock")
+    private String inStock;
     @JsonProperty("state")
     private String state;
 }
