@@ -4,12 +4,12 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import ua.com.obox.dbschema.attachment.Attachment;
 import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.tools.RequiredServiceHelper;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
@@ -65,9 +65,12 @@ public class DishService {
                     .categoryId(dish.getCategory().getCategoryId())
                     .name(dish.getName())
                     .description(dish.getDescription())
+                    .cookingTime(dish.getCooking_time())
                     .price(dish.getPrice())
                     .weight(dish.getWeight())
+                    .weightUnit(dish.getWeight_unit())
                     .calories(dish.getCalories())
+                    .inStock(dish.getIn_stock())
                     .state(dish.getState())
                     .allergens(allergens)
                     .tags(tags)
@@ -101,9 +104,10 @@ public class DishService {
         } else {
             fieldErrors.put("name", serviceHelper.updateNameField(dish::setName, request.getName(), finalAcceptLanguage));
         }
-        fieldErrors.put("price", serviceHelper.updatePriceField(dish::setPrice, request.getPrice(), 100_000, "price", finalAcceptLanguage));
-        fieldErrors.put("weight", serviceHelper.updateIntegerField(dish::setWeight, request.getWeight(), 100_000, "weight", finalAcceptLanguage));
-        fieldErrors.put("calories", serviceHelper.updateIntegerField(dish::setCalories, request.getCalories(), 30_000, "calories", finalAcceptLanguage));
+        fieldErrors.put("price", serviceHelper.updatePriceField(dish::setPrice, request.getPrice(), ValidationConfiguration.MAX_PRICE, "price", finalAcceptLanguage));
+        fieldErrors.put("cooking_time", serviceHelper.updateIntegerField(dish::setCooking_time, request.getCooking_time(), ValidationConfiguration.MAX_COOKING_TIME, "cookingTime", finalAcceptLanguage));
+        fieldErrors.put("weight", serviceHelper.updateWeightField(dish::setWeight, request.getWeight(), finalAcceptLanguage));
+        fieldErrors.put("calories", serviceHelper.updateIntegerField(dish::setCalories, request.getCalories(), ValidationConfiguration.MAX_CALORIES, "calories", finalAcceptLanguage));
         fieldErrors.put("description", serviceHelper.updateVarcharField(dish::setDescription, request.getDescription(), "description", finalAcceptLanguage));
 
         if (request.getAllergens() != null) {
@@ -114,13 +118,15 @@ public class DishService {
             dish.setTags(request.getTags());
         }
 
+        fieldErrors.put("weight_unit", serviceHelper.updateWeightUnit(dish::setWeight_unit, request.getWeight_unit(), finalAcceptLanguage));
+
+        fieldErrors.put("in_stock", serviceHelper.updateState(dish::setIn_stock, request.getIn_stock(), finalAcceptLanguage));
         fieldErrors.put("state", serviceHelper.updateState(dish::setState, request.getState(), finalAcceptLanguage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         dish.setAssociatedId(associatedId);
-
         dishRepository.save(dish);
 
         loggingService.log(LogLevel.INFO, String.format("createDish %s UUID=%s %s", request.getName(), dish.getDishId(), Message.CREATE.getMessage()));
@@ -150,9 +156,13 @@ public class DishService {
                     fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), dish, finalAcceptLanguage));
                 }
             }
-
             if (request.getPrice() != null)
                 fieldErrors.put("price", requiredServiceHelper.updatePriceIfNeeded(request.getPrice(), dish, finalAcceptLanguage));
+            if (request.getWeight_unit() != null) {
+                fieldErrors.put("weight_unit", serviceHelper.updateWeightUnit(dish::setWeight_unit, request.getWeight_unit(), finalAcceptLanguage));
+            }
+            if (request.getIn_stock() != null)
+                fieldErrors.put("in_stock", serviceHelper.updateState(dish::setIn_stock, request.getIn_stock(), finalAcceptLanguage));
             if (request.getState() != null)
                 fieldErrors.put("state", serviceHelper.updateState(dish::setState, request.getState(), finalAcceptLanguage));
 
@@ -188,11 +198,14 @@ public class DishService {
                 dish.setTags(sortedAndJoinedTags);
             }
 
+            if (request.getCooking_time() != null)
+                fieldErrors.put("cooking_time", serviceHelper.updateIntegerField(dish::setCooking_time, request.getCooking_time(), ValidationConfiguration.MAX_COOKING_TIME, "cookingTime", finalAcceptLanguage));
+
             if (request.getCalories() != null)
-                fieldErrors.put("calories", serviceHelper.updateIntegerField(dish::setCalories, request.getCalories(), 30_000, "calories", finalAcceptLanguage));
+                fieldErrors.put("calories", serviceHelper.updateIntegerField(dish::setCalories, request.getCalories(), ValidationConfiguration.MAX_CALORIES, "calories", finalAcceptLanguage));
 
             if (request.getWeight() != null)
-                fieldErrors.put("weight", serviceHelper.updateIntegerField(dish::setWeight, request.getWeight(), 100_000, "weight", finalAcceptLanguage));
+                fieldErrors.put("weight", serviceHelper.updateWeightField(dish::setWeight, request.getWeight(), finalAcceptLanguage));
 
             if (fieldErrors.size() > 0)
                 throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
