@@ -38,9 +38,12 @@ public class Dish {
     private Double price;
     private String description;
     @JsonDeserialize(using = EmptyIntegerDeserializer.class)
-    private Integer calories;
+    private Integer cooking_time;
     @JsonDeserialize(using = EmptyIntegerDeserializer.class)
-    private Integer weight;
+    private Integer calories;
+    private String weight;
+    @Column(columnDefinition = "CHAR(16)")
+    private String weight_unit;
     @JsonIgnore
     private String allergens;
     @Transient
@@ -53,6 +56,8 @@ public class Dish {
     private List<String> listTags;
     @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
     private String state;
+    @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
+    private String in_stock;
     private String associatedId;
     @Transient
     private String category_id;

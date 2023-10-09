@@ -2,6 +2,7 @@ package ua.com.obox.dbschema.tools;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
@@ -45,6 +46,26 @@ public class Validator {
                     String.format(translation.getString("en-US.varcharLimit"), translation.getString("en-US." + fieldName))
             );
             return String.format(translation.getString(acceptLanguage + ".varcharLimit"), translation.getString(acceptLanguage + "." + fieldName));
+        }
+        return null;
+    }
+
+    public static String validateWeightUnit(String str, String acceptLanguage) {
+        if (str != null && str.trim().isEmpty() || str != null && removeExtraSpaces(str).length() > 16) {
+            staticLoggingService.log(LogLevel.ERROR,
+                    translation.getString("en-US.weightUnit")
+            );
+            return translation.getString(acceptLanguage + ".weightUnit");
+        }
+        return null;
+    }
+
+    public static String validateWeight(String str, String acceptLanguage) {
+        if (!str.matches(ValidationConfiguration.WEIGHT_REGEX)) {
+            staticLoggingService.log(LogLevel.ERROR,
+                    translation.getString("en-US.weight")
+            );
+            return translation.getString(acceptLanguage + ".weight");
         }
         return null;
     }

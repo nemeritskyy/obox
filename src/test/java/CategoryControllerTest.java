@@ -72,7 +72,8 @@ public class CategoryControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "restaurant_id", restaurantId,
                 "name", "MenuForCategoryTest",
-                "language_code", languageCode
+                "language_code", languageCode,
+                "state","ENABLED"
         );
 
         menuId = PostRequest.performGetIdAfterPost("$.menu_id", URL_MENU, requestBody, mockMvc);
@@ -85,7 +86,8 @@ public class CategoryControllerTest {
         String nameSpace = "    New Space Name  ";
         Map<String, Object> requestBody = Map.of(
                 "menu_id", menuId,
-                "name", nameSpace
+                "name", nameSpace,
+                "state","ENABLED"
         );
 
         categoryId = PostRequest.performGetIdAfterPost("$.category_id", URL_CATEGORY, requestBody, mockMvc);

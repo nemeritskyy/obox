@@ -71,7 +71,8 @@ public class DishControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "restaurant_id", restaurantId,
                 "name", "MenuForDishTest",
-                "language_code", languageCode
+                "language_code", languageCode,
+                "state","ENABLED"
         );
 
         menuId = PostRequest.performGetIdAfterPost("$.menu_id", URL_MENU, requestBody, mockMvc);
@@ -82,7 +83,8 @@ public class DishControllerTest {
     public void testCategoryForTest() throws Exception { // Create Category for test // Post. 6 // Post. 7 // Get. 2
         Map<String, Object> requestBody = Map.of(
                 "menu_id", menuId,
-                "name", "MenuForDishTest"
+                "name", "MenuForDishTest",
+                "state","ENABLED"
         );
         SupportingData.categoryId = PostRequest.performGetIdAfterPost("$.category_id", URL_CATEGORY, requestBody, mockMvc);
     }
@@ -97,6 +99,7 @@ public class DishControllerTest {
                 "price", 1,
                 "weight", 1,
                 "calories", 1,
+                "in_stock", "ENABLED",
                 "state", "ENABLED"
         );
         SupportingData.dishId = PostRequest.performGetIdAfterPost("$.dish_id", URL_DISH, requestBody, mockMvc);

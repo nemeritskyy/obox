@@ -196,11 +196,14 @@ public class RestaurantService {
                                                     dishResponse.setName(dish.getName());
                                                     dishResponse.setDescription(dish.getDescription());
                                                     dishResponse.setPrice(dish.getPrice());
+                                                    dishResponse.setCookingTime(dish.getCooking_time());
                                                     dishResponse.setWeight(dish.getWeight());
+                                                    dishResponse.setWeightUnit(dish.getWeight_unit());
                                                     dishResponse.setCalories(dish.getCalories());
                                                     dishResponse.setAllergens(allergens);
                                                     dishResponse.setTags(tags);
                                                     dishResponse.setImage(dish.getImage());
+                                                    dishResponse.setInStock(dish.getIn_stock());
                                                     dishResponse.setState(dish.getState());
                                                     return dishResponse;
                                                 }).collect(Collectors.toList());
