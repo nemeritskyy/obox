@@ -10,12 +10,15 @@ import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.attachment.ImageUtils;
 import ua.com.obox.dbschema.tools.attachment.ReferenceType;
+import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 
+import javax.imageio.ImageIO;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,9 +41,29 @@ public class AttachmentFTP {
         AttachmentFTP.ftpConfiguration = ftpConfiguration;
     }
 
-    public String uploadAttachment(String attachment, String referenceId, String referenceType, String attachmentUUID, String acceptLanguage) {
+    public String uploadAttachment(String attachment, String referenceId, String referenceType, String attachmentUUID, String acceptLanguage) throws IOException {
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
         String path = "bad-associated";
+        String fileType;
+        byte[] imageData;
+
+        if (attachment.getBytes().length > ValidationConfiguration.MAX_FILE_SIZE * 4 / 3) {
+            fieldErrors.put("file_size", String.format(translation.getString(acceptLanguage + ".badFileSize"), ValidationConfiguration.MAX_FILE_SIZE / 1_048_576));
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+        } else {
+            imageData = decodeImageData(attachment);
+            fileType = Validator.detectImageType(imageData, staticLoggingService);
+            if (fileType == null) {
+                fieldErrors.put("file_type", translation.getString(acceptLanguage + ".badFileType"));
+            } else {
+//                if (attachment.getBytes().length > ValidationConfiguration.ATTACHMENT_COMPRESSING_SIZE && fileType != ".svg" && fileType != ".heic") { // Compress attachment
+                if (!fileType.equals(".svg") && !fileType.equals(".heic") && ImageIO.read(new ByteArrayInputStream(imageData)).getWidth() >= ValidationConfiguration.ATTACHMENT_RECOMMENDED_WIDTH) { // Compress attachment
+                    imageData = ImageUtils.resizeImageByWidth(imageData, fileType.replaceFirst(".", ""));
+                } else if (!fileType.equals(".svg") && !fileType.equals(".heic")){
+                    fieldErrors.put("file_size", String.format(translation.getString(acceptLanguage + ".badFileRecommendedWidth"), ValidationConfiguration.ATTACHMENT_RECOMMENDED_WIDTH));
+                }
+            }
+        }
 
         if (ReferenceType.DISH.toString().equals(Validator.removeExtraSpaces(referenceType).toUpperCase())) {
             path = getDishAssociatedPath(referenceId, acceptLanguage, fieldErrors);
@@ -48,13 +71,6 @@ public class AttachmentFTP {
 
         if (!isValidReferenceType(Validator.removeExtraSpaces(referenceType).toUpperCase())) {
             fieldErrors.put("reference_type", translation.getString(acceptLanguage + ".badReferenceType"));
-        }
-
-        byte[] imageData = decodeImageData(attachment);
-        String fileType = Validator.detectImageType(imageData, staticLoggingService);
-
-        if (fileType == null) {
-            fieldErrors.put("file_type", translation.getString(acceptLanguage + ".badFileType"));
         }
 
         if (fieldErrors.size() > 0) {

@@ -10,7 +10,7 @@
     </parent>
     <groupId>ua.com.obox</groupId>
     <artifactId>obox</artifactId>
-    <version>0.0.32-DEV</version>
+    <version>0.0.33-DEV</version>
     <packaging>war</packaging>
     <name>obox</name>
     <description>obox</description>
@@ -134,6 +134,11 @@
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
             <version>3.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.imgscalr</groupId>
+            <artifactId>imgscalr-lib</artifactId>
+            <version>4.2</version>
         </dependency>
     </dependencies>
     <build>
