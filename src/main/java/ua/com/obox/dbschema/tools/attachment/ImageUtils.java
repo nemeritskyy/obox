@@ -13,14 +13,14 @@ public class ImageUtils {
     public static byte[] resizeImageByWidth(byte[] imageData, String imageType) throws IOException {
         int targetWidth = ValidationConfiguration.ATTACHMENT_RECOMMENDED_WIDTH;
         BufferedImage originalImage = ImageIO.read(new ByteArrayInputStream(imageData));
-        BufferedImage resizedImage = simpleResizeImage(originalImage, targetWidth);
+        BufferedImage resizedImage = resizeImage(originalImage, targetWidth);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         ImageIO.write(resizedImage, imageType, baos);
         return baos.toByteArray();
     }
 
-    private static BufferedImage simpleResizeImage(BufferedImage originalImage, int targetWidth) {
-        return Scalr.resize(originalImage, targetWidth);
+    private static BufferedImage resizeImage(BufferedImage originalImage, int targetWidth) {
+        return Scalr.resize(originalImage, Scalr.Method.ULTRA_QUALITY, Scalr.Mode.FIT_TO_WIDTH, targetWidth);
     }
 
     public static byte[] resizeImageByFileSize(byte[] imageData, String imageType) throws IOException {
