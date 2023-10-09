@@ -56,13 +56,9 @@ public class AttachmentFTP {
             if (fileType == null) {
                 fieldErrors.put("file_type", translation.getString(acceptLanguage + ".badFileType"));
             } else {
-//                if (attachment.getBytes().length > ValidationConfiguration.ATTACHMENT_COMPRESSING_SIZE && fileType != ".svg" && fileType != ".heic") { // Compress attachment
                 if (!fileType.equals(".svg") && !fileType.equals(".heic") && ImageIO.read(new ByteArrayInputStream(imageData)).getWidth() > ValidationConfiguration.ATTACHMENT_RECOMMENDED_WIDTH) { // Compress attachment
                     imageData = ImageUtils.resizeImageByWidth(imageData, fileType.replaceFirst(".", ""));
                 }
-//                else if (!fileType.equals(".svg") && !fileType.equals(".heic")){
-//                    fieldErrors.put("file_size", String.format(translation.getString(acceptLanguage + ".badFileRecommendedWidth"), ValidationConfiguration.ATTACHMENT_RECOMMENDED_WIDTH));
-//                }
             }
         }
 
