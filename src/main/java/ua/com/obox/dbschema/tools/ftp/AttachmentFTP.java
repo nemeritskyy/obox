@@ -4,13 +4,13 @@ import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPSClient;
 import org.apache.commons.net.util.TrustManagerUtils;
+import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.tools.Validator;
-import ua.com.obox.dbschema.tools.attachment.ImageUtils;
 import ua.com.obox.dbschema.tools.attachment.ReferenceType;
 import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
@@ -19,7 +19,9 @@ import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 
 import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
@@ -45,19 +47,28 @@ public class AttachmentFTP {
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
         String path = "bad-associated";
         String fileType;
-        byte[] imageData;
+        byte[] imageData = decodeImageData(attachment);
 
-        if (attachment.getBytes().length > ValidationConfiguration.MAX_FILE_SIZE * 4 / 3) {
+        if (imageData.length > ValidationConfiguration.MAX_FILE_SIZE * 4 / 3) {
             fieldErrors.put("file_size", String.format(translation.getString(acceptLanguage + ".badFileSize"), ValidationConfiguration.MAX_FILE_SIZE / 1_048_576));
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
         } else {
-            imageData = decodeImageData(attachment);
             fileType = Validator.detectImageType(imageData, staticLoggingService);
+
             if (fileType == null) {
                 fieldErrors.put("file_type", translation.getString(acceptLanguage + ".badFileType"));
             } else {
-                if (!fileType.equals(".svg") && !fileType.equals(".heic") && ImageIO.read(new ByteArrayInputStream(imageData)).getWidth() > ValidationConfiguration.ATTACHMENT_RECOMMENDED_WIDTH) { // Compress attachment
-                    imageData = ImageUtils.resizeImageByWidth(imageData, fileType.replaceFirst(".", ""));
+                if (!fileType.equals(".svg") && !fileType.equals(".heic")) {
+                    try (InputStream inputStream = new ByteArrayInputStream(imageData)) {
+                        BufferedImage originalImage = ImageIO.read(inputStream);
+                        if (originalImage != null && originalImage.getWidth() > ValidationConfiguration.ATTACHMENT_RECOMMENDED_WIDTH) {
+                            originalImage = Scalr.resize(originalImage, Scalr.Method.ULTRA_QUALITY, Scalr.Mode.FIT_TO_WIDTH, ValidationConfiguration.ATTACHMENT_RECOMMENDED_WIDTH);
+                            try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                                ImageIO.write(originalImage, fileType.substring(1), baos);
+                                imageData = baos.toByteArray();
+                            }
+                        }
+                    }
                 }
             }
         }
