@@ -10,6 +10,7 @@ import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.ftp.AttachmentFTP;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -53,7 +54,7 @@ public class AttachmentService {
                 .build();
     }
 
-    public AttachmentResponseId createAttachment(Attachment request, String acceptLanguage) {
+    public AttachmentResponseId createAttachment(Attachment request, String acceptLanguage) throws IOException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         String attachmentUUID = String.valueOf(UUID.randomUUID());
         String attachmentUrl = attachmentFTP.uploadAttachment(request.getAttachment(), request.getReferenceId(), request.getReferenceType(), attachmentUUID, finalAcceptLanguage);

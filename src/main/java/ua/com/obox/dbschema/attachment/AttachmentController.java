@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 import static ua.com.obox.dbschema.tools.examples.AttachmentsResponseExample.*;
@@ -42,7 +43,7 @@ public class AttachmentController {
                     schema = @Schema(example = POST_400_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<AttachmentResponseId> createAttachment(@RequestBody @Schema(example = POST_BODY) Attachment request,
-                                                                 @RequestHeader HttpHeaders httpHeaders) {
+                                                                 @RequestHeader HttpHeaders httpHeaders) throws IOException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         AttachmentResponseId response = service.createAttachment(request, acceptLanguage);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
