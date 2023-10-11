@@ -23,6 +23,7 @@ import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -104,6 +105,8 @@ public class RestaurantService {
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
+        restaurant.setCreatedAt(Instant.now().getEpochSecond());
+        restaurant.setUpdatedAt(Instant.now().getEpochSecond());
         restaurantRepository.save(restaurant);
 
         loggingService.log(LogLevel.INFO, String.format("createRestaurant %s UUID=%s %s", request.getName(), restaurant.getRestaurantId(), Message.CREATE.getMessage()));
@@ -134,6 +137,7 @@ public class RestaurantService {
             if (fieldErrors.size() > 0)
                 throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
+            restaurant.setUpdatedAt(Instant.now().getEpochSecond());
             restaurantRepository.save(restaurant);
         }
         loggingService.log(LogLevel.INFO, String.format("patchRestaurantById %s %s", restaurantId, Message.UPDATE.getMessage()));

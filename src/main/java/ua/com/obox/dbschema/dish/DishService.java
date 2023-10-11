@@ -21,6 +21,7 @@ import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -127,6 +128,8 @@ public class DishService {
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         dish.setAssociatedId(associatedId);
+        dish.setCreatedAt(Instant.now().getEpochSecond());
+        dish.setUpdatedAt(Instant.now().getEpochSecond());
         dishRepository.save(dish);
 
         loggingService.log(LogLevel.INFO, String.format("createDish %s UUID=%s %s", request.getName(), dish.getDishId(), Message.CREATE.getMessage()));
@@ -209,7 +212,8 @@ public class DishService {
 
             if (fieldErrors.size() > 0)
                 throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
-
+            
+            dish.setUpdatedAt(Instant.now().getEpochSecond());
             dishRepository.save(dish);
             loggingService.log(LogLevel.INFO, String.format("patchDishById %s %s", dishId, Message.UPDATE.getMessage()));
         }

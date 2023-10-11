@@ -11,6 +11,7 @@ import ua.com.obox.dbschema.tools.ftp.AttachmentFTP;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
 import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -64,6 +65,8 @@ public class AttachmentService {
                 .referenceType(Validator.removeExtraSpaces(request.getReferenceType()).toUpperCase())
                 .attachmentUrl(attachmentUrl)
                 .build();
+        attachment.setCreatedAt(Instant.now().getEpochSecond());
+        attachment.setUpdatedAt(Instant.now().getEpochSecond());
         attachmentRepository.save(attachment);
         return AttachmentResponseId.builder()
                 .attachmentId(attachment.getAttachmentId())

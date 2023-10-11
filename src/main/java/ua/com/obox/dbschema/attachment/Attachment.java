@@ -23,6 +23,10 @@ public class Attachment {
     private String referenceId;
     @JsonIgnore
     private String attachmentUrl;
+
+    private long createdAt;
+    private long updatedAt;
+
     @Transient
     private String attachment;
 }

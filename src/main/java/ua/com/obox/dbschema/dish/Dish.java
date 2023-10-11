@@ -59,6 +59,10 @@ public class Dish {
     @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
     private String in_stock;
     private String associatedId;
+
+    private long createdAt;
+    private long updatedAt;
+
     @Transient
     private String category_id;
     private String image;

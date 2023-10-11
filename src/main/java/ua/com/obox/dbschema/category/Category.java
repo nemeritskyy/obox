@@ -32,12 +32,15 @@ public class Category {
     private String description;
     @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
     private String state;
-
-    @Transient
-    private String menu_id;
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Dish> dishes;
+
+    private long createdAt;
+    private long updatedAt;
+
+    @Transient
+    private String menu_id;
 
     @JsonIgnore
     public void setMenuIdForCategory(String menu_id) {

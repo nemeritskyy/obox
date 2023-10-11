@@ -34,6 +34,10 @@ public class Restaurant {
     @OneToMany(mappedBy = "restaurant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Menu> menus;
+
+    private long createdAt;
+    private long updatedAt;
+
     @JsonIgnore
     public void setTenantIdForRestaurant(String tenant_id) {
         Tenant tenant = new Tenant();
