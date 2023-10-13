@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface DishRepository extends JpaRepository<Dish, UUID> {
-    List<Dish> findAllByCategory_CategoryId(String categoryId);
+    List<Dish> findAllByCategory_CategoryIdOrderByName(String categoryId);
 
     Optional<Dish> findByDishId(String dishId);
     Optional<Dish> findByImage(String atta);

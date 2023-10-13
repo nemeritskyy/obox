@@ -5,7 +5,10 @@ import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.menu.Menu;
 import ua.com.obox.dbschema.dish.Dish;
+import ua.com.obox.dbschema.sorting.EntityOrder;
+import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.State;
+import ua.com.obox.dbschema.tools.attachment.ApplicationContextProvider;
 
 import javax.persistence.*;
 import java.util.List;
@@ -47,5 +50,28 @@ public class Category {
         Menu menu = new Menu();
         menu.setMenuId(menu_id);
         this.menu = menu;
+    }
+
+    @PreRemove
+    public void beforeRemove() {
+        EntityOrderRepository entityOrderRepository = ApplicationContextProvider.getBean(EntityOrderRepository.class);
+        entityOrderRepository.findByEntityId(this.categoryId).ifPresent(entityOrderRepository::delete);
+        EntityOrder existSorted = entityOrderRepository.findBySortedListContaining(this.categoryId).orElseGet(() -> null);
+        if (existSorted != null) {
+            String[] elements = existSorted.getSortedList().split(",");
+            StringBuilder result = new StringBuilder();
+            for (String element : elements) {
+                if (!element.equals(this.categoryId)) {
+                    result.append(element).append(",");
+                }
+            }
+            if (result.length() > 0) {
+                result.setLength(result.length() - 1);
+                existSorted.setSortedList(result.toString());
+                entityOrderRepository.save(existSorted);
+            } else {
+                entityOrderRepository.delete(existSorted);
+            }
+        }
     }
 }

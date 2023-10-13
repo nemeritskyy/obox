@@ -8,6 +8,8 @@ import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.attachment.Attachment;
 import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.category.Category;
+import ua.com.obox.dbschema.sorting.EntityOrder;
+import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.EmptyIntegerDeserializer;
 import ua.com.obox.dbschema.tools.attachment.ApplicationContextProvider;
@@ -98,6 +100,24 @@ public class Dish {
                 ex.printStackTrace();
             }
         }
-    }
 
+        EntityOrderRepository entityOrderRepository = ApplicationContextProvider.getBean(EntityOrderRepository.class);
+        EntityOrder existSorted = entityOrderRepository.findBySortedListContaining(this.dishId).orElseGet(() -> null);
+        if (existSorted != null) {
+            String[] elements = existSorted.getSortedList().split(",");
+            StringBuilder result = new StringBuilder();
+            for (String element : elements) {
+                if (!element.equals(this.dishId)) {
+                    result.append(element).append(",");
+                }
+            }
+            if (result.length() > 0) {
+                result.setLength(result.length() - 1);
+                existSorted.setSortedList(result.toString());
+                entityOrderRepository.save(existSorted);
+            } else {
+                entityOrderRepository.delete(existSorted);
+            }
+        }
+    }
 }

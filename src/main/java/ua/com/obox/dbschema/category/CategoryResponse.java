@@ -27,7 +27,7 @@ public class CategoryResponse {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("state")
     private String state;
-
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("dishes")
     private List<DishResponse> dishes;
 }

@@ -7,7 +7,10 @@ import ua.com.obox.dbschema.associateddata.RestaurantAssociatedData;
 import ua.com.obox.dbschema.associateddata.RestaurantAssociatedDataRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.restaurant.Restaurant;
+import ua.com.obox.dbschema.sorting.EntityOrder;
+import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.State;
+import ua.com.obox.dbschema.tools.attachment.ApplicationContextProvider;
 
 import javax.persistence.*;
 import java.util.List;
@@ -54,5 +57,28 @@ public class Menu {
         }
         language_code = languageCode.toLowerCase();
         this.restaurant = restaurant;
+    }
+
+    @PreRemove
+    public void beforeRemove() {
+        EntityOrderRepository entityOrderRepository = ApplicationContextProvider.getBean(EntityOrderRepository.class);
+        entityOrderRepository.findByEntityId(this.menuId).ifPresent(entityOrderRepository::delete);
+        EntityOrder existSorted = entityOrderRepository.findBySortedListContaining(this.menuId).orElseGet(() -> null);
+        if (existSorted != null) {
+            String[] elements = existSorted.getSortedList().split(",");
+            StringBuilder result = new StringBuilder();
+            for (String element : elements) {
+                if (!element.equals(this.menuId)) {
+                    result.append(element).append(",");
+                }
+            }
+            if (result.length() > 0) {
+                result.setLength(result.length() - 1);
+                existSorted.setSortedList(result.toString());
+                entityOrderRepository.save(existSorted);
+            } else {
+                entityOrderRepository.delete(existSorted);
+            }
+        }
     }
 }
