@@ -42,7 +42,7 @@ public class EntityOrderService {
         loggingService.log(LogLevel.INFO, String.format("Update/Create sorting list for %s UUID=%s", request.getReferenceType(), entityUUID));
     }
 
-    private static void checkEntityInDatabase(Optional<?> foundEntity, EntityOrder request, String acceptLanguage, EntityOrderRepository entityOrderRepository, RestaurantRepository restaurantRepository, MenuRepository menuRepository, CategoryRepository categoryRepository) {
+    private void checkEntityInDatabase(Optional<?> foundEntity, EntityOrder request, String acceptLanguage, EntityOrderRepository entityOrderRepository, RestaurantRepository restaurantRepository, MenuRepository menuRepository, CategoryRepository categoryRepository) {
         if (foundEntity.isEmpty()){
             ExceptionTools.notFoundResponse(".entityOrderNotFound", acceptLanguage, request.getEntityId());
         }
@@ -63,7 +63,7 @@ public class EntityOrderService {
         entityOrderRepository.save(entityOrderToSave);
     }
 
-    private static void validationReference(EntityOrder request, Map<String, String> fieldErrors, String finalAcceptLanguage,
+    private void validationReference(EntityOrder request, Map<String, String> fieldErrors, String finalAcceptLanguage,
                                             EntityOrderRepository entityOrderRepository, RestaurantRepository restaurantRepository, MenuRepository menuRepository, CategoryRepository categoryRepository) {
         switch (request.getReferenceType()) {
             case "DISH" -> {
