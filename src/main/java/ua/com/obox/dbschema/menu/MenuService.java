@@ -9,6 +9,8 @@ import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.category.CategoryResponse;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
+import ua.com.obox.dbschema.sorting.EntityOrder;
+import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.RequiredServiceHelper;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
@@ -21,9 +23,7 @@ import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,6 +34,7 @@ public class MenuService {
     private final CategoryRepository categoryRepository;
     private final LoggingService loggingService;
     private final RestaurantAssociatedDataRepository dataRepository;
+    private final EntityOrderRepository entityOrderRepository;
     private final UpdateServiceHelper serviceHelper;
     private final RequiredServiceHelper requiredServiceHelper;
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
@@ -48,7 +49,18 @@ public class MenuService {
             return null;
         });
 
-        List<Category> categories = categoryRepository.findAllByMenu_MenuId(menuId);
+        List<Category> categories = categoryRepository.findAllByMenu_MenuIdOrderByName(menuId);
+
+        // for sorting results
+        EntityOrder sortingExist = entityOrderRepository.findByEntityId(menuId).orElseGet(() -> null);
+        if (sortingExist != null) {
+            List<String> categoryIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
+            categories.sort(Comparator.comparingInt(category -> {
+                int index = categoryIdsInOrder.indexOf(category.getCategoryId());
+                return index != -1 ? index : Integer.MAX_VALUE;
+            }));
+
+        }
 
         List<CategoryResponse> responseList = categories.stream()
                 .map(category -> CategoryResponse.builder()

@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.menu.Menu;
+import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tenant.Tenant;
+import ua.com.obox.dbschema.tools.attachment.ApplicationContextProvider;
 
 import javax.persistence.*;
 import java.util.List;
@@ -43,5 +45,11 @@ public class Restaurant {
         Tenant tenant = new Tenant();
         tenant.setTenantId(tenant_id);
         this.tenant = tenant;
+    }
+
+    @PreRemove
+    public void beforeRemove() {
+        EntityOrderRepository entityOrderRepository = ApplicationContextProvider.getBean(EntityOrderRepository.class);
+        entityOrderRepository.findByEntityId(this.restaurantId).ifPresent(entityOrderRepository::delete);
     }
 }

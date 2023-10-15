@@ -66,6 +66,9 @@ public class AttachmentFTP {
                             try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
                                 ImageIO.write(originalImage, fileType.substring(1), baos);
                                 imageData = baos.toByteArray();
+                                staticLoggingService.log(LogLevel.INFO, "Image successfully resized to size: " + ValidationConfiguration.ATTACHMENT_RECOMMENDED_WIDTH);
+                            } catch (Exception e) {
+                                staticLoggingService.log(LogLevel.ERROR, "ATTENTION Image cannot be resized");
                             }
                         }
                     }

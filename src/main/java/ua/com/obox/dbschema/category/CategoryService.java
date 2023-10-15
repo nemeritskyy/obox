@@ -8,6 +8,8 @@ import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.dish.DishResponse;
+import ua.com.obox.dbschema.sorting.EntityOrder;
+import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.RequiredServiceHelper;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
@@ -29,6 +31,7 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final MenuRepository menuRepository;
     private final DishRepository dishRepository;
+    private final EntityOrderRepository entityOrderRepository;
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final RequiredServiceHelper requiredServiceHelper;
@@ -44,7 +47,17 @@ public class CategoryService {
             return null;
         });
 
-        List<Dish> dishes = dishRepository.findAllByCategory_CategoryId(categoryId);
+        List<Dish> dishes = dishRepository.findAllByCategory_CategoryIdOrderByName(categoryId);
+
+        // for sorting results
+        EntityOrder sortingExist = entityOrderRepository.findByEntityId(categoryId).orElseGet(() -> null);
+        if (sortingExist != null) {
+            List<String> dishIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
+            dishes.sort(Comparator.comparingInt(dish -> {
+                int index = dishIdsInOrder.indexOf(dish.getDishId());
+                return index != -1 ? index : Integer.MAX_VALUE;
+            }));
+        }
 
         List<DishResponse> responseList = dishes.stream()
                 .map(dish -> {
