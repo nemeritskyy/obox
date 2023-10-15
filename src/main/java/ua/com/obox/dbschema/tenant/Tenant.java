@@ -30,4 +30,7 @@ public class Tenant {
     @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
     @JsonIgnore
     private String state;
+
+    private long createdAt;
+    private long updatedAt;
 }

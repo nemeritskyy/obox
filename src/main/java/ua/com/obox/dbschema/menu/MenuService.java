@@ -20,6 +20,7 @@ import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -111,6 +112,8 @@ public class MenuService {
 
         menu.checkAssociatedData(request.getRestaurant_id(), request.getLanguage_code(), dataRepository); // if associated data is empty create it
 
+        menu.setCreatedAt(Instant.now().getEpochSecond());
+        menu.setUpdatedAt(Instant.now().getEpochSecond());
         menuRepository.save(menu);
 
         loggingService.log(LogLevel.INFO, String.format("createMenu %s UUID=%s %s", request.getName(), menu.getMenuId(), Message.CREATE.getMessage()));
@@ -145,6 +148,7 @@ public class MenuService {
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
+        menu.setUpdatedAt(Instant.now().getEpochSecond());
         menuRepository.save(menu);
         loggingService.log(LogLevel.INFO, String.format("patchMenuById %s %s", menuId, Message.UPDATE.getMessage()));
     }

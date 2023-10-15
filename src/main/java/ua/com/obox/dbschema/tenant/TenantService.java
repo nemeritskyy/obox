@@ -17,6 +17,7 @@ import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -87,6 +88,8 @@ public class TenantService {
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
+        tenant.setCreatedAt(Instant.now().getEpochSecond());
+        tenant.setUpdatedAt(Instant.now().getEpochSecond());
         tenantRepository.save(tenant);
 
         loggingService.log(LogLevel.INFO, String.format("createTenant %s UUID=%s %s", request.getName(), tenant.getTenantId(), Message.CREATE.getMessage()));
@@ -111,6 +114,7 @@ public class TenantService {
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
+        tenant.setUpdatedAt(Instant.now().getEpochSecond());
         tenantRepository.save(tenant);
         loggingService.log(LogLevel.INFO, String.format("patchTenantById %s %s", tenantId, Message.UPDATE.getMessage()));
     }

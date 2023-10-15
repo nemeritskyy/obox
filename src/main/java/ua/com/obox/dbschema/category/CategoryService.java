@@ -19,6 +19,7 @@ import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -126,6 +127,8 @@ public class CategoryService {
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
+        category.setCreatedAt(Instant.now().getEpochSecond());
+        category.setUpdatedAt(Instant.now().getEpochSecond());
         categoryRepository.save(category);
 
         loggingService.log(LogLevel.INFO, String.format("createCategory %s UUID=%s %s", request.getName(), category.getCategoryId(), Message.CREATE.getMessage()));
@@ -162,6 +165,7 @@ public class CategoryService {
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
+        category.setUpdatedAt(Instant.now().getEpochSecond());
         categoryRepository.save(category);
         loggingService.log(LogLevel.INFO, String.format("patchCategoryById %s %s", categoryId, Message.UPDATE.getMessage()));
     }

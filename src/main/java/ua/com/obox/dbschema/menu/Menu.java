@@ -33,13 +33,16 @@ public class Menu {
     private String name;
     @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
     private String state;
-    
-    @Transient
-    private String restaurant_id;
     @OneToMany(mappedBy = "menu", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Category> categories;
     private String language_code;
+
+    private long createdAt;
+    private long updatedAt;
+
+    @Transient
+    private String restaurant_id;
 
     @JsonIgnore
     public void checkAssociatedData(String restaurant_id, String languageCode, RestaurantAssociatedDataRepository dataRepository) {
