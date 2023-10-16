@@ -72,9 +72,11 @@ public class RequiredServiceHelper {
         return null;
     }
 
-    public String updatePriceIfNeeded(Double price, Dish dish, String acceptLanguage) {
-        if (price != null) {
-            return serviceHelper.updatePriceField(dish::setPrice, price, ValidationConfiguration.MAX_PRICE, "price", acceptLanguage);
+    public String updatePriceIfNeeded(Double price, Dish dish, boolean zeroApply, String acceptLanguage) {
+        if (price != null && zeroApply) {
+            return serviceHelper.updatePriceField(dish::setSpecialPrice, price, ValidationConfiguration.MAX_PRICE, "specialPrice", zeroApply, acceptLanguage);
+        } else if (price != null) {
+            return serviceHelper.updatePriceField(dish::setPrice, price, ValidationConfiguration.MAX_PRICE, "price", zeroApply, acceptLanguage);
         }
         return null;
     }

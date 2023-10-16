@@ -79,7 +79,7 @@ public class Validator {
     }
 
     public static String positiveInteger(String field, Number inputInteger, int maxInteger, String acceptLanguage) {
-        if (inputInteger != null && inputInteger.doubleValue() < 0 || inputInteger != null && inputInteger.doubleValue() > maxInteger) {
+        if (inputInteger != null && inputInteger.doubleValue() <= 0 || inputInteger != null && inputInteger.doubleValue() > maxInteger) {
             staticLoggingService.log(LogLevel.ERROR, String.format(translation.getString("en-US.integerRange"), translation.getString("en-US." + field), maxInteger));
             return String.format(translation.getString(acceptLanguage + ".integerRange"), translation.getString(acceptLanguage + "." + field), maxInteger);
         }

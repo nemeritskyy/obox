@@ -62,21 +62,23 @@ public class UpdateServiceHelper {
         return null;
     }
 
-    public String updatePriceField(Consumer<Double> setter, Double value, int maxValue, String fieldName, String acceptLanguage) {
-        if (value != null) {
-            if (value == 0) {
-                loggingService.log(LogLevel.ERROR, translation.getString("en-US.priceRequired"));
-                return translation.getString(acceptLanguage + ".priceRequired");
-            }
-            String result = Validator.positiveInteger(fieldName, value, maxValue, acceptLanguage);
-            if (result == null) {
-                setter.accept(value);
-            }
-            return result;
-        } else {
+    public String updatePriceField(Consumer<Double> setter, Double value, int maxValue, String fieldName, boolean zeroApply, String acceptLanguage) {
+        if (zeroApply && value == 0) {
+            setter.accept(null);
+            return null;
+        } else if (value == null){
             loggingService.log(LogLevel.ERROR, translation.getString("en-US.priceRequired"));
             return translation.getString(acceptLanguage + ".priceRequired");
         }
+        String result = Validator.positiveInteger(fieldName, value, maxValue, acceptLanguage);
+        if (result == null && value > 0) {
+            setter.accept(value);
+        } else {
+            {
+                return result;
+            }
+        }
+        return null;
     }
 
     public String updateWeightUnit(Consumer<String> setter, String value, String acceptLanguage) {
