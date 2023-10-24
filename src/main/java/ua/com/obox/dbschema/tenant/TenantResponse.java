@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ua.com.obox.dbschema.translation.responsebody.Content;
 
 @Data
 @Builder
@@ -13,6 +14,6 @@ import lombok.NoArgsConstructor;
 public class TenantResponse {
     @JsonProperty("tenant_id")
     private String tenantId;
-    @JsonProperty("name")
-    private String name;
+    @JsonProperty("content")
+    private Content content;
 }

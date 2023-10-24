@@ -1,10 +1,14 @@
 package ua.com.obox.dbschema.tenant;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
+import ua.com.obox.dbschema.language.Language;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.tools.State;
+import ua.com.obox.dbschema.tools.attachment.ApplicationContextProvider;
+import ua.com.obox.dbschema.translation.TranslationRepository;
 
 import javax.persistence.*;
 import java.util.List;
@@ -23,14 +27,34 @@ public class Tenant {
     @Column(columnDefinition = "CHAR(36)")
     @JsonIgnore
     private String tenantId;
-    private String name;
-    @OneToMany(mappedBy = "tenant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
-    private List<Restaurant> restaurants;
+    private String translationId;
     @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
     @JsonIgnore
     private String state;
 
     private long createdAt;
     private long updatedAt;
+
+    @OneToMany(mappedBy = "tenant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Restaurant> restaurants;
+
+    @OneToMany(mappedBy = "tenant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Language> languages;
+
+    @JsonProperty("name")
+    @Transient
+    private String name;
+
+    @JsonProperty("language")
+    @Transient
+    private String language;
+
+    @PreRemove
+    public void beforeRemove() {
+        TranslationRepository translationRepository = ApplicationContextProvider.getBean(TranslationRepository.class);
+        translationRepository.findAllByReferenceId(this.tenantId).ifPresent(translationRepository::delete);
+    }
 }
