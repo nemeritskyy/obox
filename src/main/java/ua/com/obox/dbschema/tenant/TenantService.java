@@ -1,12 +1,11 @@
 package ua.com.obox.dbschema.tenant;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import ua.com.obox.dbschema.language.Language;
-import ua.com.obox.dbschema.language.LanguageRepository;
 import ua.com.obox.dbschema.tools.RequiredServiceHelper;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
@@ -23,7 +22,9 @@ import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
 import ua.com.obox.dbschema.translation.Translation;
 import ua.com.obox.dbschema.translation.TranslationRepository;
+import ua.com.obox.dbschema.translation.assistant.CreateTranslation;
 import ua.com.obox.dbschema.translation.responsebody.Content;
+import ua.com.obox.dbschema.translation.responsebody.TenantTranslationEntry;
 
 import java.time.Instant;
 import java.util.*;
@@ -35,7 +36,6 @@ public class TenantService {
     private final TenantRepository tenantRepository;
     private final RestaurantRepository restaurantRepository;
     private final TranslationRepository translationRepository;
-    private final LanguageRepository languageRepository;
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final RequiredServiceHelper requiredServiceHelper;
@@ -55,9 +55,9 @@ public class TenantService {
         List<RestaurantResponse> responseList = restaurants.stream()
                 .map(restaurant -> RestaurantResponse.builder()
                         .restaurantId(restaurant.getRestaurantId())
-                        .address(restaurant.getAddress())
-                        .name(restaurant.getName())
-                        .tenantId(restaurant.getTenant().getTenantId())
+//                        .address(restaurant.getAddress())
+//                        .name(restaurant.getName())
+//                        .tenantId(restaurant.getTenant().getTenantId())
                         .build())
                 .collect(Collectors.toList());
 
@@ -81,7 +81,8 @@ public class TenantService {
         });
 
         ObjectMapper objectMapper = new ObjectMapper();
-        Content content = objectMapper.readValue(translationFromDB.getContent(), Content.class);
+        Content<TenantTranslationEntry> content = objectMapper.readValue(translationFromDB.getContent(), new TypeReference<>() {
+        });
 
         if (tenant.getState().equals(State.DISABLED))
             ExceptionTools.forbiddenResponse(finalAcceptLanguage, tenantId);
@@ -89,6 +90,7 @@ public class TenantService {
         loggingService.log(LogLevel.INFO, String.format("getTenantById %s", tenantId));
         return TenantResponse.builder()
                 .tenantId(tenant.getTenantId())
+                .translationId(tenant.getTranslationId())
                 .content(content)
                 .build();
     }
@@ -107,48 +109,15 @@ public class TenantService {
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
-
         tenant.setCreatedAt(Instant.now().getEpochSecond());
         tenant.setUpdatedAt(Instant.now().getEpochSecond());
         tenantRepository.save(tenant);
 
         {
-            Language language1 = Language.builder().build();
-            language1.setTenant(tenant);
-            language1.setName("en-US");
-            language1.setLabel("English");
-            language1.setCreatedAt(Instant.now().getEpochSecond());
-            language1.setUpdatedAt(Instant.now().getEpochSecond());
-            languageRepository.save(language1);
-
-            Language language2 = Language.builder().build();
-            language2.setTenant(tenant);
-            language2.setName("uk-UA");
-            language2.setLabel("Українська");
-            language2.setCreatedAt(Instant.now().getEpochSecond());
-            language2.setUpdatedAt(Instant.now().getEpochSecond());
-            languageRepository.save(language2);
-
-            List<Language> languageList = languageRepository.findAllByTenant_TenantId(tenant.getTenantId());
-
-            tenant.setLanguage(request.getLanguage());
-            ObjectMapper objectMapper = new ObjectMapper();
-            Content content = Content.builder().build();
-
-            Map<String, String> languagesMap = content.getName();
-            for (Language language : languageList) {
-                languagesMap.put(language.getName(), null);
-                System.out.println(language.getName());
-            }
-            languagesMap.put(tenant.getLanguage(), Validator.removeExtraSpaces(tenant.getName()));
-
-            Translation translation = Translation.builder().build();
-            translation.setReferenceId(tenant.getTenantId());
-            translation.setReferenceType("tenant");
-            translation.setContent(objectMapper.writeValueAsString(content));
-            translation.setCreatedAt(Instant.now().getEpochSecond());
-            translation.setUpdatedAt(Instant.now().getEpochSecond());
-            translationRepository.save(translation);
+            CreateTranslation<TenantTranslationEntry> createTranslation = new CreateTranslation<>(translationRepository);
+            TenantTranslationEntry entry = new TenantTranslationEntry(request.getName());
+            Translation translation = createTranslation
+                    .create(tenant.getTenantId(), "tenant", request.getLanguage(), entry, TenantTranslationEntry.class);
             tenant.setTranslationId(translation.getTranslationId());
         }
 
@@ -178,10 +147,16 @@ public class TenantService {
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
-        ObjectMapper objectMapper = new ObjectMapper();
-        Content content = objectMapper.readValue(translationFromDB.getContent(), Content.class);
-        content.getName().put(request.getLanguage(), Validator.removeExtraSpaces(tenant.getName()));
-        translationFromDB.setContent(objectMapper.writeValueAsString(content));
+        {
+            ObjectMapper objectMapper = new ObjectMapper();
+            TypeReference<Content<TenantTranslationEntry>> typeReference = new TypeReference<>() {
+            };
+            Content<TenantTranslationEntry> content = objectMapper.readValue(translationFromDB.getContent(), typeReference);
+            Map<String, TenantTranslationEntry> languagesMap = content.getContent();
+            languagesMap.put(request.getLanguage(), new TenantTranslationEntry(Validator.removeExtraSpaces(tenant.getName())));
+            translationFromDB.setContent(objectMapper.writeValueAsString(content));
+            translationFromDB.setUpdatedAt(Instant.now().getEpochSecond());
+        }
 
         tenant.setUpdatedAt(Instant.now().getEpochSecond());
         tenantRepository.save(tenant);
