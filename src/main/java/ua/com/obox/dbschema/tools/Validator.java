@@ -94,6 +94,18 @@ public class Validator {
         return null;
     }
 
+    public static String validateLanguage(String language, String acceptLanguage) {
+        if (language == null || !language.matches(ValidationConfiguration.LANGUAGE_REGEX)) {
+            staticLoggingService.log(LogLevel.ERROR,
+                    translation.getString("en-US.language")
+            );
+            return translation.getString(acceptLanguage + ".language");
+        }
+        if (!ValidationConfiguration.SUPPORT_LANGUAGES.contains(language))
+            return translation.getString(acceptLanguage + ".languageNotSupport");
+        return null;
+    }
+
     public static String detectImageType(byte[] imageData, LoggingService loggingService) {
         if (imageData.length >= 8) {
             byte[] jpegSignature = {(byte) 0xFF, (byte) 0xD8};

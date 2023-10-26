@@ -1,6 +1,8 @@
 package ua.com.obox.dbschema.translation;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,6 +13,7 @@ import ua.com.obox.dbschema.translation.responsebody.Content;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonPropertyOrder({"translation_id", "reference_id", "reference_type", "content"})
 public class TranslationResponse {
     @JsonProperty("translation_id")
     private String translationId;
@@ -18,6 +21,6 @@ public class TranslationResponse {
     private String referenceId;
     @JsonProperty("reference_type")
     private String referenceType;
-    @JsonProperty("content")
+    @JsonUnwrapped
     private Content content;
 }
