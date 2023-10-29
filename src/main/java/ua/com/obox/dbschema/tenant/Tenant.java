@@ -7,8 +7,7 @@ import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.language.Language;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.tools.State;
-import ua.com.obox.dbschema.tools.attachment.ApplicationContextProvider;
-import ua.com.obox.dbschema.translation.TranslationRepository;
+import ua.com.obox.dbschema.translation.assistant.PreRemoveAssociatedTranslation;
 
 import javax.persistence.*;
 import java.util.List;
@@ -54,7 +53,6 @@ public class Tenant {
 
     @PreRemove
     public void beforeRemove() {
-        TranslationRepository translationRepository = ApplicationContextProvider.getBean(TranslationRepository.class);
-        translationRepository.findAllByReferenceId(this.tenantId).ifPresent(translationRepository::delete);
+        PreRemoveAssociatedTranslation.removeByEntityId(this.tenantId);
     }
 }

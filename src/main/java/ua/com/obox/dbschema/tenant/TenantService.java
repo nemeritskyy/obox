@@ -24,10 +24,12 @@ import ua.com.obox.dbschema.translation.Translation;
 import ua.com.obox.dbschema.translation.TranslationRepository;
 import ua.com.obox.dbschema.translation.assistant.CreateTranslation;
 import ua.com.obox.dbschema.translation.responsebody.Content;
+import ua.com.obox.dbschema.translation.responsebody.RestaurantTranslationEntry;
 import ua.com.obox.dbschema.translation.responsebody.TenantTranslationEntry;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,23 +44,32 @@ public class TenantService {
 
     public List<RestaurantResponse> getAllRestaurantsByTenantId(String tenantId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        ObjectMapper objectMapper = new ObjectMapper();
+        AtomicReference<Content<RestaurantTranslationEntry>> content = new AtomicReference<>();
+        AtomicReference<Translation> translation = new AtomicReference<>();
 
-        var tenantInfo = tenantRepository.findByTenantId(tenantId);
-
-        tenantInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".tenantNotFound", finalAcceptLanguage, tenantId);
-            return null;
-        });
+        tenantRepository.findByTenantId(tenantId).orElseThrow(() -> ExceptionTools.notFoundException(".tenantNotFound", finalAcceptLanguage, tenantId));
 
         List<Restaurant> restaurants = restaurantRepository.findAllByTenant_TenantId(tenantId);
 
         List<RestaurantResponse> responseList = restaurants.stream()
-                .map(restaurant -> RestaurantResponse.builder()
-                        .restaurantId(restaurant.getRestaurantId())
-//                        .address(restaurant.getAddress())
-//                        .name(restaurant.getName())
-//                        .tenantId(restaurant.getTenant().getTenantId())
-                        .build())
+                .map(restaurant -> {
+                    try {
+                        translation.set(translationRepository.findAllByTranslationId(restaurant.getTranslationId()).orElseThrow(() ->
+                                ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, restaurant.getRestaurantId())));
+                        content.set(objectMapper.readValue(translation.get().getContent(), new TypeReference<>() {
+                        }));
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    return RestaurantResponse.builder()
+                            .tenantId(restaurant.getTenant().getTenantId())
+                            .restaurantId(restaurant.getRestaurantId())
+                            .translationId(restaurant.getTranslationId())
+                            .content(content.get())
+                            .build();
+                })
                 .collect(Collectors.toList());
 
         loggingService.log(LogLevel.INFO, String.format("getAllRestaurantsByTenantId %s %s %d", tenantId, Message.FIND_COUNT.getMessage(), responseList.size()));
@@ -68,20 +79,12 @@ public class TenantService {
     public TenantResponse getTenantById(String tenantId, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
-        var tenantInfo = tenantRepository.findByTenantId(tenantId);
-
-        Tenant tenant = tenantInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".tenantNotFound", finalAcceptLanguage, tenantId);
-            return null;
-        });
-
-        Translation translationFromDB = translationRepository.findAllByTranslationId(tenant.getTranslationId()).orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".translationNotFound", finalAcceptLanguage, tenantId);
-            return null;
-        });
+        Tenant tenant = tenantRepository.findByTenantId(tenantId).orElseThrow(() -> ExceptionTools.notFoundException(".tenantNotFound", finalAcceptLanguage, tenantId));
+        Translation translation = translationRepository.findAllByTranslationId(tenant.getTranslationId())
+                .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, tenantId));
 
         ObjectMapper objectMapper = new ObjectMapper();
-        Content<TenantTranslationEntry> content = objectMapper.readValue(translationFromDB.getContent(), new TypeReference<>() {
+        Content<TenantTranslationEntry> content = objectMapper.readValue(translation.getContent(), new TypeReference<>() {
         });
 
         if (tenant.getState().equals(State.DISABLED))
@@ -103,11 +106,7 @@ public class TenantService {
                 .state(State.ENABLED)
                 .build();
 
-        fieldErrors.put("name", serviceHelper.updateNameField(tenant::setName, request.getName(), finalAcceptLanguage));
-        fieldErrors.put("language", Validator.validateLanguage(request.getLanguage(), finalAcceptLanguage));
-
-        if (fieldErrors.size() > 0)
-            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+        validateRequest(request, tenant, finalAcceptLanguage, fieldErrors, true);
 
         tenant.setCreatedAt(Instant.now().getEpochSecond());
         tenant.setUpdatedAt(Instant.now().getEpochSecond());
@@ -117,7 +116,7 @@ public class TenantService {
             CreateTranslation<TenantTranslationEntry> createTranslation = new CreateTranslation<>(translationRepository);
             TenantTranslationEntry entry = new TenantTranslationEntry(request.getName());
             Translation translation = createTranslation
-                    .create(tenant.getTenantId(), "tenant", request.getLanguage(), entry, TenantTranslationEntry.class);
+                    .create(tenant.getTenantId(), "tenant", request.getLanguage(), entry);
             tenant.setTranslationId(translation.getTranslationId());
         }
 
@@ -131,32 +130,12 @@ public class TenantService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
-        Tenant tenant = tenantRepository.findByTenantId(tenantId).orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".tenantNotFound", finalAcceptLanguage, tenantId);
-            return null;
-        });
+        Tenant tenant = tenantRepository.findByTenantId(tenantId).orElseThrow(() -> ExceptionTools.notFoundException(".tenantNotFound", finalAcceptLanguage, tenantId));
+        Translation translation = translationRepository.findAllByTranslationId(tenant.getTranslationId())
+                .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, tenantId));
 
-        Translation translationFromDB = translationRepository.findAllByTranslationId(tenant.getTranslationId()).orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".translationNotFound", finalAcceptLanguage, tenantId);
-            return null;
-        });
-
-        fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), tenant, finalAcceptLanguage));
-        fieldErrors.put("language", Validator.validateLanguage(request.getLanguage(), finalAcceptLanguage));
-
-        if (fieldErrors.size() > 0)
-            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
-
-        {
-            ObjectMapper objectMapper = new ObjectMapper();
-            TypeReference<Content<TenantTranslationEntry>> typeReference = new TypeReference<>() {
-            };
-            Content<TenantTranslationEntry> content = objectMapper.readValue(translationFromDB.getContent(), typeReference);
-            Map<String, TenantTranslationEntry> languagesMap = content.getContent();
-            languagesMap.put(request.getLanguage(), new TenantTranslationEntry(Validator.removeExtraSpaces(tenant.getName())));
-            translationFromDB.setContent(objectMapper.writeValueAsString(content));
-            translationFromDB.setUpdatedAt(Instant.now().getEpochSecond());
-        }
+        validateRequest(request, tenant, finalAcceptLanguage, fieldErrors, false);
+        updateTranslation(tenant.getName(), request.getLanguage(), translation);
 
         tenant.setUpdatedAt(Instant.now().getEpochSecond());
         tenantRepository.save(tenant);
@@ -166,12 +145,7 @@ public class TenantService {
     public void deleteTenantById(String tenantId, boolean forceDelete, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
-        var tenantInfo = tenantRepository.findByTenantId(tenantId);
-
-        Tenant tenant = tenantInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".tenantNotFound", finalAcceptLanguage, tenantId);
-            return null;
-        });
+        Tenant tenant = tenantRepository.findByTenantId(tenantId).orElseThrow(() -> ExceptionTools.notFoundException(".tenantNotFound", finalAcceptLanguage, tenantId));
 
         if (!forceDelete) {
             tenant.setState(State.DISABLED);
@@ -181,5 +155,29 @@ public class TenantService {
         }
 
         loggingService.log(LogLevel.INFO, String.format("deleteTenantById %s NAME=%s %s", tenantId, tenant.getName(), Message.DELETE.getMessage()));
+    }
+
+    private void validateRequest(Tenant request, Tenant tenant, String finalAcceptLanguage, Map<String, String> fieldErrors, boolean required) {
+        fieldErrors.put("language", Validator.validateLanguage(request.getLanguage(), finalAcceptLanguage));
+        if (required) {
+            fieldErrors.put("name", serviceHelper.updateNameField(tenant::setName, request.getName(), finalAcceptLanguage));
+        } else {
+            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), tenant, finalAcceptLanguage));
+        }
+        if (fieldErrors.size() > 0)
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+    }
+
+    private void updateTranslation(String name, String language, Translation translation) throws JsonProcessingException {
+        if (name != null) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            TypeReference<Content<TenantTranslationEntry>> typeReference = new TypeReference<>() {
+            };
+            Content<TenantTranslationEntry> content = objectMapper.readValue(translation.getContent(), typeReference);
+            Map<String, TenantTranslationEntry> languagesMap = content.getContent();
+            languagesMap.put(language, new TenantTranslationEntry(name));
+            translation.setContent(objectMapper.writeValueAsString(content));
+            translation.setUpdatedAt(Instant.now().getEpochSecond());
+        }
     }
 }
