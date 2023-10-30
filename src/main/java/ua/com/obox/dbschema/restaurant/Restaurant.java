@@ -1,12 +1,12 @@
 package ua.com.obox.dbschema.restaurant;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.menu.Menu;
-import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tenant.Tenant;
-import ua.com.obox.dbschema.tools.attachment.ApplicationContextProvider;
+import ua.com.obox.dbschema.tools.PreRemoveAssistant;
 
 import javax.persistence.*;
 import java.util.List;
@@ -27,29 +27,43 @@ public class Restaurant {
     private String restaurantId;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id")
-    @JsonIgnore
     private Tenant tenant;
-    private String name;
-    private String address;
-    @Transient
-    private String tenant_id;
-    @OneToMany(mappedBy = "restaurant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+
     @JsonIgnore
-    private List<Menu> menus;
+    private String translationId;
 
     private long createdAt;
     private long updatedAt;
 
+    @OneToMany(mappedBy = "restaurant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
-    public void setTenantIdForRestaurant(String tenant_id) {
+    private List<Menu> menus;
+
+    @JsonProperty("tenant_id")
+    @Transient
+    private String tenantId;
+
+    @JsonProperty("name")
+    @Transient
+    private String name;
+
+    @JsonProperty("address")
+    @Transient
+    private String address;
+
+    @JsonProperty("language")
+    @Transient
+    private String language;
+
+    @JsonIgnore
+    public void setTenantIdForRestaurant(String tenantId) {
         Tenant tenant = new Tenant();
-        tenant.setTenantId(tenant_id);
+        tenant.setTenantId(tenantId);
         this.tenant = tenant;
     }
 
     @PreRemove
     public void beforeRemove() {
-        EntityOrderRepository entityOrderRepository = ApplicationContextProvider.getBean(EntityOrderRepository.class);
-        entityOrderRepository.findByEntityId(this.restaurantId).ifPresent(entityOrderRepository::delete);
+        PreRemoveAssistant.removeByEntityId(this.restaurantId);
     }
 }

@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.restaurant;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -58,7 +59,7 @@ public class RestaurantController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<RestaurantResponse> getRestaurantById(@PathVariable String restaurantId, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<RestaurantResponse> getRestaurantById(@PathVariable String restaurantId, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         RestaurantResponse restaurantResponse = service.getRestaurantById(restaurantId, acceptLanguage);
         return ResponseEntity.ok(restaurantResponse);
@@ -71,7 +72,7 @@ public class RestaurantController {
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = POST_400_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<RestaurantResponseId> createRestaurant(@RequestBody Restaurant request, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<RestaurantResponseId> createRestaurant(@RequestBody Restaurant request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         RestaurantResponseId response = service.createRestaurant(request, acceptLanguage);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -90,7 +91,7 @@ public class RestaurantController {
             {
               "name": "string",
               "address": "string"}""")
-    Restaurant request, @RequestHeader HttpHeaders httpHeaders) {
+    Restaurant request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         service.patchRestaurantById(restaurantId, request, acceptLanguage);
         return ResponseEntity.noContent().build();

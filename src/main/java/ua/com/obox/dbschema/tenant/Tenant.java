@@ -6,8 +6,8 @@ import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.language.Language;
 import ua.com.obox.dbschema.restaurant.Restaurant;
+import ua.com.obox.dbschema.tools.PreRemoveAssistant;
 import ua.com.obox.dbschema.tools.State;
-import ua.com.obox.dbschema.translation.assistant.PreRemoveAssociatedTranslation;
 
 import javax.persistence.*;
 import java.util.List;
@@ -53,6 +53,6 @@ public class Tenant {
 
     @PreRemove
     public void beforeRemove() {
-        PreRemoveAssociatedTranslation.removeByEntityId(this.tenantId);
+        PreRemoveAssistant.removeByEntityId(this.tenantId);
     }
 }

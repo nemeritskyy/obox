@@ -1,5 +1,8 @@
 package ua.com.obox.dbschema.restaurant;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
@@ -16,6 +19,7 @@ import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.menu.MenuResponse;
 import ua.com.obox.dbschema.tenant.Tenant;
 import ua.com.obox.dbschema.tenant.TenantRepository;
+import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
@@ -24,11 +28,18 @@ import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
+import ua.com.obox.dbschema.translation.Translation;
+import ua.com.obox.dbschema.translation.TranslationRepository;
+import ua.com.obox.dbschema.translation.assistant.CreateTranslation;
+import ua.com.obox.dbschema.translation.responsebody.Content;
+import ua.com.obox.dbschema.translation.responsebody.MenuTranslationEntry;
+import ua.com.obox.dbschema.translation.responsebody.RestaurantTranslationEntry;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -40,6 +51,7 @@ public class RestaurantService {
     private final TenantRepository tenantRepository;
     private final MenuRepository menuRepository;
     private final EntityOrderRepository entityOrderRepository;
+    private final TranslationRepository translationRepository;
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final RequiredServiceHelper requiredServiceHelper;
@@ -47,15 +59,13 @@ public class RestaurantService {
 
     public List<MenuResponse> getAllMenusByRestaurantId(String restaurantId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        ObjectMapper objectMapper = new ObjectMapper();
+        AtomicReference<Content<MenuTranslationEntry>> content = new AtomicReference<>();
+        AtomicReference<Translation> translation = new AtomicReference<>();
 
-        var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
+        restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
 
-        restaurantInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".restaurantNotFound", finalAcceptLanguage, restaurantId);
-            return null;
-        });
-
-        List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantIdOrderByName(restaurantId);
+        List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantIdOrderByCreatedAt(restaurantId);
 
         // for sorting results
         EntityOrder sortingExist = entityOrderRepository.findByEntityId(restaurantId).orElse(null);
@@ -68,61 +78,78 @@ public class RestaurantService {
         }
 
         List<MenuResponse> responseList = menus.stream()
-                .map(menu -> MenuResponse.builder()
-                        .menuId(menu.getMenuId())
-                        .name(menu.getName())
-                        .restaurantId(menu.getRestaurant().getRestaurantId())
-                        .language(menu.getLanguage_code())
-                        .state(menu.getState())
-                        .build()).collect(Collectors.toList());
+                .map(menu -> {
+                    try {
+                        translation.set(translationRepository.findAllByTranslationId(menu.getTranslationId()).orElseThrow(() ->
+                                ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, menu.getMenuId())));
+                        content.set(objectMapper.readValue(translation.get().getContent(), new TypeReference<>() {
+                        }));
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    return MenuResponse.builder()
+                            .restaurantId(menu.getRestaurant().getRestaurantId())
+                            .menuId(menu.getMenuId())
+                            .translationId(menu.getTranslationId())
+                            .state(menu.getState())
+                            .content(content.get())
+                            .build();
+                })
+                .collect(Collectors.toList());
 
         loggingService.log(LogLevel.INFO, String.format("getAllMenusByRestaurantId %s %s %d", restaurantId, Message.FIND_COUNT.getMessage(), responseList.size()));
         return responseList;
     }
 
-    public RestaurantResponse getRestaurantById(String restaurantId, String acceptLanguage) {
+    public RestaurantResponse getRestaurantById(String restaurantId, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
-        var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
+        Restaurant restaurant = restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
+        Translation translation = translationRepository.findAllByTranslationId(restaurant.getTranslationId())
+                .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, restaurantId));
 
-        Restaurant restaurant = restaurantInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".restaurantNotFound", finalAcceptLanguage, restaurantId);
-            return null;
+        ObjectMapper objectMapper = new ObjectMapper();
+        Content<RestaurantTranslationEntry> content = objectMapper.readValue(translation.getContent(), new TypeReference<>() {
         });
 
         loggingService.log(LogLevel.INFO, String.format("getRestaurantById %s", restaurantId));
         return RestaurantResponse.builder()
                 .restaurantId(restaurant.getRestaurantId())
-                .address(restaurant.getAddress())
-                .name(restaurant.getName())
                 .tenantId(restaurant.getTenant().getTenantId())
+                .translationId(restaurant.getTranslationId())
+                .content(content)
                 .build();
     }
 
-    public RestaurantResponseId createRestaurant(Restaurant request, String acceptLanguage) {
+    public RestaurantResponseId createRestaurant(Restaurant request, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
-        request.setTenantIdForRestaurant(request.getTenant_id());
+        request.setTenantIdForRestaurant(request.getTenantId());
 
-        Tenant tenant = tenantRepository.findByTenantId(request.getTenant().getTenantId()).orElseGet(() -> {
-            fieldErrors.put("tenant_id", String.format(translation.getString(finalAcceptLanguage + ".tenantNotFound"), request.getTenant_id()));
-            return null;
-        });
+        Optional<Tenant> tenant = tenantRepository.findByTenantId(request.getTenantId());
+        if (tenant.isEmpty())
+            fieldErrors.put("tenant_id", String.format(translation.getString(finalAcceptLanguage + ".tenantNotFound"), request.getTenant().getTenantId()));
+
 
         Restaurant restaurant = Restaurant.builder()
-                .tenant(tenant)
+                .tenant(tenant.orElse(null))
                 .build();
 
-        fieldErrors.put("name", serviceHelper.updateNameField(restaurant::setName, request.getName(), finalAcceptLanguage));
-        fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
-
-        if (fieldErrors.size() > 0)
-            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+        validateRequest(request, restaurant, finalAcceptLanguage, fieldErrors, true);
 
         restaurant.setCreatedAt(Instant.now().getEpochSecond());
         restaurant.setUpdatedAt(Instant.now().getEpochSecond());
         restaurantRepository.save(restaurant);
+
+        {
+            CreateTranslation<RestaurantTranslationEntry> createTranslation = new CreateTranslation<>(translationRepository);
+            RestaurantTranslationEntry entry = new RestaurantTranslationEntry(restaurant.getName(), restaurant.getAddress());
+            Translation translation = createTranslation
+                    .create(restaurant.getRestaurantId(), "restaurant", request.getLanguage(), entry);
+            restaurant.setTranslationId(translation.getTranslationId());
+        }
 
         loggingService.log(LogLevel.INFO, String.format("createRestaurant %s UUID=%s %s", request.getName(), restaurant.getRestaurantId(), Message.CREATE.getMessage()));
         return RestaurantResponseId.builder()
@@ -130,27 +157,19 @@ public class RestaurantService {
                 .build();
     }
 
-    public void patchRestaurantById(String restaurantId, Restaurant request, String acceptLanguage) {
+    public void patchRestaurantById(String restaurantId, Restaurant request, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
         try (Session session = entityManager.unwrap(Session.class)) {
-            var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
-
-            Restaurant restaurant = restaurantInfo.orElseThrow(() -> {
-                ExceptionTools.notFoundResponse(".restaurantNotFound", finalAcceptLanguage, restaurantId);
-                return null;
-            });
+            Restaurant restaurant = restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
+            Translation translation = translationRepository.findAllByTranslationId(restaurant.getTranslationId())
+                    .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, restaurantId));
 
             session.evict(restaurant); // unbind the session
 
-            if (request.getName() != null)
-                fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), restaurant, finalAcceptLanguage));
-            if (request.getAddress() != null)
-                fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
-
-            if (fieldErrors.size() > 0)
-                throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+            validateRequest(request, restaurant, finalAcceptLanguage, fieldErrors, false);
+            updateTranslation(restaurant, request.getLanguage(), translation);
 
             restaurant.setUpdatedAt(Instant.now().getEpochSecond());
             restaurantRepository.save(restaurant);
@@ -161,12 +180,7 @@ public class RestaurantService {
     public void deleteRestaurantById(String restaurantId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
-        var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
-
-        Restaurant restaurant = restaurantInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".restaurantNotFound", finalAcceptLanguage, restaurantId);
-            return null;
-        });
+        Restaurant restaurant = restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
 
         restaurantRepository.delete(restaurant);
         loggingService.log(LogLevel.INFO, String.format("restaurantId %s NAME=%s %s", restaurantId, restaurant.getName(), Message.DELETE.getMessage()));
@@ -182,7 +196,7 @@ public class RestaurantService {
             return null;
         });
 
-        List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantIdOrderByName(restaurantId);
+        List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantIdOrderByCreatedAt(restaurantId);
 
         // for sorting results
         EntityOrder sortingExist = entityOrderRepository.findByEntityId(restaurantId).orElse(null);
@@ -198,8 +212,8 @@ public class RestaurantService {
                 .map(menu -> {
                     MenuResponse menuResponse = new MenuResponse();
                     menuResponse.setMenuId(menu.getMenuId());
-                    menuResponse.setName(menu.getName());
-                    menuResponse.setLanguage(menu.getLanguage_code());
+//                    menuResponse.setName(menu.getName());
+//                    menuResponse.setLanguage(menu.getLanguage_code());
 
                     //start menu sorting
                     EntityOrder categoryExist = entityOrderRepository.findByEntityId(menu.getMenuId()).orElse(null);
@@ -277,5 +291,36 @@ public class RestaurantService {
 
         loggingService.log(LogLevel.INFO, String.format("getAllMenusCategoriesDishesByRestaurantId %s ", restaurantId));
         return responseList;
+    }
+
+    private void validateRequest(Restaurant request, Restaurant restaurant, String finalAcceptLanguage, Map<String, String> fieldErrors, boolean required) {
+        if (required) {
+            fieldErrors.put("name", serviceHelper.updateNameField(restaurant::setName, request.getName(), finalAcceptLanguage));
+        } else {
+            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), restaurant, finalAcceptLanguage));
+        }
+        fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
+        fieldErrors.put("language", Validator.validateLanguage(request.getLanguage(), finalAcceptLanguage));
+
+        if (fieldErrors.size() > 0)
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+    }
+
+    private void updateTranslation(Restaurant restaurant, String language, Translation translation) throws JsonProcessingException {
+        if (restaurant.getName() != null) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            TypeReference<Content<RestaurantTranslationEntry>> typeReference = new TypeReference<>() {
+            };
+            Content<RestaurantTranslationEntry> content = objectMapper.readValue(translation.getContent(), typeReference);
+            Map<String, RestaurantTranslationEntry> languagesMap = content.getContent();
+            if (restaurant.getAddress() == null) {
+                restaurant.setAddress(content.getContent().get(language).getAddress());
+            } else if (restaurant.getAddress().equals("")) {
+                restaurant.setAddress(null);
+            }
+            languagesMap.put(language, new RestaurantTranslationEntry(restaurant.getName(), restaurant.getAddress()));
+            translation.setContent(objectMapper.writeValueAsString(content));
+            translation.setUpdatedAt(Instant.now().getEpochSecond());
+        }
     }
 }
