@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.menu;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -44,7 +45,7 @@ public class MenuController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<MenuResponse> getMenuById(@PathVariable String menuId, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<MenuResponse> getMenuById(@PathVariable String menuId, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         MenuResponse menuResponse = service.getMenuById(menuId, acceptLanguage);
         return ResponseEntity.ok(menuResponse);
@@ -57,7 +58,7 @@ public class MenuController {
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = POST_400_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<MenuResponseId> createMenu(@RequestBody Menu request, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<MenuResponseId> createMenu(@RequestBody Menu request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         MenuResponseId response = service.createMenu(request, acceptLanguage);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -75,7 +76,7 @@ public class MenuController {
     @Schema(example = "{\n" +
             "  \"name\": \"string\"" +
             "}")
-    Menu request, @RequestHeader HttpHeaders httpHeaders) {
+    Menu request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         service.patchMenuById(menuId, request, acceptLanguage);
         return ResponseEntity.noContent().build();

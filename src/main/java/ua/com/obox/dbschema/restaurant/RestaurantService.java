@@ -169,7 +169,7 @@ public class RestaurantService {
             session.evict(restaurant); // unbind the session
 
             validateRequest(request, restaurant, finalAcceptLanguage, fieldErrors, false);
-            updateTranslation(restaurant, request.getLanguage(), translation);
+            updateTranslation(restaurant, request.getLanguage(), translation, finalAcceptLanguage);
 
             restaurant.setUpdatedAt(Instant.now().getEpochSecond());
             restaurantRepository.save(restaurant);
@@ -233,7 +233,7 @@ public class RestaurantService {
                             .map(category -> {
                                 CategoryResponse categoryResponse = new CategoryResponse();
                                 categoryResponse.setCategoryId(category.getCategoryId());
-                                categoryResponse.setName(category.getName());
+//                                categoryResponse.setName(category.getName());
 
                                 //start dish sorting
                                 EntityOrder dishExist = entityOrderRepository.findByEntityId(category.getCategoryId()).orElse(null);
@@ -306,21 +306,24 @@ public class RestaurantService {
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
     }
 
-    private void updateTranslation(Restaurant restaurant, String language, Translation translation) throws JsonProcessingException {
-        if (restaurant.getName() != null) {
-            ObjectMapper objectMapper = new ObjectMapper();
-            TypeReference<Content<RestaurantTranslationEntry>> typeReference = new TypeReference<>() {
-            };
-            Content<RestaurantTranslationEntry> content = objectMapper.readValue(translation.getContent(), typeReference);
-            Map<String, RestaurantTranslationEntry> languagesMap = content.getContent();
-            if (restaurant.getAddress() == null) {
-                restaurant.setAddress(content.getContent().get(language).getAddress());
-            } else if (restaurant.getAddress().equals("")) {
-                restaurant.setAddress(null);
-            }
-            languagesMap.put(language, new RestaurantTranslationEntry(restaurant.getName(), restaurant.getAddress()));
-            translation.setContent(objectMapper.writeValueAsString(content));
-            translation.setUpdatedAt(Instant.now().getEpochSecond());
+    private void updateTranslation(Restaurant restaurant, String language, Translation translation, String finalAcceptLanguage) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        TypeReference<Content<RestaurantTranslationEntry>> typeReference = new TypeReference<>() {
+        };
+        Content<RestaurantTranslationEntry> content = objectMapper.readValue(translation.getContent(), typeReference);
+        Map<String, RestaurantTranslationEntry> languagesMap = content.getContent();
+        if (languagesMap.get(language) == null) {
+            throw ExceptionTools.notFoundException(".translationForThisLanguageNotFound", finalAcceptLanguage, restaurant.getRestaurantId());
         }
+        if (restaurant.getName() == null)
+            restaurant.setName(languagesMap.get(language).getName());
+        if (restaurant.getAddress() == null) {
+            restaurant.setAddress(content.getContent().get(language).getAddress());
+        } else if (restaurant.getAddress().equals("")) {
+            restaurant.setAddress(null);
+        }
+        languagesMap.put(language, new RestaurantTranslationEntry(restaurant.getName(), restaurant.getAddress()));
+        translation.setContent(objectMapper.writeValueAsString(content));
+        translation.setUpdatedAt(Instant.now().getEpochSecond());
     }
 }
