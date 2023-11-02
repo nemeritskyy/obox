@@ -10,7 +10,7 @@
     </parent>
     <groupId>ua.com.obox</groupId>
     <artifactId>obox</artifactId>
-    <version>0.1.0-DEV</version>
+    <version>0.1.1-DEV</version>
     <packaging>war</packaging>
     <name>obox</name>
     <description>obox</description>
