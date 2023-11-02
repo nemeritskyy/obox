@@ -61,7 +61,7 @@ public class TenantController {
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = POST_400_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<TenantResponseId> createTenant(@RequestBody Tenant request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
+    public ResponseEntity<TenantResponseId> createTenant(@RequestBody @Schema(example = POST_BODY) Tenant request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         TenantResponseId response = service.createTenant(request, acceptLanguage);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -75,7 +75,7 @@ public class TenantController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<Void> patchTenantById(@PathVariable String tenantId, @RequestBody Tenant request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
+    public ResponseEntity<Void> patchTenantById(@PathVariable String tenantId, @RequestBody @Schema(example = POST_BODY) Tenant request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         service.patchTenantById(tenantId, request, acceptLanguage);
         return ResponseEntity.noContent().build();
