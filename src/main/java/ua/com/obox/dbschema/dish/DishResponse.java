@@ -2,10 +2,14 @@ package ua.com.obox.dbschema.dish;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import ua.com.obox.dbschema.translation.responsebody.CategoryTranslationEntry;
+import ua.com.obox.dbschema.translation.responsebody.Content;
 
 import java.util.List;
 
@@ -13,18 +17,17 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonPropertyOrder({"category_id", "dish_id", "translation_id", "state", "in_stock", "content", "price", "special_price", "weight", "weight_unit", "cooking_time", "calories", "image", "allergens", "tags"})
 public class DishResponse {
-    @JsonProperty("dish_id")
-    private String dishId;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("category_id")
     private String categoryId;
-    @JsonProperty("associated_id")
-    private String associatedId;
-    @JsonProperty("name")
-    private String name;
-    @JsonProperty("description")
-    private String description;
+    @JsonProperty("dish_id")
+    private String dishId;
+    @JsonProperty("translation_id")
+    private String translationId;
+    @JsonUnwrapped
+    private Content<CategoryTranslationEntry> content;
     @JsonProperty("price")
     private Double price;
     @JsonProperty("special_price")
