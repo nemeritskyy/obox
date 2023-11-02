@@ -8,7 +8,6 @@ import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.translation.Translation;
 import ua.com.obox.dbschema.translation.TranslationRepository;
 import ua.com.obox.dbschema.translation.responsebody.Content;
-import ua.com.obox.dbschema.translation.responsebody.MenuTranslationEntry;
 
 import java.io.IOException;
 import java.util.List;
@@ -17,7 +16,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @AllArgsConstructor
-public class ExistEntity<T extends MenuTranslationEntry> {
+public class ExistEntity<T extends ExistName> {
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
     private final TranslationRepository translationRepository;
 
@@ -36,11 +35,11 @@ public class ExistEntity<T extends MenuTranslationEntry> {
                         });
                         for (String entryLanguage : supportLanguages) {
                             translationEntry = content.getContent().get(entryLanguage);
-                            if (translationEntry != null && translationEntry.getName().equals(name)) {
+                            if (translationEntry != null && translationEntry.getName().equals(name)
+                                    && element.getId().equals(translationExist.getReferenceId())) {
                                 fieldErrors.put("name", translation.getString(errorLanguage + ".nameExists"));
                             }
                         }
-
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

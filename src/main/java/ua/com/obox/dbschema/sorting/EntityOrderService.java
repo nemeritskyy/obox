@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
+import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
@@ -30,7 +31,7 @@ public class EntityOrderService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         String entityUUID = request.getEntityId();
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
-        if (!String.join(",", request.getSortedArray()).matches("([0-9a-fA-F-]{36}(,)?)+")) {
+        if (!String.join(",", request.getSortedArray()).matches(ValidationConfiguration.UUID_REGEX)) {
             fieldErrors.put("sorted_list", translation.getString(finalAcceptLanguage + ".badSortedList"));
         }
         validationReference(request, fieldErrors, finalAcceptLanguage,
@@ -42,8 +43,8 @@ public class EntityOrderService {
         loggingService.log(LogLevel.INFO, String.format("Update/Create sorting list for %s UUID=%s", request.getReferenceType(), entityUUID));
     }
 
-    private void checkEntityInDatabase(Optional<?> foundEntity, EntityOrder request, String acceptLanguage, EntityOrderRepository entityOrderRepository, RestaurantRepository restaurantRepository, MenuRepository menuRepository, CategoryRepository categoryRepository) {
-        if (foundEntity.isEmpty()){
+    private void checkEntityInDatabase(Optional<?> foundEntity, EntityOrder request, String acceptLanguage, EntityOrderRepository entityOrderRepository) {
+        if (foundEntity.isEmpty()) {
             ExceptionTools.notFoundResponse(".entityOrderNotFound", acceptLanguage, request.getEntityId());
         }
 
@@ -64,19 +65,20 @@ public class EntityOrderService {
     }
 
     private void validationReference(EntityOrder request, Map<String, String> fieldErrors, String finalAcceptLanguage,
-                                            EntityOrderRepository entityOrderRepository, RestaurantRepository restaurantRepository, MenuRepository menuRepository, CategoryRepository categoryRepository) {
+                                     EntityOrderRepository entityOrderRepository, RestaurantRepository restaurantRepository, MenuRepository menuRepository, CategoryRepository categoryRepository) {
+        request.setReferenceType(request.getReferenceType().toLowerCase());
         switch (request.getReferenceType()) {
-            case "DISH" -> {
+            case "dish" -> {
                 var categoryInfo = categoryRepository.findByCategoryId(request.getEntityId());
-                checkEntityInDatabase(categoryInfo, request, finalAcceptLanguage, entityOrderRepository, restaurantRepository, menuRepository, categoryRepository);
+                checkEntityInDatabase(categoryInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
-            case "CATEGORY" -> {
+            case "category" -> {
                 var menuInfo = menuRepository.findByMenuId(request.getEntityId());
-                checkEntityInDatabase(menuInfo, request, finalAcceptLanguage, entityOrderRepository, restaurantRepository, menuRepository, categoryRepository);
+                checkEntityInDatabase(menuInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
-            case "MENU" -> {
+            case "menu" -> {
                 var restaurantInfo = restaurantRepository.findByRestaurantId(request.getEntityId());
-                checkEntityInDatabase(restaurantInfo, request, finalAcceptLanguage, entityOrderRepository, restaurantRepository, menuRepository, categoryRepository);
+                checkEntityInDatabase(restaurantInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
             default ->
                     fieldErrors.put("reference_type", translation.getString(finalAcceptLanguage + ".badReferenceType"));

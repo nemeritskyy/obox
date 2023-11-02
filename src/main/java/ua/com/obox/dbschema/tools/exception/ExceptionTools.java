@@ -19,7 +19,16 @@ public class ExceptionTools {
 
     @PostConstruct
     private void init() {
-        staticLoggingService = this.loggingService;
+        if (staticLoggingService == null) {
+            staticLoggingService = this.loggingService;
+        }
+    }
+
+    public static RuntimeException notFoundException(String translationMessage, String acceptLanguage, String entityId) {
+        String errorMessage = String.format(translation.getString(acceptLanguage + translationMessage), entityId);
+        String defaultErrorMessage = String.format(translation.getString("en-US" + translationMessage), entityId);
+        LoggingResponseHelper.loggingThrowException(LogLevel.ERROR, HttpStatus.NOT_FOUND, errorMessage, defaultErrorMessage, staticLoggingService);
+        return new RuntimeException(errorMessage);
     }
 
     public static void notFoundResponse(String translationMessage, String acceptLanguage, String entityId) {
