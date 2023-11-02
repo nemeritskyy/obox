@@ -46,7 +46,8 @@ public class MenuControllerTest {
     @Order(1)
     public void testCreateTenantForTest() throws Exception { // Create Tenant for test
         Map<String, Object> requestBody = Map.of(
-                "name", "createTenantForMenuTest()");
+                "name", "createTenantForMenuTest()",
+                "language", "en-US");
 
         tenantId = PostRequest.performGetIdAfterPost("$.tenant_id", URL_TENANT, requestBody, mockMvc);
     }
@@ -58,7 +59,8 @@ public class MenuControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "tenant_id", tenantId,
                 "name", "createRestaurantForMenuTest()",
-                "address", validAddress);
+                "address", validAddress,
+                "language", "en-US");
 
         restaurantId = PostRequest.performGetIdAfterPost("$.restaurant_id", URL_RESTAURANT, requestBody, mockMvc); // Create Restaurant for test
         System.out.println(restaurantId);
@@ -72,8 +74,8 @@ public class MenuControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "restaurant_id", restaurantId,
                 "name", nameSpace,
-                "language_code", languageCode,
-                "state","ENABLED"
+                "state", "ENABLED",
+                "language", "en-US"
         );
 
         menuId = PostRequest.performGetIdAfterPost("$.menu_id", URL_MENU, requestBody, mockMvc);
@@ -81,8 +83,8 @@ public class MenuControllerTest {
         requestResponse = Map.of(
                 "$.menu_id", equalTo(menuId),
                 "$.restaurant_id", equalTo(restaurantId),
-                "$.name", equalTo(nameSpace.trim()),
-                "$.language_code", equalTo(languageCode)
+                "$.state", "ENABLED",
+                "$.content.en-US.name", equalTo(nameSpace.trim())
         );
 
         GetRequestEquals.performGetAndExpect(URL_MENU + menuId, requestResponse, mockMvc);
@@ -96,8 +98,8 @@ public class MenuControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "restaurant_id", restaurantId,
                 "name", name,
-                "language_code", languageCode,
-                "state","ENABLED"
+                "state", "ENABLED",
+                "language", "en-US"
         );
         PostRequest
                 .performPostRequest(URL_MENU, requestBody, mockMvc)
@@ -136,7 +138,8 @@ public class MenuControllerTest {
     public void testPatchExistingMenu() throws Exception { // Patch. 1
         String name = "Menu JUnit new";
         Map<String, Object> requestBody = Map.of(
-                "name", name);
+                "name", name,
+                "language", "en-US");
         PatchRequest
                 .performPatchRequest(URL_MENU + menuId, requestBody, mockMvc)
                 .andExpect(status().isNoContent());
@@ -159,7 +162,8 @@ public class MenuControllerTest {
     @MethodSource("tools.TestValues#getValidNames") // Patch. 3 // Patch. 4
     public void testPatchValidNames(String name) throws Exception {
         Map<String, Object> requestBody = Map.of(
-                "name", name+"1"
+                "name", name + "1",
+                "language", "en-US"
         );
         PatchRequest
                 .performPatchRequest(URL_MENU + menuId, requestBody, mockMvc)
@@ -183,8 +187,7 @@ public class MenuControllerTest {
         Map<String, Object> requestResponse = Map.of(
                 "$.menu_id", notNullValue(),
                 "$.restaurant_id", notNullValue(),
-                "$.name", notNullValue(),
-                "$.language_code", notNullValue()
+                "$.content.en-US.name", notNullValue()
         );
         GetRequestEquals.performGetAndExpect(URL_MENU + menuId, requestResponse, mockMvc);
     }

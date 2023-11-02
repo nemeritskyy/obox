@@ -7,8 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface MenuRepository extends JpaRepository<Menu, UUID> {
-    List<Menu> findAllByRestaurant_RestaurantIdOrderByName(String restaurantId);
-
+    List<Menu> findAllByRestaurant_RestaurantIdOrderByCreatedAt(String restaurantId);
     Optional<Menu> findByMenuId(String menuId);
-    List<Menu> findAllByRestaurant_RestaurantIdAndName(String restaurantId, String name);
+    List<Menu> findAllByRestaurant_RestaurantId(String restaurantId);
 }

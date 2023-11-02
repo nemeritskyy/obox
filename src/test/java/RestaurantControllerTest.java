@@ -1,3 +1,4 @@
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -9,7 +10,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
-import tools.GetRequestEquals;
 import tools.PatchRequest;
 import tools.PostRequest;
 import ua.com.obox.OboxApplication;
@@ -17,7 +17,8 @@ import ua.com.obox.OboxApplication;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.equalTo;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -44,7 +45,8 @@ public class RestaurantControllerTest {
     public void testCreateTenantForTest() throws Exception { // Create Tenant for test
         Map<String, Object> requestBody = Map.of(
                 "name",
-                "createTenantForRestaurantTest()");
+                "createTenantForRestaurantTest()",
+                "language", "en-US");
 
         tenantId = PostRequest.performGetIdAfterPost("$.tenant_id", URL_TENANT, requestBody, mockMvc);
     }
@@ -67,7 +69,8 @@ public class RestaurantControllerTest {
     public void testPostValidNames(String name) throws Exception {
         Map<String, Object> requestBody = Map.of(
                 "tenant_id", tenantId,
-                "name", name);
+                "name", name,
+                "language", "en-US");
         PostRequest
                 .performPostRequest(URL_RESTAURANT, requestBody, mockMvc)
                 .andExpect(status().isCreated());
@@ -92,7 +95,8 @@ public class RestaurantControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "tenant_id", tenantId,
                 "name", "RestaurantName",
-                "address", validAddress);
+                "address", validAddress,
+                "language", "en-US");
 
         restaurantId = PostRequest.performGetIdAfterPost("$.restaurant_id", URL_RESTAURANT, requestBody, mockMvc); // Create Restaurant for test
     }
@@ -115,7 +119,8 @@ public class RestaurantControllerTest {
     public void testPostTenantIdWithSpace() throws Exception { // Post. 8
         Map<String, Object> requestBody = Map.of(
                 "tenant_id", tenantId + " ", // add space
-                "name", "RestaurantName");
+                "name", "RestaurantName",
+                "language", "en-US");
         PostRequest
                 .performPostRequest(URL_RESTAURANT, requestBody, mockMvc)
                 .andExpect(status().isCreated());
@@ -136,14 +141,21 @@ public class RestaurantControllerTest {
         String testRestaurantId = null;
         Map<String, Object> requestBody = Map.of(
                 "tenant_id", tenantId, //
-                "name", testName);
+                "name", testName,
+                "language", "en-US");
         testRestaurantId = PostRequest.performGetIdAfterPost("$.restaurant_id", URL_RESTAURANT, requestBody, mockMvc);
 
-        requestResponse = Map.of(
-                "$.name", equalTo(testName.trim()),
-                "$.address", "DOES_NOT_EXIST"
-        );
-        GetRequestEquals.performGetAndExpect(URL_RESTAURANT + testRestaurantId, requestResponse, mockMvc);
+        String jsonResponse = mockMvc.perform(get(URL_RESTAURANT + testRestaurantId))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String nameEnUs = JsonPath.read(jsonResponse, "$.content.en-US.name");
+        String addressEnUs = JsonPath.read(jsonResponse, "$.content.en-US.address");
+
+        assertEquals(testName.trim(), nameEnUs);
+        assertNull(addressEnUs);
     }
 
     @Test
@@ -185,7 +197,8 @@ public class RestaurantControllerTest {
     public void testPatchExistingRestaurant() throws Exception { // Patch. 6
         String name = "Restaurant JUnit new";
         Map<String, Object> requestBody = Map.of(
-                "name", name);
+                "name", name,
+                "language", "en-US");
         PatchRequest
                 .performPatchRequest(URL_RESTAURANT + restaurantId, requestBody, mockMvc)
                 .andExpect(status().isNoContent());

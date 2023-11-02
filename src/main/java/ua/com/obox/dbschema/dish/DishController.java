@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.dish;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -27,7 +28,7 @@ public class DishController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<DishResponse> getDishById(@PathVariable String dishId, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<DishResponse> getDishById(@PathVariable String dishId, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         DishResponse dishResponse = service.getDishById(dishId, acceptLanguage);
 
@@ -42,7 +43,7 @@ public class DishController {
                     schema = @Schema(example = POST_400_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<DishResponseId> createDish(@RequestBody @Schema(example = POST_BODY)
-                                                     Dish request, @RequestHeader HttpHeaders httpHeaders) {
+                                                     Dish request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         DishResponseId response = service.createDish(request, acceptLanguage);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -72,7 +73,7 @@ public class DishController {
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<Void> patchDishById(@PathVariable String dishId, @RequestBody @Schema(example = PATCH_BODY)
-    Dish request, @RequestHeader HttpHeaders httpHeaders) {
+    Dish request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         service.patchDishById(dishId, request, acceptLanguage);
         return ResponseEntity.noContent().build();

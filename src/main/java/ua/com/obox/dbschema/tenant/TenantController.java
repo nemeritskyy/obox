@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.tenant;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -47,7 +48,7 @@ public class TenantController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<TenantResponse> getTenantById(@PathVariable String tenantId, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<TenantResponse> getTenantById(@PathVariable String tenantId, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         TenantResponse tenantResponse = service.getTenantById(tenantId, acceptLanguage);
         return ResponseEntity.ok(tenantResponse);
@@ -60,7 +61,7 @@ public class TenantController {
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = POST_400_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<TenantResponseId> createTenant(@RequestBody Tenant request, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<TenantResponseId> createTenant(@RequestBody @Schema(example = POST_BODY) Tenant request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         TenantResponseId response = service.createTenant(request, acceptLanguage);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -74,7 +75,7 @@ public class TenantController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<Void> patchTenantById(@PathVariable String tenantId, @RequestBody Tenant request, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<Void> patchTenantById(@PathVariable String tenantId, @RequestBody @Schema(example = POST_BODY) Tenant request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         service.patchTenantById(tenantId, request, acceptLanguage);
         return ResponseEntity.noContent().build();

@@ -19,7 +19,8 @@ public class TestValuesDishes {
                         "weight", 1,
                         "calories", 1,
                         "in_stock", "ENABLED",
-                        "state", "ENABLED"
+                        "state", "ENABLED",
+                        "language", "en-US"
                 ),
                 Map.of( // Post. 3
                         "category_id", SupportingData.categoryId,
@@ -29,7 +30,8 @@ public class TestValuesDishes {
                         "weight", 1,
                         "calories", 1,
                         "in_stock", "ENABLED",
-                        "state", "ENABLED"
+                        "state", "ENABLED",
+                        "language", "en-US"
                 ),
                 Map.of( // Post. 11
                         "category_id", SupportingData.categoryId,
@@ -39,7 +41,8 @@ public class TestValuesDishes {
                         "weight", 1,
                         "calories", 1,
                         "in_stock", "ENABLED",
-                        "state", "ENABLED"
+                        "state", "ENABLED",
+                        "language", "en-US"
                 ),
                 Map.of( // Post. 14
                         "category_id", SupportingData.categoryId,
@@ -49,7 +52,8 @@ public class TestValuesDishes {
                         "weight", 1,
                         "calories", 1,
                         "in_stock", "ENABLED",
-                        "state", "ENABLED"
+                        "state", "ENABLED",
+                        "language", "en-US"
                 ),
                 Map.of( // Post. 19
                         "category_id", SupportingData.categoryId,
@@ -59,7 +63,8 @@ public class TestValuesDishes {
                         "weight", 1,
                         "calories", 1,
                         "in_stock", "ENABLED",
-                        "state", "DISABLED"
+                        "state", "DISABLED",
+                        "language", "en-US"
                 ),
                 Map.of( // Post. 20
                         "category_id", SupportingData.categoryId,
@@ -69,17 +74,30 @@ public class TestValuesDishes {
                         "weight", 1,
                         "calories", 1,
                         "in_stock", "ENABLED",
-                        "state", "ENABLED"
+                        "state", "ENABLED",
+                        "language", "en-US"
                 ),
                 Map.of( // Post. 22
                         "category_id", SupportingData.categoryId,
                         "name", "dish7",
                         "description", RandomStringUtils.random(255, true, true),
                         "price", 1,
-                        "weight", 100_000,
+                        "weight", 10_000,
                         "calories", 1,
                         "in_stock", "ENABLED",
-                        "state", "ENABLED"
+                        "state", "ENABLED",
+                        "language", "en-US"
+                ),
+                Map.of( // Post. 22
+                        "category_id", SupportingData.categoryId,
+                        "name", "dish weight",
+                        "description", RandomStringUtils.random(255, true, true),
+                        "price", 1,
+                        "weight", "10000/300/50",
+                        "calories", 1,
+                        "in_stock", "ENABLED",
+                        "state", "ENABLED",
+                        "language", "en-US"
                 ),
                 Map.of( // Post. 26
                         "category_id", SupportingData.categoryId,
@@ -89,7 +107,8 @@ public class TestValuesDishes {
                         "weight", 100/50,
                         "calories", 30_000,
                         "in_stock", "ENABLED",
-                        "state", "ENABLED"
+                        "state", "ENABLED",
+                        "language", "en-US"
                 )
         );
     }
@@ -249,47 +268,54 @@ public class TestValuesDishes {
                         "name", "dish21",
                         "description", "description",
                         "price", 1,
-                        "weight", 30000,
+                        "weight", 10000,
                         "calories", 100.5,
-                        "state", "ENABLED"
+                        "state", "ENABLED",
+                        "language", "en-US"
                 ),
                 Map.of( // Patch. 2
                         "name", "dish22",
                         "price", 100,
                         "description", "new description",
-                        "weight", 30000,
+                        "weight", 10000,
                         "calories", 100.5,
-                        "state", "ENABLED"
+                        "state", "ENABLED",
+                        "language", "en-US"
                 ),
                 Map.of( // Patch. 3
                         "name", "dish23",
                         "price", 8,
                         "description", "new description",
                         "calories", 100.5,
-                        "weight", 30000,
-                        "state", "ENABLED"
+                        "weight", 10000,
+                        "state", "ENABLED",
+                        "language", "en-US"
                 ),
                 Map.of( // Patch. 3 duplicate
                         "name", "dish24",
                         "price", 8,
                         "description", "",
                         "calories", 100.5,
-                        "weight", 30000,
-                        "state", "ENABLED"
+                        "weight", 10000,
+                        "state", "ENABLED",
+                        "language", "en-US"
                 ),
                 Map.of( // Patch. 4
                         "calories", 500,
-                        "weight", 400
+                        "weight", 400,
+                        "language", "en-US"
                 ),
                 Map.of( // Patch. 6
-                        "state", "DISABLED"
+                        "state", "DISABLED",
+                        "language", "en-US"
                 ),
                 Map.of( // change for Get. 5
                         "description", "",
                         "calories", "",
 //                        "allergens", "",
 //                        "tags", "",
-                        "weight", ""
+                        "weight", "",
+                        "language", "en-US"
                 )
         );
     }
@@ -312,8 +338,7 @@ public class TestValuesDishes {
                 Map.of( // Get. 1
                         "$.state", equalTo("DISABLED")
                 ),
-                Map.of( // Test associated data
-                        "$.associated_id", notNullValue(),
+                Map.of( // Test category data
                         "$.category_id", notNullValue()
                 ),
                 Map.of( // Get. 5

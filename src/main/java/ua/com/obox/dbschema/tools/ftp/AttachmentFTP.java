@@ -76,11 +76,11 @@ public class AttachmentFTP {
             }
         }
 
-        if (ReferenceType.DISH.toString().equals(Validator.removeExtraSpaces(referenceType).toUpperCase())) {
+        if (ReferenceType.dish.toString().equals(Validator.removeExtraSpaces(referenceType).toLowerCase())) {
             path = getDishAssociatedPath(referenceId, acceptLanguage, fieldErrors);
         }
 
-        if (!isValidReferenceType(Validator.removeExtraSpaces(referenceType).toUpperCase())) {
+        if (!isValidReferenceType(Validator.removeExtraSpaces(referenceType).toLowerCase())) {
             fieldErrors.put("reference_type", translation.getString(acceptLanguage + ".badReferenceType"));
         }
 
@@ -102,7 +102,7 @@ public class AttachmentFTP {
             fieldErrors.put("reference_id", String.format(translation.getString(acceptLanguage + ".dishNotFound"), referenceId));
             return null;
         });
-        return dish != null ? dish.getAssociatedId() : "bad-associated";
+        return dish != null ? dish.getCategory().getMenu().getMenuId() : "bad-associated";
     }
 
     private boolean isValidReferenceType(String referenceType) {

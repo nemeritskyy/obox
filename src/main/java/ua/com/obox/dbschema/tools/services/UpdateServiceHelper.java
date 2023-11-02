@@ -24,8 +24,12 @@ public class UpdateServiceHelper {
     }
 
     public String updateVarcharField(Consumer<String> setter, String value, String fieldName, String acceptLanguage) {
-        if (value == null || removeExtraSpaces(value).isEmpty()) {
+        if (value == null) {
             setter.accept(null);
+            return null;
+        }
+        if (removeExtraSpaces(value).isEmpty()) {
+            setter.accept("");
             return null;
         }
         String checkField = Validator.validateVarcharTranslationSupport(value, fieldName, acceptLanguage);
@@ -82,13 +86,13 @@ public class UpdateServiceHelper {
     }
 
     public String updateWeightUnit(Consumer<String> setter, String value, String acceptLanguage) {
-        if (value == null || removeExtraSpaces(value).isEmpty()) {
+        if (value == null) {
             setter.accept(null);
             return null;
         }
         String checkField = Validator.validateWeightUnit(value, acceptLanguage);
         if (checkField == null) {
-            setter.accept(removeExtraSpaces(value));
+            setter.accept(value);
         }
         return checkField;
     }
@@ -98,10 +102,6 @@ public class UpdateServiceHelper {
         if (state == null)
             setter.accept(value);
         return state;
-    }
-
-    public String updateLanguageCode(String value, String acceptLanguage) {
-        return Validator.languageCode("createMenu", value, acceptLanguage);
     }
 
     public static String removeExtraSpaces(String str) {

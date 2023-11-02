@@ -43,7 +43,8 @@ public class TenantControllerTest {
     public void testCreateTenantForTest() throws Exception { // Create Tenant for test
         Map<String, Object> requestBody = Map.of(
                 "name",
-                "createTenantForRestaurantTest()");
+                "createTenantForRestaurantTest()",
+                "language", "en-US");
         tenantId = PostRequest.performGetIdAfterPost("$.tenant_id", URL_TENANT, requestBody, mockMvc);
     }
 
@@ -67,7 +68,8 @@ public class TenantControllerTest {
     @MethodSource("tools.TestValues#getValidNames")
     public void testPostValidNames(String name) throws Exception {
         Map<String, Object> requestBody = Map.of(
-                "name", name);
+                "name", name,
+                "language", "en-US");
         PostRequest
                 .performPostRequest(URL_TENANT, requestBody, mockMvc)
                 .andExpect(status().isCreated());
@@ -92,13 +94,14 @@ public class TenantControllerTest {
 
         Map<String, Object> requestResponse;
         Map<String, Object> requestBody = Map.of(
-                "name", spaceName);
+                "name", spaceName,
+                "language", "en-US");
         tenantForbiddenStateDisabled = PostRequest
                 .performGetIdAfterPost("$.tenant_id", URL_TENANT, requestBody, mockMvc);
 
         requestResponse = Map.of(
                 "$.tenant_id", equalTo(tenantForbiddenStateDisabled),
-                "$.name", equalTo(spaceName.trim())
+                "$.content.en-US.name", equalTo(spaceName.trim())
         );
 
         GetRequestEquals
@@ -120,7 +123,8 @@ public class TenantControllerTest {
     public void testPatchValid(String name) throws Exception {
         Map<String, Object> requestResponse;
         Map<String, Object> requestBody = Map.of(
-                "name", name);
+                "name", name,
+                "language", "en-US");
 
         PatchRequest
                 .performPatchRequest(URL_TENANT + tenantId, requestBody, mockMvc)
@@ -128,7 +132,7 @@ public class TenantControllerTest {
 
         requestResponse = Map.of(
                 "$.tenant_id", equalTo(tenantId),
-                "$.name", equalTo(name.trim())
+                "$.content.en-US.name", equalTo(name.trim())
         );
 
         GetRequestEquals
@@ -152,13 +156,14 @@ public class TenantControllerTest {
         String name = "Patch name";
         Map<String, Object> requestResponse;
         Map<String, Object> requestBody = Map.of(
-                "name", name);
+                "name", name,
+                "language", "en-US");
         PatchRequest
                 .performPatchRequest(URL_TENANT + tenantId, requestBody, mockMvc)
                 .andExpect(status().isNoContent());
 
         requestResponse = Map.of(
-                "$.name", equalTo(name.trim())
+                "$.content.en-US.name", equalTo(name.trim())
         );
 
         GetRequestEquals

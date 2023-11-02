@@ -51,7 +51,7 @@ public class Validator {
     }
 
     public static String validateWeightUnit(String str, String acceptLanguage) {
-        if (str != null && str.trim().isEmpty() || str != null && removeExtraSpaces(str).length() > 16) {
+        if (!str.matches(ValidationConfiguration.UUID_REGEX)) {
             staticLoggingService.log(LogLevel.ERROR,
                     translation.getString("en-US.weightUnit")
             );
@@ -61,19 +61,18 @@ public class Validator {
     }
 
     public static String validateWeight(String str, String acceptLanguage) {
+        System.out.println(str);
         if (!str.matches(ValidationConfiguration.WEIGHT_REGEX)) {
             staticLoggingService.log(LogLevel.ERROR,
                     translation.getString("en-US.weight")
             );
             return translation.getString(acceptLanguage + ".weight");
         }
-        return null;
-    }
-
-    public static String languageCode(String loggingMessage, String code, String acceptLanguage) {
-        if (code == null || code.length() < 2 || code.length() > 3) {
-            staticLoggingService.log(LogLevel.ERROR, String.format("%s %s", loggingMessage, translation.getString("en-US.languageCode")));
-            return translation.getString(acceptLanguage + ".languageCode");
+        for (String weight : str.split("/")) {
+            if (Long.parseLong(weight) > ValidationConfiguration.MAX_WEIGHT) {
+                staticLoggingService.log(LogLevel.ERROR, String.format(translation.getString("en-US.weightLimit"), ValidationConfiguration.MAX_WEIGHT));
+                return String.format(translation.getString(acceptLanguage + ".weightLimit"), ValidationConfiguration.MAX_WEIGHT);
+            }
         }
         return null;
     }
@@ -91,6 +90,18 @@ public class Validator {
             staticLoggingService.log(LogLevel.ERROR, translation.getString("en-US.state"));
             return String.format(translation.getString(acceptLanguage + ".state"));
         }
+        return null;
+    }
+
+    public static String validateLanguage(String language, String acceptLanguage) {
+        if (language == null || !language.matches(ValidationConfiguration.LANGUAGE_REGEX)) {
+            staticLoggingService.log(LogLevel.ERROR,
+                    translation.getString("en-US.language")
+            );
+            return translation.getString(acceptLanguage + ".language");
+        }
+        if (!ValidationConfiguration.SUPPORT_LANGUAGES.contains(language))
+            return translation.getString(acceptLanguage + ".languageNotSupport");
         return null;
     }
 
@@ -133,6 +144,8 @@ public class Validator {
     }
 
     public static String removeExtraSpaces(String str) {
-        return str.trim().replaceAll("\\s+", " ");
+        if (str != null)
+            return str.trim().replaceAll("\\s+", " ");
+        return null;
     }
 }
