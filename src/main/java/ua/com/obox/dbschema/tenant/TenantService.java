@@ -114,7 +114,7 @@ public class TenantService {
 
         {
             CreateTranslation<TenantTranslationEntry> createTranslation = new CreateTranslation<>(translationRepository);
-            TenantTranslationEntry entry = new TenantTranslationEntry(request.getName());
+            TenantTranslationEntry entry = new TenantTranslationEntry(tenant.getName());
             Translation translation = createTranslation
                     .create(tenant.getTenantId(), "tenant", request.getLanguage(), entry);
             tenant.setTranslationId(translation.getTranslationId());

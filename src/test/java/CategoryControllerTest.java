@@ -49,7 +49,8 @@ public class CategoryControllerTest {
     @Order(1)
     public void testCreateTenantForTest() throws Exception { // Create Tenant for test
         Map<String, Object> requestBody = Map.of(
-                "name", "createTenantForMenuTest()");
+                "name", "createTenantForMenuTest()",
+                "language", "en-US");
 
         tenantId = PostRequest.performGetIdAfterPost("$.tenant_id", URL_TENANT, requestBody, mockMvc);
     }
@@ -61,7 +62,8 @@ public class CategoryControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "tenant_id", tenantId,
                 "name", "createRestaurantForMenuTest()",
-                "address", validAddress);
+                "address", validAddress,
+                "language", "en-US");
 
         restaurantId = PostRequest.performGetIdAfterPost("$.restaurant_id", URL_RESTAURANT, requestBody, mockMvc);
     }
@@ -72,8 +74,8 @@ public class CategoryControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "restaurant_id", restaurantId,
                 "name", "MenuForCategoryTest",
-                "language_code", languageCode,
-                "state","ENABLED"
+                "state","ENABLED",
+                "language", "en-US"
         );
 
         menuId = PostRequest.performGetIdAfterPost("$.menu_id", URL_MENU, requestBody, mockMvc);
@@ -87,7 +89,8 @@ public class CategoryControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "menu_id", menuId,
                 "name", nameSpace,
-                "state","ENABLED"
+                "state","ENABLED",
+                "language", "en-US"
         );
 
         categoryId = PostRequest.performGetIdAfterPost("$.category_id", URL_CATEGORY, requestBody, mockMvc);
@@ -95,7 +98,7 @@ public class CategoryControllerTest {
         responseJson = Map.of(
                 "menu_id", notNullValue(),
                 "category_id", equalTo(categoryId),
-                "name", equalTo(nameSpace.trim())
+                "$.content.en-US.name", equalTo(nameSpace.trim())
         );
 
         GetRequestEquals.performGetAndExpect(URL_CATEGORY + categoryId, responseJson, mockMvc);

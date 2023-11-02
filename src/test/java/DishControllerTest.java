@@ -48,7 +48,8 @@ public class DishControllerTest {
     @Order(1)
     public void testCreateTenantForTest() throws Exception { // Create Tenant for test
         Map<String, Object> requestBody = Map.of(
-                "name", "createTenantForDishTest()");
+                "name", "createTenantForDishTest()",
+                "language", "en-US");
 
         tenantId = PostRequest.performGetIdAfterPost("$.tenant_id", URL_TENANT, requestBody, mockMvc);
     }
@@ -60,7 +61,8 @@ public class DishControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "tenant_id", tenantId,
                 "name", "createRestaurantForDishTest()",
-                "address", validAddress);
+                "address", validAddress,
+                "language", "en-US");
 
         restaurantId = PostRequest.performGetIdAfterPost("$.restaurant_id", URL_RESTAURANT, requestBody, mockMvc);
     }
@@ -71,8 +73,8 @@ public class DishControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "restaurant_id", restaurantId,
                 "name", "MenuForDishTest",
-                "language_code", languageCode,
-                "state","ENABLED"
+                "state","ENABLED",
+                "language", "en-US"
         );
 
         menuId = PostRequest.performGetIdAfterPost("$.menu_id", URL_MENU, requestBody, mockMvc);
@@ -84,7 +86,8 @@ public class DishControllerTest {
         Map<String, Object> requestBody = Map.of(
                 "menu_id", menuId,
                 "name", "MenuForDishTest",
-                "state","ENABLED"
+                "state","ENABLED",
+                "language", "en-US"
         );
         SupportingData.categoryId = PostRequest.performGetIdAfterPost("$.category_id", URL_CATEGORY, requestBody, mockMvc);
     }
@@ -100,7 +103,8 @@ public class DishControllerTest {
                 "weight", 1,
                 "calories", 1,
                 "in_stock", "ENABLED",
-                "state", "ENABLED"
+                "state", "ENABLED",
+                "language", "en-US"
         );
         SupportingData.dishId = PostRequest.performGetIdAfterPost("$.dish_id", URL_DISH, requestBody, mockMvc);
     }
