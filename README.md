@@ -1,3 +1,12 @@
+# OpenAPI Swagger
+http://localhost:8080/obox/swagger-ui/index.html  
+>Now there is a setting that after restarting the server your user data will be deleted  
+If you need use already created user please use  
+login: admin@mail.com  
+password: password  
+# POSTMAN
+[My workspace for fast application testing](https://www.postman.com/orbital-module-participant-50713643/workspace/obox/request/28060010-cc530140-600d-4a66-a686-daa7d908d6c1)  
+![N|Solid](https://nemeritskyy.pp.ua/obox/24.png)  
 # Tools for local using project on your PC
 ## _Recommend to use directories and password's as tutorial_
 ## _Install Java JDK:_
@@ -12,7 +21,7 @@ Select destination folder, I recommend create folder for backend tools, for exam
 
 ## _Download Apache Tomcat Server with link:_
 32-bit/64-bit Windows Service Installer:  
-https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.10/bin/apache-tomcat-10.1.10.exe  
+[TomCat 9.0.76 32-bit/64-bit Windows Service Installer](https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.76/bin/apache-tomcat-9.0.76.exe)  
 
 1. Run installer with Administrator rights  
 2. Select all Checkboxes including "Host Manager", "Example"  
@@ -30,6 +39,8 @@ https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.10/bin/apache-tomcat-10.1.10.exe
 > Add war file from repository to directory C:\obox\tomcat\webapps and open your browser http://localhost:8080/obox/
 
 ## _Install MySQL_
+## _In Future after reboot you PC start first MySQL Workbench, after that Tomcat_
+
 Fast link Windows (x86, 32-bit), MSI Installer:  
 https://dev.mysql.com/get/Downloads/MySQLInstaller/mysql-installer-web-community-8.0.33.0.msi  
 Step-by-step installation as in the images  
