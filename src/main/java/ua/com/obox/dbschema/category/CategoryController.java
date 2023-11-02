@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.category;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -43,7 +44,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable String categoryId, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<CategoryResponse> getCategoryById(@PathVariable String categoryId, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         CategoryResponse categoryResponse = service.getCategoryById(categoryId, acceptLanguage);
         return ResponseEntity.ok(categoryResponse);
@@ -56,7 +57,7 @@ public class CategoryController {
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = POST_400_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<CategoryResponseId> createCategory(@RequestBody Category request, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<CategoryResponseId> createCategory(@RequestBody @Schema(example = POST_BODY) Category request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         CategoryResponseId response = service.createCategory(request, acceptLanguage);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -72,7 +73,7 @@ public class CategoryController {
     })
     public ResponseEntity<Void> patchCategoryById(@PathVariable String categoryId, @RequestBody
     @Schema(example = PATCH_BODY)
-    Category request, @RequestHeader HttpHeaders httpHeaders) {
+    Category request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         service.patchCategoryById(categoryId, request, acceptLanguage);
         return ResponseEntity.noContent().build();

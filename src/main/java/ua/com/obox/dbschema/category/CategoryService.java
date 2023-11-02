@@ -1,5 +1,8 @@
 package ua.com.obox.dbschema.category;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -10,7 +13,7 @@ import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.dish.DishResponse;
 import ua.com.obox.dbschema.sorting.EntityOrder;
 import ua.com.obox.dbschema.sorting.EntityOrderRepository;
-import ua.com.obox.dbschema.tools.RequiredServiceHelper;
+import ua.com.obox.dbschema.tools.FieldUpdateFunction;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
@@ -20,9 +23,16 @@ import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
+import ua.com.obox.dbschema.translation.Translation;
+import ua.com.obox.dbschema.translation.TranslationRepository;
+import ua.com.obox.dbschema.translation.assistant.CreateTranslation;
+import ua.com.obox.dbschema.translation.assistant.ExistEntity;
+import ua.com.obox.dbschema.translation.responsebody.CategoryTranslationEntry;
+import ua.com.obox.dbschema.translation.responsebody.Content;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,22 +42,20 @@ public class CategoryService {
     private final MenuRepository menuRepository;
     private final DishRepository dishRepository;
     private final EntityOrderRepository entityOrderRepository;
+    private final TranslationRepository translationRepository;
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
-    private final RequiredServiceHelper requiredServiceHelper;
-    private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
+    private final ResourceBundle translationContent = ResourceBundle.getBundle("translation.messages");
 
     public List<DishResponse> getAllDishesByCategoryId(String categoryId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        ObjectMapper objectMapper = new ObjectMapper();
+        AtomicReference<Content<CategoryTranslationEntry>> content = new AtomicReference<>();
+        AtomicReference<Translation> translation = new AtomicReference<>();
 
-        var categoryInfo = categoryRepository.findByCategoryId(categoryId);
+        categoryRepository.findByCategoryId(categoryId).orElseThrow(() -> ExceptionTools.notFoundException(".categoryNotFound", finalAcceptLanguage, categoryId));
 
-        categoryInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".categoryNotFound", finalAcceptLanguage, categoryId);
-            return null;
-        });
-
-        List<Dish> dishes = dishRepository.findAllByCategory_CategoryIdOrderByName(categoryId);
+        List<Dish> dishes = dishRepository.findAllByCategory_CategoryIdOrderByCreatedAtDesc(categoryId);
 
         // for sorting results
         EntityOrder sortingExist = entityOrderRepository.findByEntityId(categoryId).orElse(null);
@@ -61,29 +69,29 @@ public class CategoryService {
 
         List<DishResponse> responseList = dishes.stream()
                 .map(dish -> {
-                    List<String> allergensList = (dish.getAllergens() != null) ? Arrays.asList(dish.getAllergens().split("::")) : new ArrayList<>();
-                    List<String> tagsList = (dish.getTags() != null) ? Arrays.asList(dish.getTags().split("::")) : new ArrayList<>();
-
-                    Collections.sort(allergensList);
-                    Collections.sort(tagsList);
+                    try {
+                        translation.set(translationRepository.findAllByTranslationId(dish.getTranslationId()).orElseThrow(() ->
+                                ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, dish.getDishId())));
+                        content.set(objectMapper.readValue(translation.get().getContent(), new TypeReference<>() {
+                        }));
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
 
                     return DishResponse.builder()
-                            .dishId(dish.getDishId())
                             .categoryId(dish.getCategory().getCategoryId())
-                            .name(dish.getName())
-                            .description(dish.getDescription())
-                            .cookingTime(dish.getCooking_time())
+                            .dishId(dish.getDishId())
+                            .translationId(dish.getTranslationId())
                             .price(dish.getPrice())
                             .specialPrice(dish.getSpecialPrice())
-                            .weight(dish.getWeight())
-                            .weightUnit(dish.getWeight_unit())
+                            .cookingTime(dish.getCookingTime())
                             .calories(dish.getCalories())
-                            .inStock(dish.getIn_stock())
+                            .weight(dish.getWeight())
+                            .weightUnit(dish.getWeightUnit())
+                            .inStock(dish.getInStock())
                             .state(dish.getState())
-                            .allergens(allergensList)
-                            .tags(tagsList)
-                            .associatedId(dish.getAssociatedId())
                             .image(dish.getImage())
+                            .content(content.get())
                             .build();
                 })
                 .collect(Collectors.toList());
@@ -92,58 +100,53 @@ public class CategoryService {
         return responseList;
     }
 
-    public CategoryResponse getCategoryById(String categoryId, String acceptLanguage) {
+    public CategoryResponse getCategoryById(String categoryId, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
-        var categoryInfo = categoryRepository.findByCategoryId(categoryId);
+        Category category = categoryRepository.findByCategoryId(categoryId).orElseThrow(() -> ExceptionTools.notFoundException(".categoryNotFound", finalAcceptLanguage, categoryId));
+        Translation translation = translationRepository.findAllByTranslationId(category.getTranslationId())
+                .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, categoryId));
 
-        Category category = categoryInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".categoryNotFound", finalAcceptLanguage, categoryId);
-            return null;
+        ObjectMapper objectMapper = new ObjectMapper();
+        Content<CategoryTranslationEntry> content = objectMapper.readValue(translation.getContent(), new TypeReference<>() {
         });
 
         loggingService.log(LogLevel.INFO, String.format("getCategoryById %s", categoryId));
         return CategoryResponse.builder()
-                .categoryId(category.getCategoryId())
                 .menuId(category.getMenu().getMenuId())
-                .name(category.getName())
-                .description(category.getDescription())
+                .categoryId(category.getCategoryId())
+                .translationId(category.getTranslationId())
+                .content(content)
                 .state(category.getState())
                 .build();
     }
 
-    public CategoryResponseId createCategory(Category request, String acceptLanguage) {
+    public CategoryResponseId createCategory(Category request, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
-        request.setMenuIdForCategory(request.getMenu_id());
+        Optional<Menu> menu = menuRepository.findByMenuId(request.getMenuId());
+        if (menu.isEmpty())
+            fieldErrors.put("menu_id", String.format(translationContent.getString(finalAcceptLanguage + ".menuNotFound"), request.getMenuId()));
 
-        Menu menu = menuRepository.findByMenuId(request.getMenu().getMenuId())
-                .orElseGet(() -> {
-                    fieldErrors.put("menu_id", String.format(translation.getString(finalAcceptLanguage + ".menuNotFound"), request.getMenu().getMenuId()));
-                    return null;
-                });
 
         Category category = Category.builder()
-                .menu(menu)
+                .menu(menu.orElse(null))
                 .build();
 
-        if (request.getName() != null && !categoryRepository.findAllByMenu_MenuIdAndName(request.getMenu_id(), Validator.removeExtraSpaces(request.getName())).isEmpty()) {
-            fieldErrors.put("name", translation.getString(finalAcceptLanguage + ".categoryExists"));
-        } else {
-            fieldErrors.put("name", serviceHelper.updateNameField(category::setName, request.getName(), finalAcceptLanguage));
-        }
-
-        fieldErrors.put("description", serviceHelper.updateVarcharField(category::setDescription, request.getDescription(), "description", finalAcceptLanguage));
-
-        fieldErrors.put("state", serviceHelper.updateState(category::setState, request.getState(), finalAcceptLanguage));
-
-        if (fieldErrors.size() > 0)
-            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+        validateRequest(request, category, finalAcceptLanguage, fieldErrors, true);
 
         category.setCreatedAt(Instant.now().getEpochSecond());
         category.setUpdatedAt(Instant.now().getEpochSecond());
         categoryRepository.save(category);
+
+        {
+            CreateTranslation<CategoryTranslationEntry> createTranslation = new CreateTranslation<>(translationRepository);
+            CategoryTranslationEntry entry = new CategoryTranslationEntry(category.getName(), category.getDescription());
+            Translation translation = createTranslation
+                    .create(category.getCategoryId(), "category", request.getLanguage(), entry);
+            category.setTranslationId(translation.getTranslationId());
+        }
 
         loggingService.log(LogLevel.INFO, String.format("createCategory %s UUID=%s %s", request.getName(), category.getCategoryId(), Message.CREATE.getMessage()));
         return CategoryResponseId.builder()
@@ -151,33 +154,16 @@ public class CategoryService {
                 .build();
     }
 
-    public void patchCategoryById(String categoryId, Category request, String acceptLanguage) {
+    public void patchCategoryById(String categoryId, Category request, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
-        var categoryInfo = categoryRepository.findByCategoryId(categoryId);
+        Category category = categoryRepository.findByCategoryId(categoryId).orElseThrow(() -> ExceptionTools.notFoundException(".categoryNotFound", finalAcceptLanguage, categoryId));
+        Translation translation = translationRepository.findAllByTranslationId(category.getTranslationId())
+                .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, categoryId));
 
-        Category category = categoryInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".categoryNotFound", finalAcceptLanguage, categoryId);
-            return null;
-        });
-
-        if (request.getName() != null && !category.getName().equals(Validator.removeExtraSpaces(request.getName()))) {
-            if (!categoryRepository.findAllByMenu_MenuIdAndName(category.getMenu().getMenuId(), Validator.removeExtraSpaces(request.getName())).isEmpty()) {
-                fieldErrors.put("name", translation.getString(finalAcceptLanguage + ".categoryExists"));
-            } else {
-                fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), category, finalAcceptLanguage));
-            }
-        }
-
-        if (request.getDescription() != null)
-            fieldErrors.put("description", serviceHelper.updateVarcharField(category::setDescription, request.getDescription(), "description", finalAcceptLanguage));
-
-        if (request.getState() != null)
-            fieldErrors.put("state", serviceHelper.updateState(category::setState, request.getState(), finalAcceptLanguage));
-
-        if (fieldErrors.size() > 0)
-            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+        validateRequest(request, category, finalAcceptLanguage, fieldErrors, false);
+        updateTranslation(category, request.getLanguage(), translation);
 
         category.setUpdatedAt(Instant.now().getEpochSecond());
         categoryRepository.save(category);
@@ -186,15 +172,59 @@ public class CategoryService {
 
     public void deleteCategoryById(String categoryId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
-
-        var categoryInfo = categoryRepository.findByCategoryId(categoryId);
-
-        Category category = categoryInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".categoryNotFound", finalAcceptLanguage, categoryId);
-            return null;
-        });
-
+        Category category = categoryRepository.findByCategoryId(categoryId).orElseThrow(() -> ExceptionTools.notFoundException(".categoryNotFound", finalAcceptLanguage, categoryId));
         categoryRepository.delete(category);
         loggingService.log(LogLevel.INFO, String.format("deleteCategoryById %s NAME=%s %s", categoryId, category.getName(), Message.DELETE.getMessage()));
+    }
+
+    private void validateRequest(Category request, Category category, String finalAcceptLanguage, Map<String, String> fieldErrors, boolean required) {
+        fieldErrors.put("language", Validator.validateLanguage(request.getLanguage(), finalAcceptLanguage));
+
+        updateField(request.getName(), required, category, fieldErrors, "name",
+                (name) -> serviceHelper.updateNameField(category::setName, name, finalAcceptLanguage), finalAcceptLanguage);
+
+        updateField(request.getState(), required, category, fieldErrors, "state",
+                (state) -> serviceHelper.updateState(category::setState, state, finalAcceptLanguage), finalAcceptLanguage);
+
+        updateField(request.getDescription(), required, category, fieldErrors, "description",
+                (description) -> serviceHelper.updateVarcharField(category::setDescription, description, "description", finalAcceptLanguage), finalAcceptLanguage);
+
+        if (fieldErrors.size() > 0)
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+    }
+
+    private <T> void updateField(T value, boolean required, Category category, Map<String, String> fieldErrors, String fieldName, FieldUpdateFunction<T> updateFunction, String finalAcceptLanguage) {
+        if (value != null || required) {
+            if (Objects.equals(fieldName, "name") && category.getMenu() != null) {
+                List<Category> sameParent = categoryRepository.findAllByMenu_MenuId(category.getMenu().getMenuId());
+                sameParent.remove(category);
+                ExistEntity<CategoryTranslationEntry> existEntity = new ExistEntity<>(translationRepository);
+                existEntity.checkExistEntity(Validator.removeExtraSpaces((String) value), sameParent, finalAcceptLanguage, fieldErrors);
+            }
+            String error = updateFunction.updateField(value);
+            if (error != null) {
+                fieldErrors.put(fieldName, error);
+            }
+        }
+    }
+
+    private void updateTranslation(Category category, String language, Translation translation) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        TypeReference<Content<CategoryTranslationEntry>> typeReference = new TypeReference<>() {
+        };
+        Content<CategoryTranslationEntry> content = objectMapper.readValue(translation.getContent(), typeReference);
+        Map<String, CategoryTranslationEntry> languagesMap = content.getContent();
+        if (languagesMap.get(language) != null) {
+            if (category.getName() == null)
+                category.setName(languagesMap.get(language).getName());
+            if (category.getDescription() == null) {
+                category.setDescription(content.getContent().get(language).getDescription());
+            } else if (category.getDescription().equals("")) {
+                category.setDescription(null);
+            }
+        }
+        languagesMap.put(language, new CategoryTranslationEntry(category.getName(), category.getDescription()));
+        translation.setContent(objectMapper.writeValueAsString(content));
+        translation.setUpdatedAt(Instant.now().getEpochSecond());
     }
 }
