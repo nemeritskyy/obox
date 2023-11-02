@@ -10,6 +10,7 @@ import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.sorting.EntityOrder;
 import ua.com.obox.dbschema.sorting.EntityOrderRepository;
+import ua.com.obox.dbschema.tools.EmptyDoubleDeserializer;
 import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.EmptyIntegerDeserializer;
 import ua.com.obox.dbschema.tools.attachment.ApplicationContextProvider;
@@ -37,7 +38,11 @@ public class Dish {
     @JsonIgnore
     private Category category;
     private String name;
+    @JsonDeserialize(using = EmptyDoubleDeserializer.class)
     private Double price;
+    @JsonDeserialize(using = EmptyDoubleDeserializer.class)
+    @JsonProperty("special_price")
+    private Double specialPrice;
     private String description;
     @JsonDeserialize(using = EmptyIntegerDeserializer.class)
     private Integer cooking_time;
@@ -102,7 +107,7 @@ public class Dish {
         }
 
         EntityOrderRepository entityOrderRepository = ApplicationContextProvider.getBean(EntityOrderRepository.class);
-        EntityOrder existSorted = entityOrderRepository.findBySortedListContaining(this.dishId).orElseGet(() -> null);
+        EntityOrder existSorted = entityOrderRepository.findBySortedListContaining(this.dishId).orElse(null);
         if (existSorted != null) {
             String[] elements = existSorted.getSortedList().split(",");
             StringBuilder result = new StringBuilder();

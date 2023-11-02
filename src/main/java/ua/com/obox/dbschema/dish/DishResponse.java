@@ -27,6 +27,8 @@ public class DishResponse {
     private String description;
     @JsonProperty("price")
     private Double price;
+    @JsonProperty("special_price")
+    private Double specialPrice;
     @JsonProperty("weight")
     private String weight;
     @JsonProperty("weight_unit")
