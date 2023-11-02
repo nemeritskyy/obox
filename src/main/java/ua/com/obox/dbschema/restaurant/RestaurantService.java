@@ -13,6 +13,7 @@ import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishResponse;
 import ua.com.obox.dbschema.sorting.EntityOrder;
 import ua.com.obox.dbschema.sorting.EntityOrderRepository;
+import ua.com.obox.dbschema.tools.FieldUpdateFunction;
 import ua.com.obox.dbschema.tools.RequiredServiceHelper;
 import ua.com.obox.dbschema.menu.Menu;
 import ua.com.obox.dbschema.menu.MenuRepository;
@@ -54,7 +55,6 @@ public class RestaurantService {
     private final TranslationRepository translationRepository;
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
-    private final RequiredServiceHelper requiredServiceHelper;
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
 
     public List<MenuResponse> getAllMenusByRestaurantId(String restaurantId, String acceptLanguage) {
@@ -189,12 +189,11 @@ public class RestaurantService {
     public List<MenuResponse> getAllMenusCategoriesDishesByRestaurantId(String restaurantId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
-        var restaurantInfo = restaurantRepository.findByRestaurantId(restaurantId);
+        ObjectMapper objectMapper = new ObjectMapper();
+        AtomicReference<Content> content = new AtomicReference<>();
+        AtomicReference<Translation> translation = new AtomicReference<>();
 
-        restaurantInfo.orElseThrow(() -> {
-            ExceptionTools.notFoundResponse(".restaurantNotFound", finalAcceptLanguage, restaurantId);
-            return null;
-        });
+        restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
 
         List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantIdOrderByCreatedAt(restaurantId);
 
@@ -210,10 +209,21 @@ public class RestaurantService {
 
         List<MenuResponse> responseList = menus.stream()
                 .map(menu -> {
+                    try {
+                        translation.set(translationRepository.findAllByTranslationId(menu.getTranslationId()).orElseThrow(() ->
+                                ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, menu.getMenuId())));
+                        content.set(objectMapper.readValue(translation.get().getContent(), new TypeReference<>() {
+                        }));
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
+
                     MenuResponse menuResponse = new MenuResponse();
+                    menuResponse.setRestaurantId(menu.getRestaurant().getRestaurantId());
                     menuResponse.setMenuId(menu.getMenuId());
-//                    menuResponse.setName(menu.getName());
-//                    menuResponse.setLanguage(menu.getLanguage_code());
+                    menuResponse.setTranslationId(menu.getTranslationId());
+                    menuResponse.setState(menu.getState());
+                    menuResponse.setContent(content.get());
 
                     //start menu sorting
                     EntityOrder categoryExist = entityOrderRepository.findByEntityId(menu.getMenuId()).orElse(null);
@@ -222,7 +232,7 @@ public class RestaurantService {
                         CategoryIdsInOrder = Arrays.stream(categoryExist.getSortedList().split(",")).toList();
                     }
                     List<String> finalCategoryIdsInOrder = CategoryIdsInOrder;
-                    menu.getCategories().sort(Comparator.comparing(Category::getName));
+                    menu.getCategories().sort(Comparator.comparing(Category::getCreatedAt).reversed());
                     menu.getCategories().sort(Comparator.comparingInt(category -> {
                         int index = finalCategoryIdsInOrder.indexOf(category.getCategoryId());
                         return index != -1 ? index : Integer.MAX_VALUE;
@@ -231,9 +241,22 @@ public class RestaurantService {
 
                     List<CategoryResponse> categoryResponseList = menu.getCategories().stream()
                             .map(category -> {
-                                CategoryResponse categoryResponse = new CategoryResponse();
-                                categoryResponse.setCategoryId(category.getCategoryId());
-//                                categoryResponse.setName(category.getName());
+                                try {
+                                    translation.set(translationRepository.findAllByTranslationId(category.getTranslationId()).orElseThrow(() ->
+                                            ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, category.getCategoryId())));
+                                    content.set(objectMapper.readValue(translation.get().getContent(), new TypeReference<>() {
+                                    }));
+                                } catch (JsonProcessingException e) {
+                                    throw new RuntimeException(e);
+                                }
+
+                                CategoryResponse categoryResponse = CategoryResponse.builder()
+                                        .menuId(category.getMenu().getMenuId())
+                                        .categoryId(category.getCategoryId())
+                                        .translationId(category.getTranslationId())
+                                        .state(category.getState())
+                                        .content(content.get())
+                                        .build();
 
                                 //start dish sorting
                                 EntityOrder dishExist = entityOrderRepository.findByEntityId(category.getCategoryId()).orElse(null);
@@ -242,7 +265,7 @@ public class RestaurantService {
                                     DishIdsInOrder = Arrays.stream(dishExist.getSortedList().split(",")).toList();
                                 }
                                 List<String> finalDishIdsInOrder = DishIdsInOrder;
-                                category.getDishes().sort(Comparator.comparing(Dish::getName));
+                                category.getDishes().sort(Comparator.comparing(Dish::getCreatedAt).reversed());
                                 category.getDishes().sort(Comparator.comparingInt(dish -> {
                                     int index = finalDishIdsInOrder.indexOf(dish.getDishId());
                                     return index != -1 ? index : Integer.MAX_VALUE;
@@ -251,32 +274,29 @@ public class RestaurantService {
 
                                 List<DishResponse> dishResponseList = category.getDishes().stream()
                                         .map(dish -> {
-                                            List<String> allergens = new ArrayList<>();
-                                            if (dish.getAllergens() != null)
-                                                allergens.addAll(Arrays.stream(dish.getAllergens().split("::")).toList());
-                                            Collections.sort(allergens);
-
-                                            List<String> tags = new ArrayList<>();
-                                            if (dish.getTags() != null)
-                                                tags.addAll(Arrays.stream(dish.getTags().split("::")).toList());
-                                            Collections.sort(tags);
-
-                                            DishResponse dishResponse = new DishResponse();
-                                            dishResponse.setDishId(dish.getDishId());
-                                            dishResponse.setAssociatedId(dish.getAssociatedId());
-                                            dishResponse.setName(dish.getName());
-                                            dishResponse.setDescription(dish.getDescription());
-                                            dishResponse.setPrice(dish.getPrice());
-                                            dishResponse.setSpecialPrice(dish.getSpecialPrice());
-                                            dishResponse.setCookingTime(dish.getCooking_time());
-                                            dishResponse.setWeight(dish.getWeight());
-                                            dishResponse.setWeightUnit(dish.getWeight_unit());
-                                            dishResponse.setCalories(dish.getCalories());
-                                            dishResponse.setAllergens(allergens);
-                                            dishResponse.setTags(tags);
-                                            dishResponse.setImage(dish.getImage());
-                                            dishResponse.setInStock(dish.getIn_stock());
-                                            dishResponse.setState(dish.getState());
+                                            try {
+                                                translation.set(translationRepository.findAllByTranslationId(dish.getTranslationId()).orElseThrow(() ->
+                                                        ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, dish.getDishId())));
+                                                content.set(objectMapper.readValue(translation.get().getContent(), new TypeReference<>() {
+                                                }));
+                                            } catch (JsonProcessingException e) {
+                                                throw new RuntimeException(e);
+                                            }
+                                            DishResponse dishResponse = DishResponse.builder()
+                                                    .categoryId(dish.getCategory().getCategoryId())
+                                                    .dishId(dish.getDishId())
+                                                    .translationId(dish.getTranslationId())
+                                                    .price(dish.getPrice())
+                                                    .specialPrice(dish.getSpecialPrice())
+                                                    .cookingTime(dish.getCookingTime())
+                                                    .calories(dish.getCalories())
+                                                    .weight(dish.getWeight())
+                                                    .weightUnit(dish.getWeightUnit())
+                                                    .inStock(dish.getInStock())
+                                                    .state(dish.getState())
+                                                    .image(dish.getImage())
+                                                    .content(content.get())
+                                                    .build();
                                             return dishResponse;
                                         }).collect(Collectors.toList());
 
@@ -294,16 +314,22 @@ public class RestaurantService {
     }
 
     private void validateRequest(Restaurant request, Restaurant restaurant, String finalAcceptLanguage, Map<String, String> fieldErrors, boolean required) {
-        if (required) {
-            fieldErrors.put("name", serviceHelper.updateNameField(restaurant::setName, request.getName(), finalAcceptLanguage));
-        } else {
-            fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), restaurant, finalAcceptLanguage));
-        }
-        fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
         fieldErrors.put("language", Validator.validateLanguage(request.getLanguage(), finalAcceptLanguage));
+        updateField(request.getName(), required, restaurant, fieldErrors, "name",
+                (name) -> serviceHelper.updateNameField(restaurant::setName, name, finalAcceptLanguage));
+        fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+    }
+
+    private <T> void updateField(T value, boolean required, Restaurant restaurant, Map<String, String> fieldErrors, String fieldName, FieldUpdateFunction<T> updateFunction) {
+        if (value != null || required) {
+            String error = updateFunction.updateField(value);
+            if (error != null) {
+                fieldErrors.put(fieldName, error);
+            }
+        }
     }
 
     private void updateTranslation(Restaurant restaurant, String language, Translation translation, String finalAcceptLanguage) throws JsonProcessingException {
@@ -312,15 +338,14 @@ public class RestaurantService {
         };
         Content<RestaurantTranslationEntry> content = objectMapper.readValue(translation.getContent(), typeReference);
         Map<String, RestaurantTranslationEntry> languagesMap = content.getContent();
-        if (languagesMap.get(language) == null) {
-            throw ExceptionTools.notFoundException(".translationForThisLanguageNotFound", finalAcceptLanguage, restaurant.getRestaurantId());
-        }
-        if (restaurant.getName() == null)
-            restaurant.setName(languagesMap.get(language).getName());
-        if (restaurant.getAddress() == null) {
-            restaurant.setAddress(content.getContent().get(language).getAddress());
-        } else if (restaurant.getAddress().equals("")) {
-            restaurant.setAddress(null);
+        if (languagesMap.get(language) != null) {
+            if (restaurant.getName() == null)
+                restaurant.setName(languagesMap.get(language).getName());
+            if (restaurant.getAddress() == null) {
+                restaurant.setAddress(content.getContent().get(language).getAddress());
+            } else if (restaurant.getAddress().equals("")) {
+                restaurant.setAddress(null);
+            }
         }
         languagesMap.put(language, new RestaurantTranslationEntry(restaurant.getName(), restaurant.getAddress()));
         translation.setContent(objectMapper.writeValueAsString(content));

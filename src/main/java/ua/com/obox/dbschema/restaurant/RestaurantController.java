@@ -17,7 +17,6 @@ import java.util.List;
 
 import static ua.com.obox.dbschema.tools.examples.RestaurantResponseExample.*;
 
-
 @RestController
 @RequestMapping("/restaurants")
 @RequiredArgsConstructor
@@ -72,7 +71,7 @@ public class RestaurantController {
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = POST_400_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<RestaurantResponseId> createRestaurant(@RequestBody Restaurant request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
+    public ResponseEntity<RestaurantResponseId> createRestaurant(@RequestBody @Schema(example = POST_BODY) Restaurant request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         RestaurantResponseId response = service.createRestaurant(request, acceptLanguage);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -87,10 +86,7 @@ public class RestaurantController {
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<Void> patchRestaurantById(@PathVariable String restaurantId, @RequestBody
-    @Schema(example = """
-            {
-              "name": "string",
-              "address": "string"}""")
+    @Schema(example = PATCH_BODY)
     Restaurant request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         service.patchRestaurantById(restaurantId, request, acceptLanguage);
