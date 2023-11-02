@@ -8,6 +8,7 @@
         <version>2.7.13</version>
         <relativePath/>
     </parent>
+
     <groupId>ua.com.obox</groupId>
     <artifactId>obox</artifactId>
     <version>0.1.1-DEV</version>
