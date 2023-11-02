@@ -88,14 +88,6 @@ public class MenuService {
                             .build();
                 })
                 .collect(Collectors.toList());
-//
-//                .map(category -> CategoryResponse.builder()
-//                        .categoryId(category.getCategoryId())
-//                        .menuId(category.getMenu().getMenuId())
-//                        .name(category.getName())
-//                        .description(category.getDescription())
-//                        .state(category.getState())
-//                        .build()).collect(Collectors.toList());
 
         loggingService.log(LogLevel.INFO, String.format("getAllCategoriesByMenuId %s %s %d", menuId, Message.FIND_COUNT.getMessage(), responseList.size()));
         return responseList;
@@ -194,7 +186,7 @@ public class MenuService {
 
     private <T> void updateField(T value, boolean required, Menu menu, Map<String, String> fieldErrors, String fieldName, FieldUpdateFunction<T> updateFunction, String finalAcceptLanguage) {
         if (value != null || required) {
-            if (menu.getRestaurant() != null) {
+            if (Objects.equals(fieldName, "name") && menu.getRestaurant() != null) {
                 List<Menu> sameParent = menuRepository.findAllByRestaurant_RestaurantId(menu.getRestaurant().getRestaurantId());
                 sameParent.remove(menu);
                 ExistEntity<MenuTranslationEntry> existEntity = new ExistEntity<>(translationRepository);

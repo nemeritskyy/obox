@@ -58,7 +58,7 @@ public class MenuController {
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = POST_400_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<MenuResponseId> createMenu(@RequestBody Menu request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
+    public ResponseEntity<MenuResponseId> createMenu(@RequestBody @Schema(example = POST_BODY) Menu request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         MenuResponseId response = service.createMenu(request, acceptLanguage);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -73,9 +73,7 @@ public class MenuController {
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<Void> patchMenuById(@PathVariable String menuId, @RequestBody
-    @Schema(example = "{\n" +
-            "  \"name\": \"string\"" +
-            "}")
+    @Schema(example = PATCH_BODY)
     Menu request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         service.patchMenuById(menuId, request, acceptLanguage);
