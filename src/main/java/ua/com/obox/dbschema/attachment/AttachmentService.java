@@ -62,7 +62,7 @@ public class AttachmentService {
         Attachment attachment = Attachment.builder()
                 .attachmentId(attachmentUUID)
                 .referenceId(request.getReferenceId())
-                .referenceType(Validator.removeExtraSpaces(request.getReferenceType()).toUpperCase())
+                .referenceType(Validator.removeExtraSpaces(request.getReferenceType()).toLowerCase())
                 .attachmentUrl(attachmentUrl)
                 .build();
         attachment.setCreatedAt(Instant.now().getEpochSecond());
