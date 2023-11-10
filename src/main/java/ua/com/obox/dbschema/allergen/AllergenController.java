@@ -11,12 +11,30 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
+import static ua.com.obox.dbschema.tools.examples.RestaurantResponseExample.ALL_MAPPINGS_404_RESPONSE_EXAMPLE;
+import static ua.com.obox.dbschema.tools.examples.RestaurantResponseExample.GET_ALL_DETAILS;
+
 @RestController
 @RequestMapping("/allergens/")
 @RequiredArgsConstructor
 @Tag(name = "Allergens")
 public class AllergenController {
     private final AllergenService service;
+
+    @GetMapping("/{restaurantId}/restaurant-allergens")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",
+                    schema = @Schema(example = GET_ALL_DETAILS))),
+            @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
+                    schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
+    })
+    public ResponseEntity<List<AllergenResponse>> getAllAllergensByRestaurantId(@PathVariable String restaurantId, @RequestHeader HttpHeaders httpHeaders) {
+        String acceptLanguage = httpHeaders.getFirst("Accept-Language");
+        List<AllergenResponse> menuResponses = service.getAllAllergensByRestaurantId(restaurantId, acceptLanguage);
+        return ResponseEntity.ok(menuResponses);
+    }
 
     @PostMapping("/")
     @ApiResponses(value = {

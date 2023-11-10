@@ -3,6 +3,7 @@ package ua.com.obox.dbschema.sorting;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.allergen.AllergenRepository;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
@@ -24,6 +25,7 @@ public class EntityOrderService {
     private final MenuRepository menuRepository;
     private final RestaurantRepository restaurantRepository;
     private final CategoryRepository categoryRepository;
+    private final AllergenRepository allergenRepository;
     private final LoggingService loggingService;
     private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
 
@@ -76,7 +78,7 @@ public class EntityOrderService {
                 var menuInfo = menuRepository.findByMenuId(request.getEntityId());
                 checkEntityInDatabase(menuInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
-            case "menu" -> {
+            case "menu", "allergen" -> {
                 var restaurantInfo = restaurantRepository.findByRestaurantId(request.getEntityId());
                 checkEntityInDatabase(restaurantInfo, request, finalAcceptLanguage, entityOrderRepository);
             }

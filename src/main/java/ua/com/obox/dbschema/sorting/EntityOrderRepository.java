@@ -7,6 +7,7 @@ import java.util.UUID;
 
 public interface EntityOrderRepository extends JpaRepository<EntityOrder, UUID> {
     Optional<EntityOrder> findByEntityId(String entityId);
+    Optional<EntityOrder> findByEntityIdAndReferenceType(String entityId, String referenceType);
 
     Optional<EntityOrder> findBySortedListContaining(String entityId);
 }

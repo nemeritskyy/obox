@@ -1,12 +1,17 @@
 package ua.com.obox.dbschema.allergen;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
+import ua.com.obox.dbschema.sorting.EntityOrder;
+import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.FieldUpdateFunction;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
@@ -19,13 +24,13 @@ import ua.com.obox.dbschema.translation.TranslationRepository;
 import ua.com.obox.dbschema.translation.assistant.CreateTranslation;
 import ua.com.obox.dbschema.translation.assistant.ExistEntity;
 import ua.com.obox.dbschema.translation.assistant.ExistName;
+import ua.com.obox.dbschema.translation.responsebody.Content;
 import ua.com.obox.dbschema.translation.responsebody.MenuTranslationEntry;
 
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,12 +38,55 @@ public class AllergenService {
     private final RestaurantRepository restaurantRepository;
     private final AllergenRepository allergenRepository;
     private final TranslationRepository translationRepository;
+    private final EntityOrderRepository entityOrderRepository;
     private final UpdateServiceHelper serviceHelper;
     private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
     private final LoggingService loggingService;
 
-
     private String selectedLanguage = "en-US";
+
+    public List<AllergenResponse> getAllAllergensByRestaurantId(String restaurantId, String acceptLanguage) {
+        selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        ObjectMapper objectMapper = new ObjectMapper();
+        AtomicReference<Content<ExistName>> content = new AtomicReference<>();
+        AtomicReference<Translation> translation = new AtomicReference<>();
+
+        restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", selectedLanguage, restaurantId));
+
+        List<Allergen> allergens = allergenRepository.findAllByReferenceIdOrderByCreatedAtDesc(restaurantId);
+
+        // for sorting results
+        EntityOrder sortingExist = entityOrderRepository.findByEntityIdAndReferenceType(restaurantId, "allergen").orElse(null);
+        if (sortingExist != null) {
+            List<String> MenuIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
+            allergens.sort(Comparator.comparingInt(menu -> {
+                int index = MenuIdsInOrder.indexOf(menu.getAllergenId());
+                return index != -1 ? index : Integer.MAX_VALUE;
+            }));
+        }
+
+        List<AllergenResponse> responseList = allergens.stream()
+                .map(allergen -> {
+                    try {
+                        translation.set(translationRepository.findAllByTranslationId(allergen.getTranslationId()).orElseThrow(() ->
+                                ExceptionTools.notFoundException(".translationNotFound", selectedLanguage, allergen.getAllergenId())));
+                        content.set(objectMapper.readValue(translation.get().getContent(), new TypeReference<>() {
+                        }));
+                    } catch (JsonProcessingException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    return AllergenResponse.builder()
+                            .allergenId(allergen.getAllergenId())
+                            .translationId(allergen.getTranslationId())
+                            .content(content.get())
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        loggingService.log(LogLevel.INFO, String.format("getAllMenusByRestaurantId %s %s %d", restaurantId, Message.FIND_COUNT.getMessage(), responseList.size()));
+        return responseList;
+    }
 
     public void addAllergen(Allergen request, String acceptLanguage) throws JsonProcessingException {
         selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
