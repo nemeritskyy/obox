@@ -64,6 +64,6 @@ public class Restaurant {
 
     @PreRemove
     public void beforeRemove() {
-        PreRemoveAssistant.removeByEntityId(this.restaurantId);
+        PreRemoveAssistant.removeByEntityId(this.restaurantId, "restaurant");
     }
 }

@@ -44,9 +44,23 @@ public class AllergenController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = "")))
     })
-    public ResponseEntity<Void> createMenu(@RequestBody @Schema(example = "") Allergen request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
+    public ResponseEntity<Void> createMenu(@RequestBody
+//                                               @Schema(example = "")
+                                           Allergen request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         service.addAllergen(request, acceptLanguage);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{allergenId}")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "No Content"),
+            @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
+                    schema = @Schema(example = "")))
+    })
+    public ResponseEntity<Void> deleteAllergenById(@PathVariable String allergenId, @RequestHeader HttpHeaders httpHeaders) {
+        String acceptLanguage = httpHeaders.getFirst("Accept-Language");
+        service.deleteAllergenById(allergenId, acceptLanguage);
         return ResponseEntity.noContent().build();
     }
 }

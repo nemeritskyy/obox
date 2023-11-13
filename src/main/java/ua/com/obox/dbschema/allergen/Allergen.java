@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
+import ua.com.obox.dbschema.tools.PreRemoveAssistant;
 import ua.com.obox.dbschema.translation.assistant.IdentifiableId;
 
 import javax.persistence.*;
@@ -31,6 +32,7 @@ public class Allergen implements IdentifiableId {
     private String referenceType;
 
     @JsonProperty("name")
+    @Transient
     private String name;
 
     @JsonIgnore
@@ -43,6 +45,11 @@ public class Allergen implements IdentifiableId {
     @JsonProperty("language")
     @Transient
     private String language;
+
+    @PreRemove
+    public void beforeRemove() {
+        PreRemoveAssistant.removeByEntityId(this.allergenId);
+    }
 
     @Override
     @Transient

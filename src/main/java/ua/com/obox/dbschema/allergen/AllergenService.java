@@ -56,7 +56,7 @@ public class AllergenService {
         List<Allergen> allergens = allergenRepository.findAllByReferenceIdOrderByCreatedAtDesc(restaurantId);
 
         // for sorting results
-        EntityOrder sortingExist = entityOrderRepository.findByEntityIdAndReferenceType(restaurantId, "allergen").orElse(null);
+        EntityOrder sortingExist = entityOrderRepository.findByReferenceIdAndReferenceType(restaurantId, "allergen").orElse(null);
         if (sortingExist != null) {
             List<String> MenuIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
             allergens.sort(Comparator.comparingInt(menu -> {
@@ -143,5 +143,12 @@ public class AllergenService {
                 fieldErrors.put(fieldName, error);
             }
         }
+    }
+
+    public void deleteAllergenById(String allergenId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        Allergen allergen = allergenRepository.findByAllergenId(allergenId).orElseThrow(() -> ExceptionTools.notFoundException(".allergenNotFound", finalAcceptLanguage, allergenId));
+        allergenRepository.delete(allergen);
+        loggingService.log(LogLevel.INFO, String.format("deleteAllergenById %s NAME=%s %s", allergenId, allergen.getName(), Message.DELETE.getMessage()));
     }
 }

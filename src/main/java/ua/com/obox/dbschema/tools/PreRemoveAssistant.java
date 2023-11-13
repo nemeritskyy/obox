@@ -1,5 +1,7 @@
 package ua.com.obox.dbschema.tools;
 
+import ua.com.obox.dbschema.allergen.Allergen;
+import ua.com.obox.dbschema.allergen.AllergenRepository;
 import ua.com.obox.dbschema.attachment.Attachment;
 import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.sorting.EntityOrder;
@@ -13,7 +15,8 @@ import java.util.List;
 public class PreRemoveAssistant {
     public static void removeByEntityId(String entityId) {
         EntityOrderRepository entityOrderRepository = ApplicationContextProvider.getBean(EntityOrderRepository.class);
-        entityOrderRepository.findByEntityId(entityId).ifPresent(entityOrderRepository::delete);
+        List<EntityOrder> list = entityOrderRepository.findByReferenceId(entityId);
+        entityOrderRepository.deleteAll(list);
         EntityOrder existSorted = entityOrderRepository.findBySortedListContaining(entityId).orElse(null);
         if (existSorted != null) {
             String[] elements = existSorted.getSortedList().split(",");
@@ -35,7 +38,16 @@ public class PreRemoveAssistant {
         translationRepository.findAllByReferenceId(entityId).ifPresent(translationRepository::delete);
     }
 
-    public static void removeAttachmentByEntityId(String entityId){
+    public static void removeByEntityId(String entityId, String referenceType) {
+        if (referenceType.equals("restaurant")) {
+            AllergenRepository allergenRepository = ApplicationContextProvider.getBean(AllergenRepository.class);
+            List<Allergen> allergens = allergenRepository.findAllByReferenceId(entityId);
+            allergenRepository.deleteAll(allergens);
+        }
+        removeByEntityId(entityId);
+    }
+
+    public static void removeAttachmentByEntityId(String entityId) {
         AttachmentRepository attachmentRepository = ApplicationContextProvider.getBean(AttachmentRepository.class);
         List<Attachment> attachments = attachmentRepository.findAllByReferenceId(entityId);
         if (!attachments.isEmpty()) {
