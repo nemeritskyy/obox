@@ -25,13 +25,12 @@ public class EntityOrderService {
     private final MenuRepository menuRepository;
     private final RestaurantRepository restaurantRepository;
     private final CategoryRepository categoryRepository;
-    private final AllergenRepository allergenRepository;
     private final LoggingService loggingService;
     private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
 
     public void createEntityOrder(EntityOrder request, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
-        String entityUUID = request.getEntityId();
+        String entityUUID = request.getReferenceId();
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
         if (!String.join(",", request.getSortedArray()).matches(ValidationConfiguration.UUID_REGEX)) {
             fieldErrors.put("sorted_list", translation.getString(finalAcceptLanguage + ".badSortedList"));
@@ -47,10 +46,10 @@ public class EntityOrderService {
 
     private void checkEntityInDatabase(Optional<?> foundEntity, EntityOrder request, String acceptLanguage, EntityOrderRepository entityOrderRepository) {
         if (foundEntity.isEmpty()) {
-            ExceptionTools.notFoundResponse(".entityOrderNotFound", acceptLanguage, request.getEntityId());
+            ExceptionTools.notFoundResponse(".entityOrderNotFound", acceptLanguage, request.getReferenceId());
         }
 
-        EntityOrder entityOrderExist = entityOrderRepository.findByEntityId(request.getEntityId()).orElse(null);
+        EntityOrder entityOrderExist = entityOrderRepository.findByReferenceIdAndReferenceType(request.getReferenceId(), request.getReferenceType()).orElse(null);
         EntityOrder entityOrderToSave;
 
         if (entityOrderExist != null) {
@@ -71,15 +70,15 @@ public class EntityOrderService {
         request.setReferenceType(request.getReferenceType().toLowerCase());
         switch (request.getReferenceType()) {
             case "dish" -> {
-                var categoryInfo = categoryRepository.findByCategoryId(request.getEntityId());
+                var categoryInfo = categoryRepository.findByCategoryId(request.getReferenceId());
                 checkEntityInDatabase(categoryInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
             case "category" -> {
-                var menuInfo = menuRepository.findByMenuId(request.getEntityId());
+                var menuInfo = menuRepository.findByMenuId(request.getReferenceId());
                 checkEntityInDatabase(menuInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
             case "menu", "allergen" -> {
-                var restaurantInfo = restaurantRepository.findByRestaurantId(request.getEntityId());
+                var restaurantInfo = restaurantRepository.findByRestaurantId(request.getReferenceId());
                 checkEntityInDatabase(restaurantInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
             default ->

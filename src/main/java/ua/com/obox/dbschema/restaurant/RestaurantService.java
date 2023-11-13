@@ -14,7 +14,6 @@ import ua.com.obox.dbschema.dish.DishResponse;
 import ua.com.obox.dbschema.sorting.EntityOrder;
 import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.FieldUpdateFunction;
-import ua.com.obox.dbschema.tools.RequiredServiceHelper;
 import ua.com.obox.dbschema.menu.Menu;
 import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.menu.MenuResponse;
@@ -68,7 +67,7 @@ public class RestaurantService {
         List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantIdOrderByCreatedAt(restaurantId);
 
         // for sorting results
-        EntityOrder sortingExist = entityOrderRepository.findByEntityId(restaurantId).orElse(null);
+        EntityOrder sortingExist = entityOrderRepository.findByReferenceIdAndReferenceType(restaurantId, "menu").orElse(null);
         if (sortingExist != null) {
             List<String> MenuIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
             menus.sort(Comparator.comparingInt(menu -> {
@@ -198,7 +197,7 @@ public class RestaurantService {
         List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantIdOrderByCreatedAt(restaurantId);
 
         // for sorting results
-        EntityOrder sortingExist = entityOrderRepository.findByEntityId(restaurantId).orElse(null);
+        EntityOrder sortingExist = entityOrderRepository.findByReferenceIdAndReferenceType(restaurantId, "menu").orElse(null);
         if (sortingExist != null) {
             List<String> MenuIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
             menus.sort(Comparator.comparingInt(menu -> {
@@ -226,7 +225,7 @@ public class RestaurantService {
                     menuResponse.setContent(content.get());
 
                     //start menu sorting
-                    EntityOrder categoryExist = entityOrderRepository.findByEntityId(menu.getMenuId()).orElse(null);
+                    EntityOrder categoryExist = entityOrderRepository.findByReferenceIdAndReferenceType(menu.getMenuId(), "category").orElse(null);
                     List<String> CategoryIdsInOrder = new ArrayList<>();
                     if (categoryExist != null) {
                         CategoryIdsInOrder = Arrays.stream(categoryExist.getSortedList().split(",")).toList();
@@ -259,7 +258,7 @@ public class RestaurantService {
                                         .build();
 
                                 //start dish sorting
-                                EntityOrder dishExist = entityOrderRepository.findByEntityId(category.getCategoryId()).orElse(null);
+                                EntityOrder dishExist = entityOrderRepository.findByReferenceIdAndReferenceType(category.getCategoryId(), "dish").orElse(null);
                                 List<String> DishIdsInOrder = new ArrayList<>();
                                 if (dishExist != null) {
                                     DishIdsInOrder = Arrays.stream(dishExist.getSortedList().split(",")).toList();
