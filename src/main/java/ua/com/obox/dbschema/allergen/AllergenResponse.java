@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ua.com.obox.dbschema.translation.assistant.ExistName;
+import ua.com.obox.dbschema.translation.assistant.OnlyName;
 import ua.com.obox.dbschema.translation.responsebody.Content;
 
 @Data
@@ -21,5 +21,5 @@ public class AllergenResponse {
     @JsonProperty("translation_id")
     private String translationId;
     @JsonUnwrapped
-    private Content<ExistName> content;
+    private Content<OnlyName> content;
 }

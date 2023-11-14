@@ -23,7 +23,7 @@ import ua.com.obox.dbschema.translation.Translation;
 import ua.com.obox.dbschema.translation.TranslationRepository;
 import ua.com.obox.dbschema.translation.assistant.CreateTranslation;
 import ua.com.obox.dbschema.translation.assistant.ExistEntity;
-import ua.com.obox.dbschema.translation.assistant.ExistName;
+import ua.com.obox.dbschema.translation.assistant.OnlyName;
 import ua.com.obox.dbschema.translation.responsebody.Content;
 import ua.com.obox.dbschema.translation.responsebody.MenuTranslationEntry;
 
@@ -48,7 +48,7 @@ public class AllergenService {
     public List<AllergenResponse> getAllAllergensByRestaurantId(String restaurantId, String acceptLanguage) {
         selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         ObjectMapper objectMapper = new ObjectMapper();
-        AtomicReference<Content<ExistName>> content = new AtomicReference<>();
+        AtomicReference<Content<OnlyName>> content = new AtomicReference<>();
         AtomicReference<Translation> translation = new AtomicReference<>();
 
         restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", selectedLanguage, restaurantId));
@@ -56,7 +56,7 @@ public class AllergenService {
         List<Allergen> allergens = allergenRepository.findAllByReferenceIdOrderByCreatedAtDesc(restaurantId);
 
         // for sorting results
-        EntityOrder sortingExist = entityOrderRepository.findByReferenceIdAndReferenceType(restaurantId, "allergen").orElse(null);
+        EntityOrder sortingExist = entityOrderRepository.findByReferenceIdAndReferenceType(restaurantId, "allergens").orElse(null);
         if (sortingExist != null) {
             List<String> MenuIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
             allergens.sort(Comparator.comparingInt(menu -> {
@@ -88,7 +88,26 @@ public class AllergenService {
         return responseList;
     }
 
-    public void addAllergen(Allergen request, String acceptLanguage) throws JsonProcessingException {
+    public AllergenResponse getAllergenById(String allergenId, String acceptLanguage) throws JsonProcessingException {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
+        Allergen allergen = allergenRepository.findByAllergenId(allergenId).orElseThrow(() -> ExceptionTools.notFoundException(".allergenNotFound", finalAcceptLanguage, allergenId));
+        Translation translation = translationRepository.findAllByTranslationId(allergen.getTranslationId())
+                .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, allergenId));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        Content<OnlyName> content = objectMapper.readValue(translation.getContent(), new TypeReference<>() {
+        });
+
+        loggingService.log(LogLevel.INFO, String.format("getAllergenById %s", allergenId));
+        return AllergenResponse.builder()
+                .allergenId(allergen.getAllergenId())
+                .translationId(allergen.getTranslationId())
+                .content(content)
+                .build();
+    }
+
+    public AllergenResponseId createAllergen(Allergen request, String acceptLanguage) throws JsonProcessingException {
         selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
         validateRequest(request, fieldErrors, true);
@@ -99,7 +118,7 @@ public class AllergenService {
         allergenRepository.save(request);
 
         {
-            CreateTranslation<ExistName> createTranslation = new CreateTranslation<>(translationRepository);
+            CreateTranslation<OnlyName> createTranslation = new CreateTranslation<>(translationRepository);
             MenuTranslationEntry entry = new MenuTranslationEntry(request.getName());
             Translation translation = createTranslation
                     .create(request.getAllergenId(), "allergen", request.getLanguage(), entry);
@@ -108,19 +127,39 @@ public class AllergenService {
         }
 
         loggingService.log(LogLevel.INFO, String.format("addAllergen %s UUID=%s %s", request.getName(), request.getAllergenId(), Message.CREATE.getMessage()));
+        return AllergenResponseId.builder().allergenId(request.getAllergenId()).build();
+    }
+
+    public void patchAllergenById(String allergenId, Allergen request, String acceptLanguage) throws JsonProcessingException {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        Map<String, String> fieldErrors = new ResponseErrorMap<>();
+
+        Allergen allergen = allergenRepository.findByAllergenId(allergenId).orElseThrow(() -> ExceptionTools.notFoundException(".allergenNotFound", finalAcceptLanguage, allergenId));
+        Translation translation = translationRepository.findAllByTranslationId(allergen.getTranslationId())
+                .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, allergenId));
+
+        validateRequest(request, fieldErrors, false);
+        allergen.setName(request.getName());
+        updateTranslation(allergen, request.getLanguage(), translation);
+
+        allergen.setUpdatedAt(Instant.now().getEpochSecond());
+        allergenRepository.save(allergen);
+        loggingService.log(LogLevel.INFO, String.format("patchAllergenById %s %s", allergenId, Message.UPDATE.getMessage()));
     }
 
     private void validateRequest(Allergen allergen, Map<String, String> fieldErrors, boolean required) {
         fieldErrors.put("language", Validator.validateLanguage(allergen.getLanguage(), selectedLanguage));
 
-        if ("restaurant".equals(allergen.getReferenceType())) {
-            var restaurantInfo = restaurantRepository.findByRestaurantId(allergen.getReferenceId());
+        if (required) {
+            if ("restaurant".equals(allergen.getReferenceType())) {
+                var restaurantInfo = restaurantRepository.findByRestaurantId(allergen.getReferenceId());
 
-            if (restaurantInfo.isEmpty()) {
-                fieldErrors.put("reference_id", String.format(translation.getString(selectedLanguage + ".badReferenceId"), allergen.getReferenceId()));
+                if (restaurantInfo.isEmpty()) {
+                    fieldErrors.put("reference_id", String.format(translation.getString(selectedLanguage + ".badReferenceId"), allergen.getReferenceId()));
+                }
+            } else {
+                fieldErrors.put("reference_type", translation.getString(selectedLanguage + ".badReferenceType"));
             }
-        } else {
-            fieldErrors.put("reference_type", translation.getString(selectedLanguage + ".badReferenceType"));
         }
 
         updateField(allergen.getName(), required, allergen, fieldErrors, "name",
@@ -135,7 +174,7 @@ public class AllergenService {
             if (Objects.equals(fieldName, "name") && allergen.getReferenceId() != null) {
                 List<Allergen> sameParent = allergenRepository.findAllByReferenceId(allergen.getReferenceId());
                 sameParent.remove(allergen);
-                ExistEntity<ExistName> existEntity = new ExistEntity<>(translationRepository);
+                ExistEntity<OnlyName> existEntity = new ExistEntity<>(translationRepository);
                 existEntity.checkExistEntity(Validator.removeExtraSpaces((String) value), sameParent, finalAcceptLanguage, fieldErrors);
             }
             String error = updateFunction.updateField(value);
@@ -143,6 +182,21 @@ public class AllergenService {
                 fieldErrors.put(fieldName, error);
             }
         }
+    }
+
+    private void updateTranslation(Allergen allergen, String language, Translation translation) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        TypeReference<Content<OnlyName>> typeReference = new TypeReference<>() {
+        };
+        Content<OnlyName> content = objectMapper.readValue(translation.getContent(), typeReference);
+        Map<String, OnlyName> languagesMap = content.getContent();
+        if (languagesMap.get(language) != null) {
+            if (allergen.getName() == null)
+                allergen.setName(languagesMap.get(language).getName());
+        }
+        languagesMap.put(language, new OnlyName(allergen.getName()));
+        translation.setContent(objectMapper.writeValueAsString(content));
+        translation.setUpdatedAt(Instant.now().getEpochSecond());
     }
 
     public void deleteAllergenById(String allergenId, String acceptLanguage) {
