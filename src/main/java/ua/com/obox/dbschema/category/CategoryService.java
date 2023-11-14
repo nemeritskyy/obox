@@ -58,7 +58,7 @@ public class CategoryService {
         List<Dish> dishes = dishRepository.findAllByCategory_CategoryIdOrderByCreatedAtDesc(categoryId);
 
         // for sorting results
-        EntityOrder sortingExist = entityOrderRepository.findByReferenceIdAndReferenceType(categoryId, "dish").orElse(null);
+        EntityOrder sortingExist = entityOrderRepository.findByReferenceIdAndReferenceType(categoryId, "dishes").orElse(null);
         if (sortingExist != null) {
             List<String> dishIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
             dishes.sort(Comparator.comparingInt(dish -> {

@@ -3,7 +3,6 @@ package ua.com.obox.dbschema.sorting;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import ua.com.obox.dbschema.allergen.AllergenRepository;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
@@ -69,15 +68,15 @@ public class EntityOrderService {
                                      EntityOrderRepository entityOrderRepository, RestaurantRepository restaurantRepository, MenuRepository menuRepository, CategoryRepository categoryRepository) {
         request.setReferenceType(request.getReferenceType().toLowerCase());
         switch (request.getReferenceType()) {
-            case "dish" -> {
+            case "dishes" -> {
                 var categoryInfo = categoryRepository.findByCategoryId(request.getReferenceId());
                 checkEntityInDatabase(categoryInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
-            case "category" -> {
+            case "categories" -> {
                 var menuInfo = menuRepository.findByMenuId(request.getReferenceId());
                 checkEntityInDatabase(menuInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
-            case "menu", "allergen" -> {
+            case "menus", "allergens" -> {
                 var restaurantInfo = restaurantRepository.findByRestaurantId(request.getReferenceId());
                 checkEntityInDatabase(restaurantInfo, request, finalAcceptLanguage, entityOrderRepository);
             }

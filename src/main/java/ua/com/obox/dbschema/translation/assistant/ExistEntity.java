@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @AllArgsConstructor
-public class ExistEntity<T extends ExistName> {
+public class ExistEntity<T extends OnlyName> {
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
     private final TranslationRepository translationRepository;
 

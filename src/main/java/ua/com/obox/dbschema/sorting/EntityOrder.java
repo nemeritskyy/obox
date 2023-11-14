@@ -22,7 +22,7 @@ public class EntityOrder {
     @JsonIgnore
     private String entityId;
     @Column(columnDefinition = "CHAR(36)")
-    @JsonProperty("reference_id")
+    @JsonProperty("parent_id")
     private String referenceId;
     @JsonProperty("reference_type")
     private String referenceType;
