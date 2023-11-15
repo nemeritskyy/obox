@@ -117,6 +117,13 @@ public class DishService {
         Translation translation = translationRepository.findAllByTranslationId(dish.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, dishId));
 
+        if (request.getCategoryId() != null && !request.getCategoryId().isEmpty()) {
+            Optional<Category> category = categoryRepository.findByCategoryId(request.getCategoryId());
+            if (category.isEmpty())
+                fieldErrors.put("category_id", String.format(translationContent.getString(finalAcceptLanguage + ".categoryNotFound"), request.getCategoryId()));
+            dish.setCategory(category.orElse(null));
+        }
+
         validateRequest(request, dish, finalAcceptLanguage, fieldErrors, false);
         updateTranslation(dish, request.getLanguage(), translation, finalAcceptLanguage);
 
@@ -152,6 +159,9 @@ public class DishService {
 
     private void validateRequest(Dish request, Dish dish, String finalAcceptLanguage, Map<String, String> fieldErrors, boolean required) {
         fieldErrors.put("language", Validator.validateLanguage(request.getLanguage(), finalAcceptLanguage));
+
+        updateField(request.getAllergensArray(), required, dish, fieldErrors, "allergens",
+                (allergens) -> serviceHelper.updateAllergens(dish::setAllergens, allergens, finalAcceptLanguage), finalAcceptLanguage);
 
         updateField(request.getName(), required, dish, fieldErrors, "name",
                 (name) -> serviceHelper.updateNameField(dish::setName, name, finalAcceptLanguage), finalAcceptLanguage);
