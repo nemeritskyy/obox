@@ -7,10 +7,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface AllergenRepository extends JpaRepository<Allergen, UUID> {
-    Optional<Allergen> findByTranslationId(String translationId);
-
     Optional<Allergen> findByAllergenId(String allergenId);
-
     List<Allergen> findAllByReferenceId(String entityId);
     List<Allergen> findAllByReferenceIdOrderByCreatedAtDesc(String entityId);
 }

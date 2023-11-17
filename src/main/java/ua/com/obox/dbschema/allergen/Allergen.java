@@ -49,6 +49,7 @@ public class Allergen implements IdentifiableId {
     @PreRemove
     public void beforeRemove() {
         PreRemoveAssistant.removeByEntityId(this.allergenId);
+        PreRemoveAssistant.removeAllergenFromDish(this.allergenId);
     }
 
     @Override

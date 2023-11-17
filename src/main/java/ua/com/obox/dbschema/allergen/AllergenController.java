@@ -59,7 +59,7 @@ public class AllergenController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = "")))
     })
-    public ResponseEntity<AllergenResponseId> createMenu(@RequestBody
+    public ResponseEntity<AllergenResponseId> createAllergen(@RequestBody
 //                                               @Schema(example = "")
                                            Allergen request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");

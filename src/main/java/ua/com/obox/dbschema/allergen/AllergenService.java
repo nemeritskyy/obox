@@ -59,8 +59,8 @@ public class AllergenService {
         EntityOrder sortingExist = entityOrderRepository.findByReferenceIdAndReferenceType(restaurantId, "allergens").orElse(null);
         if (sortingExist != null) {
             List<String> MenuIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
-            allergens.sort(Comparator.comparingInt(menu -> {
-                int index = MenuIdsInOrder.indexOf(menu.getAllergenId());
+            allergens.sort(Comparator.comparingInt(allergen -> {
+                int index = MenuIdsInOrder.indexOf(allergen.getAllergenId());
                 return index != -1 ? index : Integer.MAX_VALUE;
             }));
         }
@@ -84,7 +84,7 @@ public class AllergenService {
                 })
                 .collect(Collectors.toList());
 
-        loggingService.log(LogLevel.INFO, String.format("getAllMenusByRestaurantId %s %s %d", restaurantId, Message.FIND_COUNT.getMessage(), responseList.size()));
+        loggingService.log(LogLevel.INFO, String.format("getAllAllergensByRestaurantId %s %s %d", restaurantId, Message.FIND_COUNT.getMessage(), responseList.size()));
         return responseList;
     }
 
