@@ -6,14 +6,10 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.dbschema.category.Category;
-import ua.com.obox.dbschema.tools.EmptyDoubleDeserializer;
-import ua.com.obox.dbschema.tools.PreRemoveAssistant;
-import ua.com.obox.dbschema.tools.State;
-import ua.com.obox.dbschema.tools.EmptyIntegerDeserializer;
+import ua.com.obox.dbschema.tools.*;
 import ua.com.obox.dbschema.translation.assistant.IdentifiableId;
 
 import javax.persistence.*;
-import java.util.List;
 
 @Data
 @Builder
@@ -51,10 +47,19 @@ public class Dish implements IdentifiableId {
     @JsonProperty("weight_unit")
     private String weightUnit;
 
+    @Lob
     @JsonIgnore
     private String allergens;
+    @Transient
+    @JsonProperty("allergens")
+    String[] allergensArray;
+    @Lob
     @JsonIgnore
-    private String tags;
+    private String marks;
+    @Transient
+    @JsonProperty("marks")
+    String[] marksArray;
+
     @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
     private String state;
     @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
@@ -67,14 +72,6 @@ public class Dish implements IdentifiableId {
 
     private long createdAt;
     private long updatedAt;
-
-    @Transient
-    @JsonProperty("allergens")
-    private List<String> listAllergens;
-
-    @Transient
-    @JsonProperty("tags")
-    private List<String> listTags;
 
     @JsonProperty("category_id")
     @Transient

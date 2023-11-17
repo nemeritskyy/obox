@@ -42,8 +42,8 @@ public class DishResponse {
     private Integer calories;
     @JsonProperty("allergens")
     private List<String> allergens;
-    @JsonProperty("tags")
-    private List<String> tags;
+    @JsonProperty("marks")
+    private List<String> marks;
     @JsonProperty("image")
     private String image;
     @JsonProperty("in_stock")

@@ -4,6 +4,8 @@ import ua.com.obox.dbschema.allergen.Allergen;
 import ua.com.obox.dbschema.allergen.AllergenRepository;
 import ua.com.obox.dbschema.attachment.Attachment;
 import ua.com.obox.dbschema.attachment.AttachmentRepository;
+import ua.com.obox.dbschema.dish.Dish;
+import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.sorting.EntityOrder;
 import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.attachment.ApplicationContextProvider;
@@ -59,6 +61,48 @@ public class PreRemoveAssistant {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+        }
+    }
+
+    public static void removeAllergenFromDish(String allergenId) {
+        DishRepository dishRepository = ApplicationContextProvider.getBean(DishRepository.class);
+        Dish dish = dishRepository.findByAllergensContaining(allergenId).orElse(null);
+        if (dish != null) {
+            String[] elements = dish.getAllergens().split(",");
+            StringBuilder result = new StringBuilder();
+            for (String element : elements) {
+                if (!element.equals(allergenId)) {
+                    result.append(element).append(",");
+                }
+            }
+            if (result.length() > 0) {
+                result.setLength(result.length() - 1);
+                dish.setAllergens(result.toString());
+            } else {
+                dish.setAllergens(null);
+            }
+            dishRepository.save(dish);
+        }
+    }
+
+    public static void removeMarkFromDish(String markId) {
+        DishRepository dishRepository = ApplicationContextProvider.getBean(DishRepository.class);
+        Dish dish = dishRepository.findByMarksContaining(markId).orElse(null);
+        if (dish != null) {
+            String[] elements = dish.getMarks().split(",");
+            StringBuilder result = new StringBuilder();
+            for (String element : elements) {
+                if (!element.equals(markId)) {
+                    result.append(element).append(",");
+                }
+            }
+            if (result.length() > 0) {
+                result.setLength(result.length() - 1);
+                dish.setMarks(result.toString());
+            } else {
+                dish.setMarks(null);
+            }
+            dishRepository.save(dish);
         }
     }
 }

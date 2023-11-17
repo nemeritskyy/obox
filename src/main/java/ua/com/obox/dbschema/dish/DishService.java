@@ -69,8 +69,8 @@ public class DishService {
                 .calories(dish.getCalories())
                 .inStock(dish.getInStock())
                 .state(dish.getState())
-//                .allergens(allergens)
-//                .tags(tags)
+                .allergens(Arrays.stream(dish.getAllergens().split(",")).toList())
+                .marks(Arrays.stream(dish.getMarks().split(",")).toList())
                 .image(dish.getImage())
                 .build();
 
@@ -163,6 +163,9 @@ public class DishService {
         updateField(request.getAllergensArray(), required, dish, fieldErrors, "allergens",
                 (allergens) -> serviceHelper.updateAllergens(dish::setAllergens, allergens, finalAcceptLanguage), finalAcceptLanguage);
 
+        updateField(request.getMarksArray(), required, dish, fieldErrors, "marks",
+                (marks) -> serviceHelper.updateAllergens(dish::setMarks, marks, finalAcceptLanguage), finalAcceptLanguage);
+
         updateField(request.getName(), required, dish, fieldErrors, "name",
                 (name) -> serviceHelper.updateNameField(dish::setName, name, finalAcceptLanguage), finalAcceptLanguage);
 
@@ -237,4 +240,3 @@ public class DishService {
         translation.setUpdatedAt(Instant.now().getEpochSecond());
     }
 }
-

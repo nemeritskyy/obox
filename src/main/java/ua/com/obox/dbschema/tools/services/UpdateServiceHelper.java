@@ -3,6 +3,7 @@ package ua.com.obox.dbschema.tools.services;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
@@ -70,7 +71,7 @@ public class UpdateServiceHelper {
         if (zeroApply && value == 0) {
             setter.accept(null);
             return null;
-        } else if (value == null){
+        } else if (value == null) {
             loggingService.log(LogLevel.ERROR, translation.getString("en-US.priceRequired"));
             return translation.getString(acceptLanguage + ".priceRequired");
         }
@@ -110,5 +111,14 @@ public class UpdateServiceHelper {
 
     public static String removeSpacesAndDuplicateSeparators(String str) {
         return str.replaceAll("\s+", "").replaceAll("/{2,}", "/").replaceAll("^\\/|\\/$", "");
+    }
+
+    public String updateAllergens(Consumer<String> setter, String[] allergens, String acceptLanguage) {
+        if (allergens[0].isEmpty()) {
+            setter.accept(null);
+        } else if (String.join(",", allergens).matches(ValidationConfiguration.UUID_REGEX)) {
+            setter.accept(String.join(",", allergens));
+        } else return translation.getString(acceptLanguage + ".badSortedList");
+        return null;
     }
 }

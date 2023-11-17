@@ -90,6 +90,8 @@ public class CategoryService {
                             .weightUnit(dish.getWeightUnit())
                             .inStock(dish.getInStock())
                             .state(dish.getState())
+                            .allergens(Arrays.stream(dish.getAllergens().split(",")).toList())
+                            .marks(Arrays.stream(dish.getMarks().split(",")).toList())
                             .image(dish.getImage())
                             .content(content.get())
                             .build();
