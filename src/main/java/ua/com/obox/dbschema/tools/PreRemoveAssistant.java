@@ -6,10 +6,13 @@ import ua.com.obox.dbschema.attachment.Attachment;
 import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
+import ua.com.obox.dbschema.mark.Mark;
+import ua.com.obox.dbschema.mark.MarkRepository;
 import ua.com.obox.dbschema.sorting.EntityOrder;
 import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.attachment.ApplicationContextProvider;
 import ua.com.obox.dbschema.tools.ftp.AttachmentFTP;
+import ua.com.obox.dbschema.translation.Translation;
 import ua.com.obox.dbschema.translation.TranslationRepository;
 
 import java.util.List;
@@ -45,6 +48,14 @@ public class PreRemoveAssistant {
             AllergenRepository allergenRepository = ApplicationContextProvider.getBean(AllergenRepository.class);
             List<Allergen> allergens = allergenRepository.findAllByReferenceId(entityId);
             allergenRepository.deleteAll(allergens);
+            MarkRepository markRepository = ApplicationContextProvider.getBean(MarkRepository.class);
+            List<Mark> marks = markRepository.findAllByReferenceId(entityId);
+            markRepository.deleteAll(marks);
+            TranslationRepository translationRepository = ApplicationContextProvider.getBean(TranslationRepository.class);
+            List<Translation> translationsAllergens = translationRepository.findAllByReferenceIdAndReferenceType(entityId, "allergen");
+            translationRepository.deleteAll(translationsAllergens);
+            List<Translation> translationsMarks = translationRepository.findAllByReferenceIdAndReferenceType(entityId, "mark");
+            translationRepository.deleteAll(translationsMarks);
         }
         removeByEntityId(entityId);
     }

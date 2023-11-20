@@ -1,6 +1,7 @@
 package ua.com.obox.dbschema.mark;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,6 +14,7 @@ import ua.com.obox.dbschema.translation.responsebody.Content;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@JsonPropertyOrder({"mark_id", "translation_id", "content"})
 public class MarkResponse {
     @JsonProperty("mark_id")
     private String markId;

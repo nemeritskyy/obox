@@ -1,0 +1,12 @@
+package ua.com.obox.dbschema.tools.examples;
+
+public class MarkResponseExample {
+    public static final String POST_BODY = "{ \"reference_type\":\"restaurant\", \"reference_id\":\"fbdf5025-4aba-47b2-990f-7b3435216357\", \"name\":\"Вегетаріанський\", \"language\":\"uk-UA\" }";
+    public static final String GET_ALL_200_RESPONSE_EXAMPLE = "[ { \"mark_id\": \"6df2a8b2-4183-42b4-9369-e66682aadeff\", \"translation_id\": \"4e4a2ade-9b1c-4e93-a08b-9e10c67023ba\", \"content\": { \"uk-UA\": { \"name\": \"Гостре\" } } }, { \"mark_id\": \"0967c4fd-53b2-4bef-a2ba-038e30f9b329\", \"translation_id\": \"a15335ba-c03a-44d7-89da-7eaf2e1667ca\", \"content\": { \"uk-UA\": { \"name\": \"Не містить глютену\" } } }, { \"mark_id\": \"868dda6c-f974-4663-80d4-ab8b8e8ce176\", \"translation_id\": \"0aa79118-e408-4012-a70b-0b950f220865\", \"content\": { \"uk-UA\": { \"name\": \"Вегетаріанський\" } } } ]";
+    public static final String GET_200_RESPONSE_EXAMPLE = "{ \"mark_id\": \"6df2a8b2-4183-42b4-9369-e66682aadeff\", \"translation_id\": \"4e4a2ade-9b1c-4e93-a08b-9e10c67023ba\", \"content\": { \"uk-UA\": { \"name\": \"Гостре\" } } }";
+    public static final String POST_201_RESPONSE_EXAMPLE = "{ \"mark_id\": \"868dda6c-f974-4663-80d4-ab8b8e8ce176\" }";
+    public static final String POST_400_RESPONSE_EXAMPLE = "{ \"timestamp\": \"2023-11-20T07:50:28.611+00:00\", \"status\": 400, \"error\": \"Bad Request\", \"message\": \"400 BAD_REQUEST\", \"path\": \"/marks/\", \"fields\": { \"name\": \"Field name is required\", \"language\": \"The language field is mandatory in the format en-US\", \"reference_type\": \"Bad reference type\" } }";
+    public static final String PATCH_400_RESPONSE_EXAMPLE = "{ \"timestamp\": \"2023-11-20T07:51:35.126+00:00\", \"status\": 400, \"error\": \"Bad Request\", \"message\": \"400 BAD_REQUEST\", \"path\": \"/marks/868dda6c-f974-4663-80d4-ab8b8e8ce176\", \"fields\": { \"name\": \"Field name is required\", \"language\": \"The language field is mandatory in the format en-US\" } }";
+    public static final String PATCH_BODY = "{ \"language\":\"uk-UA\", \"name\":\"Spicy\" }";
+    public static final String ALL_MAPPINGS_404_RESPONSE_EXAMPLE = "{ \"timestamp\": \"2023-11-20T07:51:49.937+00:00\", \"status\": 404, \"error\": \"Not Found\", \"message\": \"Mark with id 868dda6c-f974-4663-80d4-ab8b8e8ce17 not found\", \"path\": \"/marks/868dda6c-f974-4663-80d4-ab8b8e8ce17\" }";
+}
