@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.language;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -11,6 +12,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/languages")
 @RequiredArgsConstructor
+@Hidden
 @Tag(name = "Languages")
 public class LanguageController {
     private final LanguageService service;

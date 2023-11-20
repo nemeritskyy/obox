@@ -14,9 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static ua.com.obox.dbschema.tools.examples.CategoryResponseExample.GET_200_RESPONSE_EXAMPLE;
-import static ua.com.obox.dbschema.tools.examples.RestaurantResponseExample.ALL_MAPPINGS_404_RESPONSE_EXAMPLE;
-import static ua.com.obox.dbschema.tools.examples.RestaurantResponseExample.GET_ALL_DETAILS;
+import static ua.com.obox.dbschema.tools.examples.MarkResponseExample.*;
 
 @RestController
 @RequestMapping("/marks/")
@@ -28,7 +26,7 @@ public class MarkController {
     @GetMapping("/{restaurantId}/restaurant-marks")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example = GET_ALL_DETAILS))),
+                    schema = @Schema(example = GET_ALL_200_RESPONSE_EXAMPLE))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
@@ -43,7 +41,7 @@ public class MarkController {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = GET_200_RESPONSE_EXAMPLE))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example = "")))
+                    schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<MarkResponse> getAllergenById(@PathVariable String markId, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
@@ -55,12 +53,12 @@ public class MarkController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example = ""))),
+                    schema = @Schema(example = POST_400_RESPONSE_EXAMPLE))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example = "")))
+                    schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<MarkResponseId> createMark(@RequestBody
-//                                               @Schema(example = "")
+                                               @Schema(example = POST_BODY)
                                                      Mark request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         MarkResponseId response = service.createMark(request, acceptLanguage);
@@ -71,12 +69,12 @@ public class MarkController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example = ""))),
+                    schema = @Schema(example = PATCH_400_RESPONSE_EXAMPLE))),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example = "")))
+                    schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<Void> patchMarkById(@PathVariable String markId, @RequestBody
-//    @Schema(example = PATCH_BODY)
+    @Schema(example = PATCH_BODY)
     Mark request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         service.patchMarkById(markId, request, acceptLanguage);
@@ -87,7 +85,7 @@ public class MarkController {
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
-                    schema = @Schema(example = "")))
+                    schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<Void> deleteMarkById(@PathVariable String markId, @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
