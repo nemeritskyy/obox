@@ -8,6 +8,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+import tools.GetRequestEquals;
 import tools.PatchRequest;
 import tools.PostRequest;
 import tools.values.SupportingData;
@@ -149,12 +150,12 @@ public class DishControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-//    @ParameterizedTest
-//    @Order(60)
-//    @MethodSource("tools.values.TestValuesDishes#getGetValidRequests")
-//    public void testGetAfterPatch(Map<String, Object> requestResponse) throws Exception {
-//        GetRequestEquals.performGetAndExpect(URL_DISH + SupportingData.dishId, requestResponse, mockMvc);
-//    }
+    @ParameterizedTest
+    @Order(60)
+    @MethodSource("tools.values.TestValuesDishes#getGetValidRequests")
+    public void testGetAfterPatch(Map<String, Object> requestResponse) throws Exception {
+        GetRequestEquals.performGetAndExpect(URL_DISH + SupportingData.dishId, requestResponse, mockMvc);
+    }
 
     @Test
     @Order(99)
