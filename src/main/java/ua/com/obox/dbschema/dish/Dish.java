@@ -52,12 +52,14 @@ public class Dish implements IdentifiableId {
     private String allergens;
     @Transient
     @JsonProperty("allergens")
+    @JsonDeserialize(using = StringArrayDeserializer.class)
     String[] allergensArray;
     @Lob
     @JsonIgnore
     private String marks;
     @Transient
     @JsonProperty("marks")
+    @JsonDeserialize(using = StringArrayDeserializer.class)
     String[] marksArray;
 
     @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")

@@ -114,11 +114,13 @@ public class UpdateServiceHelper {
     }
 
     public String updateAllergens(Consumer<String> setter, String[] allergens, String acceptLanguage) {
-        if (allergens[0].isEmpty()) {
-            setter.accept(null);
-        } else if (String.join(",", allergens).matches(ValidationConfiguration.UUID_REGEX)) {
-            setter.accept(String.join(",", allergens));
-        } else return translation.getString(acceptLanguage + ".badSortedList");
+        if (allergens != null) {
+            if (allergens[0].isEmpty()) {
+                setter.accept(null);
+            } else if (String.join(",", allergens).matches(ValidationConfiguration.UUID_REGEX)) {
+                setter.accept(String.join(",", allergens));
+            } else return translation.getString(acceptLanguage + ".badSortedList");
+        }
         return null;
     }
 }
