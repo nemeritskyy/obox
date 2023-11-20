@@ -1,0 +1,12 @@
+package ua.com.obox.dbschema.tools.examples;
+
+public class AllergenResponseExample {
+    public static final String POST_BODY = "{ \"reference_type\":\"restaurant\", \"reference_id\":\"fbdf5025-4aba-47b2-990f-7b3435216357\", \"name\":\"Арахіс\", \"language\":\"uk-UA\" }";
+    public static final String GET_ALL_200_RESPONSE_EXAMPLE = "[ { \"allergen_id\": \"f27e264b-f18f-4786-a3df-5625d48b06a5\", \"translation_id\": \"00019132-2b32-4935-9796-8066d006696f\", \"content\": { \"uk-UA\": { \"name\": \"Арахіс\" } } }, { \"allergen_id\": \"bd06f17f-4c8e-4c3a-badf-b826f812b797\", \"translation_id\": \"7a14fadb-d38b-49fd-aa76-7a0fee6f1a17\", \"content\": { \"uk-UA\": { \"name\": \"Риба\" } } }, { \"allergen_id\": \"67bcfb5e-afe7-4e93-9c50-af73e3361c10\", \"translation_id\": \"125126d3-8081-4f5b-848a-e0826fe1fb92\", \"content\": { \"uk-UA\": { \"name\": \"Яйця\" } } } ]";
+    public static final String GET_200_RESPONSE_EXAMPLE = "{ \"allergen_id\": \"bd06f17f-4c8e-4c3a-badf-b826f812b797\", \"translation_id\": \"7a14fadb-d38b-49fd-aa76-7a0fee6f1a17\", \"content\": { \"uk-UA\": { \"name\": \"Риба\" } } }";
+    public static final String POST_201_RESPONSE_EXAMPLE = "{ \"allergen_id\": \"f27e264b-f18f-4786-a3df-5625d48b06a5\" }";
+    public static final String POST_400_RESPONSE_EXAMPLE = "{ \"timestamp\": \"2023-11-20T07:37:16.985+00:00\", \"status\": 400, \"error\": \"Bad Request\", \"message\": \"400 BAD_REQUEST\", \"path\": \"/allergens/\", \"fields\": { \"name\": \"Field name is required\", \"language\": \"The language field is mandatory in the format en-US\", \"reference_type\": \"Bad reference type\" } }";
+    public static final String PATCH_400_RESPONSE_EXAMPLE = "{ \"timestamp\": \"2023-11-20T07:36:30.824+00:00\", \"status\": 400, \"error\": \"Bad Request\", \"message\": \"400 BAD_REQUEST\", \"path\": \"/allergens/68751185-e70f-4dd2-9ea1-9b80b96e244e\", \"fields\": { \"name\": \"Field name is required\", \"language\": \"The language field is mandatory in the format en-US\" } }";
+    public static final String PATCH_BODY = "{ \"language\":\"en-US\", \"name\":\"Soya\" }";
+    public static final String ALL_MAPPINGS_404_RESPONSE_EXAMPLE = "{ \"timestamp\": \"2023-11-20T07:34:39.960+00:00\", \"status\": 404, \"error\": \"Not Found\", \"message\": \"Allergen with id bd06f17f-4c8e-4c3a-badf-b826f812b79 not found\", \"path\": \"/allergens/bd06f17f-4c8e-4c3a-badf-b826f812b79\" }";
+}
