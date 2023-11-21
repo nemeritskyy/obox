@@ -58,7 +58,7 @@ public class CategoryService {
         List<Dish> dishes = dishRepository.findAllByCategory_CategoryIdOrderByCreatedAtDesc(categoryId);
 
         // for sorting results
-        EntityOrder sortingExist = entityOrderRepository.findByEntityId(categoryId).orElse(null);
+        EntityOrder sortingExist = entityOrderRepository.findByReferenceIdAndReferenceType(categoryId, "dishes").orElse(null);
         if (sortingExist != null) {
             List<String> dishIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
             dishes.sort(Comparator.comparingInt(dish -> {
@@ -90,6 +90,8 @@ public class CategoryService {
                             .weightUnit(dish.getWeightUnit())
                             .inStock(dish.getInStock())
                             .state(dish.getState())
+                            .allergens(dish.getAllergens() == null ? null : Arrays.stream(dish.getAllergens().split(",")).toList())
+                            .marks(dish.getMarks() == null ? null : Arrays.stream(dish.getMarks().split(",")).toList())
                             .image(dish.getImage())
                             .content(content.get())
                             .build();

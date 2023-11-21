@@ -8,10 +8,9 @@
         <version>2.7.13</version>
         <relativePath/>
     </parent>
-
     <groupId>ua.com.obox</groupId>
     <artifactId>obox</artifactId>
-    <version>0.1.1-DEV</version>
+    <version>0.1.3-DEV</version>
     <packaging>war</packaging>
     <name>obox</name>
     <description>obox</description>
@@ -23,7 +22,7 @@
             <id>local</id>
             <properties>
                 <activatedProperties>local</activatedProperties>
-                <heroku.appName></heroku.appName>
+                <heroku.appName/>
             </properties>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -101,7 +100,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
-            <version>1.6.12</version>
+            <version>1.6.15</version>
         </dependency>
         <!-- auto restart project -->
         <dependency>
@@ -134,7 +133,7 @@
         <dependency>
             <groupId>commons-net</groupId>
             <artifactId>commons-net</artifactId>
-            <version>3.6</version>
+            <version>3.10.0</version>
         </dependency>
         <dependency>
             <groupId>org.imgscalr</groupId>

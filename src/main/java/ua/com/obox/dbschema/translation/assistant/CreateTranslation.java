@@ -36,4 +36,24 @@ public class CreateTranslation<T> {
         translationRepository.save(translation);
         return translation;
     }
+
+    public Translation createBasic(String referenceId, String typeReference, Map<String, T> recordWithTranslate) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        Content<T> content = Content.<T>builder()
+                .content(new HashMap<>())
+                .build();
+        Map<String, T> languagesMap = content.getContent();
+        languagesMap.putAll(recordWithTranslate);
+
+        Translation translation = Translation.builder().build();
+        translation.setReferenceId(referenceId);
+        translation.setReferenceType(typeReference);
+        translation.setContent(objectMapper.writeValueAsString(content));
+        translation.setCreatedAt(Instant.now().getEpochSecond());
+        translation.setUpdatedAt(Instant.now().getEpochSecond());
+
+        translationRepository.save(translation);
+        return translation;
+    }
 }

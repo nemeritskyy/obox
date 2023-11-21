@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ExistName {
+public class OnlyName {
     String name;
 }

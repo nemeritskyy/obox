@@ -16,10 +16,10 @@ import javax.persistence.*;
 public class Translation {
     @Id
     @GeneratedValue(generator = "uuid2")
-    @Column(name = "translation_id")
+    @Column(name = "translation_id", columnDefinition = "CHAR(36)")
     private String translationId;
 
-    @JoinColumn(name = "reference_id")
+    @JoinColumn(name = "reference_id", columnDefinition = "CHAR(36)")
     private String referenceId;
 
     @JoinColumn(name = "reference_type")

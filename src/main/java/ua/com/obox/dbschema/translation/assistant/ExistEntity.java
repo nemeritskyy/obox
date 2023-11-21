@@ -16,7 +16,7 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 @AllArgsConstructor
-public class ExistEntity<T extends ExistName> {
+public class ExistEntity<T extends OnlyName> {
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
     private final TranslationRepository translationRepository;
 
@@ -35,7 +35,7 @@ public class ExistEntity<T extends ExistName> {
                         });
                         for (String entryLanguage : supportLanguages) {
                             translationEntry = content.getContent().get(entryLanguage);
-                            if (translationEntry != null && translationEntry.getName().equals(name)
+                            if (translationEntry != null && translationEntry.getName().equalsIgnoreCase(name)
                                     && element.getId().equals(translationExist.getReferenceId())) {
                                 fieldErrors.put("name", translation.getString(errorLanguage + ".nameExists"));
                             }

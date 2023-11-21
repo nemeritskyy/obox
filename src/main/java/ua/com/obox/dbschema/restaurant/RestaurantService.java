@@ -7,14 +7,16 @@ import lombok.RequiredArgsConstructor;
 import org.hibernate.Session;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.allergen.AllergenRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryResponse;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishResponse;
+import ua.com.obox.dbschema.mark.MarkRepository;
 import ua.com.obox.dbschema.sorting.EntityOrder;
 import ua.com.obox.dbschema.sorting.EntityOrderRepository;
+import ua.com.obox.dbschema.tools.BasicAllergensAndMarks;
 import ua.com.obox.dbschema.tools.FieldUpdateFunction;
-import ua.com.obox.dbschema.tools.RequiredServiceHelper;
 import ua.com.obox.dbschema.menu.Menu;
 import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.menu.MenuResponse;
@@ -53,6 +55,8 @@ public class RestaurantService {
     private final MenuRepository menuRepository;
     private final EntityOrderRepository entityOrderRepository;
     private final TranslationRepository translationRepository;
+    private final MarkRepository markRepository;
+    private final AllergenRepository allergenRepository;
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
@@ -68,7 +72,7 @@ public class RestaurantService {
         List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantIdOrderByCreatedAt(restaurantId);
 
         // for sorting results
-        EntityOrder sortingExist = entityOrderRepository.findByEntityId(restaurantId).orElse(null);
+        EntityOrder sortingExist = entityOrderRepository.findByReferenceIdAndReferenceType(restaurantId, "menus").orElse(null);
         if (sortingExist != null) {
             List<String> MenuIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
             menus.sort(Comparator.comparingInt(menu -> {
@@ -151,6 +155,13 @@ public class RestaurantService {
             restaurant.setTranslationId(translation.getTranslationId());
         }
 
+        try {
+            BasicAllergensAndMarks.addBasicMarks(restaurant.getRestaurantId(), translationRepository, markRepository);
+            BasicAllergensAndMarks.addBasicAllergens(restaurant.getRestaurantId(), translationRepository, allergenRepository);
+        } catch (Exception ex) {
+            loggingService.log(LogLevel.ERROR, "Problem with adding basic marks or allergens");
+        }
+
         loggingService.log(LogLevel.INFO, String.format("createRestaurant %s UUID=%s %s", request.getName(), restaurant.getRestaurantId(), Message.CREATE.getMessage()));
         return RestaurantResponseId.builder()
                 .restaurantId(restaurant.getRestaurantId())
@@ -198,7 +209,7 @@ public class RestaurantService {
         List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantIdOrderByCreatedAt(restaurantId);
 
         // for sorting results
-        EntityOrder sortingExist = entityOrderRepository.findByEntityId(restaurantId).orElse(null);
+        EntityOrder sortingExist = entityOrderRepository.findByReferenceIdAndReferenceType(restaurantId, "menus").orElse(null);
         if (sortingExist != null) {
             List<String> MenuIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
             menus.sort(Comparator.comparingInt(menu -> {
@@ -226,7 +237,7 @@ public class RestaurantService {
                     menuResponse.setContent(content.get());
 
                     //start menu sorting
-                    EntityOrder categoryExist = entityOrderRepository.findByEntityId(menu.getMenuId()).orElse(null);
+                    EntityOrder categoryExist = entityOrderRepository.findByReferenceIdAndReferenceType(menu.getMenuId(), "categories").orElse(null);
                     List<String> CategoryIdsInOrder = new ArrayList<>();
                     if (categoryExist != null) {
                         CategoryIdsInOrder = Arrays.stream(categoryExist.getSortedList().split(",")).toList();
@@ -259,7 +270,7 @@ public class RestaurantService {
                                         .build();
 
                                 //start dish sorting
-                                EntityOrder dishExist = entityOrderRepository.findByEntityId(category.getCategoryId()).orElse(null);
+                                EntityOrder dishExist = entityOrderRepository.findByReferenceIdAndReferenceType(category.getCategoryId(), "dishes").orElse(null);
                                 List<String> DishIdsInOrder = new ArrayList<>();
                                 if (dishExist != null) {
                                     DishIdsInOrder = Arrays.stream(dishExist.getSortedList().split(",")).toList();
@@ -282,7 +293,7 @@ public class RestaurantService {
                                             } catch (JsonProcessingException e) {
                                                 throw new RuntimeException(e);
                                             }
-                                            DishResponse dishResponse = DishResponse.builder()
+                                            return DishResponse.builder()
                                                     .categoryId(dish.getCategory().getCategoryId())
                                                     .dishId(dish.getDishId())
                                                     .translationId(dish.getTranslationId())
@@ -294,10 +305,11 @@ public class RestaurantService {
                                                     .weightUnit(dish.getWeightUnit())
                                                     .inStock(dish.getInStock())
                                                     .state(dish.getState())
+                                                    .allergens(dish.getAllergens() == null ? null : Arrays.stream(dish.getAllergens().split(",")).toList())
+                                                    .marks(dish.getMarks() == null ? null : Arrays.stream(dish.getMarks().split(",")).toList())
                                                     .image(dish.getImage())
                                                     .content(content.get())
                                                     .build();
-                                            return dishResponse;
                                         }).collect(Collectors.toList());
 
                                 categoryResponse.setDishes(dishResponseList);

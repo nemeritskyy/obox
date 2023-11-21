@@ -29,7 +29,7 @@ public class EntityOrderService {
 
     public void createEntityOrder(EntityOrder request, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
-        String entityUUID = request.getEntityId();
+        String entityUUID = request.getReferenceId();
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
         if (!String.join(",", request.getSortedArray()).matches(ValidationConfiguration.UUID_REGEX)) {
             fieldErrors.put("sorted_list", translation.getString(finalAcceptLanguage + ".badSortedList"));
@@ -45,10 +45,10 @@ public class EntityOrderService {
 
     private void checkEntityInDatabase(Optional<?> foundEntity, EntityOrder request, String acceptLanguage, EntityOrderRepository entityOrderRepository) {
         if (foundEntity.isEmpty()) {
-            ExceptionTools.notFoundResponse(".entityOrderNotFound", acceptLanguage, request.getEntityId());
+            ExceptionTools.notFoundResponse(".entityOrderNotFound", acceptLanguage, request.getReferenceId());
         }
 
-        EntityOrder entityOrderExist = entityOrderRepository.findByEntityId(request.getEntityId()).orElse(null);
+        EntityOrder entityOrderExist = entityOrderRepository.findByReferenceIdAndReferenceType(request.getReferenceId(), request.getReferenceType()).orElse(null);
         EntityOrder entityOrderToSave;
 
         if (entityOrderExist != null) {
@@ -68,16 +68,16 @@ public class EntityOrderService {
                                      EntityOrderRepository entityOrderRepository, RestaurantRepository restaurantRepository, MenuRepository menuRepository, CategoryRepository categoryRepository) {
         request.setReferenceType(request.getReferenceType().toLowerCase());
         switch (request.getReferenceType()) {
-            case "dish" -> {
-                var categoryInfo = categoryRepository.findByCategoryId(request.getEntityId());
+            case "dishes" -> {
+                var categoryInfo = categoryRepository.findByCategoryId(request.getReferenceId());
                 checkEntityInDatabase(categoryInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
-            case "category" -> {
-                var menuInfo = menuRepository.findByMenuId(request.getEntityId());
+            case "categories" -> {
+                var menuInfo = menuRepository.findByMenuId(request.getReferenceId());
                 checkEntityInDatabase(menuInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
-            case "menu" -> {
-                var restaurantInfo = restaurantRepository.findByRestaurantId(request.getEntityId());
+            case "menus", "allergens" -> {
+                var restaurantInfo = restaurantRepository.findByRestaurantId(request.getReferenceId());
                 checkEntityInDatabase(restaurantInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
             default ->

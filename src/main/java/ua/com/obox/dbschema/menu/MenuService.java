@@ -59,7 +59,7 @@ public class MenuService {
         List<Category> categories = categoryRepository.findAllByMenu_MenuId(menuId);
 
         // for sorting results
-        EntityOrder sortingExist = entityOrderRepository.findByEntityId(menuId).orElse(null);
+        EntityOrder sortingExist = entityOrderRepository.findByReferenceIdAndReferenceType(menuId, "categories").orElse(null);
         if (sortingExist != null) {
             List<String> categoryIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
             categories.sort(Comparator.comparingInt(category -> {
