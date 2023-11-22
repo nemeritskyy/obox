@@ -20,7 +20,7 @@ public class LogEntry {
 
     @Enumerated(EnumType.STRING)
     private LogLevel level;
-    @Column(length = 1000)
+    @Lob
     private String message;
 
     @Column(name = "query_time")
