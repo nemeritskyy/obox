@@ -160,24 +160,24 @@ public class TestValuesDishes {
                         "calories", 1,
                         "state", "ENABLED"
                 ),
-//                Map.of( // Post. 8
-//                        "category_id", SupportingData.categoryId,
-//                        "name", " ",
-//                        "description", "description",
-//                        "price", "aaa",
-//                        "weight", 1,
-//                        "calories", 1,
-//                        "state", "ENABLED"
-//                ),
-//                Map.of( // Post. 9
-//                        "category_id", SupportingData.categoryId,
-//                        "name", "dish1",
-//                        "description", "description",
-//                        "price", ",",
-//                        "weight", 1,
-//                        "calories", 1,
-//                        "state", "ENABLED"
-//                ),
+                Map.of( // Post. 8
+                        "category_id", SupportingData.categoryId,
+                        "name", " ",
+                        "description", "description",
+                        "price", "aaa",
+                        "weight", 1,
+                        "calories", 1,
+                        "state", "ENABLED"
+                ),
+                Map.of( // Post. 9
+                        "category_id", SupportingData.categoryId,
+                        "name", "dish1",
+                        "description", "description",
+                        "price", ",",
+                        "weight", 1,
+                        "calories", 1,
+                        "state", "ENABLED"
+                ),
                 Map.of( // Post. 10
                         "category_id", SupportingData.categoryId,
                         "name", "dish1",
@@ -196,24 +196,24 @@ public class TestValuesDishes {
                         "calories", 1,
                         "state", "ENABLED"
                 ),
-//                Map.of( // Post. 13
-//                        "category_id", SupportingData.categoryId,
-//                        "name", "dish1",
-//                        "description", "description",
-//                        "price", "99,99",
-//                        "weight", 1,
-//                        "calories", 1,
-//                        "state", "ENABLED"
-//                ),
-//                Map.of( // Post. 15
-//                        "category_id", SupportingData.categoryId,
-//                        "name", "dish1",
-//                        "description", "",
-//                        "price", 1,
-//                        "weight", 1,
-//                        "calories", 1,
-//                        "state", "ENABLED"
-//                ),
+                Map.of( // Post. 13
+                        "category_id", SupportingData.categoryId,
+                        "name", "dish1",
+                        "description", "description",
+                        "price", "99,99",
+                        "weight", 1,
+                        "calories", 1,
+                        "state", "ENABLED"
+                ),
+                Map.of( // Post. 15
+                        "category_id", SupportingData.categoryId,
+                        "name", "dish1",
+                        "description", "",
+                        "price", 1,
+                        "weight", 1,
+                        "calories", 1,
+                        "state", "ENABLED"
+                ),
                 Map.of( // Post. 17
                         "category_id", SupportingData.categoryId,
                         "name", "dish1",
