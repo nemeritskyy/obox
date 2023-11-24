@@ -1,6 +1,7 @@
 package ua.com.obox.dbschema.dish;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -11,6 +12,14 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ua.com.obox.dbschema.tools.logging.LogLevel;
+import ua.com.obox.dbschema.tools.logging.LoggingService;
+import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
+
+import javax.servlet.http.HttpServletRequest;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static ua.com.obox.dbschema.tools.examples.DishResponseExample.*;
 
@@ -20,6 +29,9 @@ import static ua.com.obox.dbschema.tools.examples.DishResponseExample.*;
 @Tag(name = "Dishes")
 public class DishController {
     private final DishService service;
+    private final LoggingService loggingService;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @GetMapping("/{dishId}")
     @ApiResponses(value = {
@@ -42,10 +54,12 @@ public class DishController {
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = POST_400_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<DishResponseId> createDish(@RequestBody @Schema(example = POST_BODY)
-                                                     Dish request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
+    public ResponseEntity<DishResponseId> createDish(
+            HttpServletRequest servletRequest,
+            @RequestBody @Schema(example = POST_BODY) String jsonRequest,
+            @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
-        DishResponseId response = service.createDish(request, acceptLanguage);
+        DishResponseId response = service.createDish(validateJSON(jsonRequest, servletRequest), acceptLanguage);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -72,10 +86,13 @@ public class DishController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<Void> patchDishById(@PathVariable String dishId, @RequestBody @Schema(example = PATCH_BODY)
-    Dish request, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
+    public ResponseEntity<Void> patchDishById(
+            HttpServletRequest servletRequest,
+            @RequestBody @Schema(example = PATCH_BODY) String jsonRequest,
+            @PathVariable String dishId,
+            @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
-        service.patchDishById(dishId, request, acceptLanguage);
+        service.patchDishById(dishId, validateJSON(jsonRequest, servletRequest), acceptLanguage);
         return ResponseEntity.noContent().build();
     }
 
@@ -89,6 +106,19 @@ public class DishController {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         service.deleteDishById(dishId, acceptLanguage);
         return ResponseEntity.noContent().build();
+    }
+
+    private Dish validateJSON(String jsonRequest, HttpServletRequest servletRequest) {
+        Dish dish;
+        try {
+            dish = objectMapper.readValue(jsonRequest, Dish.class);
+        } catch (Exception e) {
+            loggingService.log(LogLevel.JSON, servletRequest.getRemoteAddr() + jsonRequest);
+            Map<String, String> responseBody = new HashMap<>();
+            responseBody.put("error", "Contact the administrator to resolve the problem");
+            throw new BadFieldsResponse(HttpStatus.INTERNAL_SERVER_ERROR, responseBody);
+        }
+        return dish;
     }
 }
 
