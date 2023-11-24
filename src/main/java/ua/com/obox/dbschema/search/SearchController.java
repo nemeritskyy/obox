@@ -13,8 +13,7 @@ import ua.com.obox.dbschema.dish.DishResponse;
 
 import java.util.List;
 
-import static ua.com.obox.dbschema.tools.examples.SearchResponseExample.ALLERGEN_404_RESPONSE_EXAMPLE;
-import static ua.com.obox.dbschema.tools.examples.SearchResponseExample.GET_ALLERGENS_200_RESPONSE_EXAMPLE;
+import static ua.com.obox.dbschema.tools.examples.SearchResponseExample.*;
 
 
 @RestController
@@ -33,6 +32,19 @@ public class SearchController {
     public ResponseEntity<List<DishResponse>> getAllDishesByAllergenId(@PathVariable String allergenId, @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         List<DishResponse> dishesResponse = service.getAllDishesByAllergenId(allergenId, acceptLanguage);
+        return ResponseEntity.ok(dishesResponse);
+    }
+
+    @GetMapping("/{markId}/marks")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",
+                    schema = @Schema(example = GET_MARKS_200_RESPONSE_EXAMPLE))),
+            @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
+                    schema = @Schema(example = MARK_404_RESPONSE_EXAMPLE)))
+    })
+    public ResponseEntity<List<DishResponse>> getAllMarksByAllergenId(@PathVariable String markId, @RequestHeader HttpHeaders httpHeaders) {
+        String acceptLanguage = httpHeaders.getFirst("Accept-Language");
+        List<DishResponse> dishesResponse = service.getAllMarksByAllergenId(markId, acceptLanguage);
         return ResponseEntity.ok(dishesResponse);
     }
 }
