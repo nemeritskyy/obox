@@ -10,6 +10,8 @@ public interface DishRepository extends JpaRepository<Dish, UUID> {
     Optional<Dish> findByDishId(String dishId);
     Optional<Dish> findByImage(String attachmentId);
     List<Dish> findAllByCategory_CategoryIdOrderByCreatedAtDesc(String categoryId);
+    List<Dish> findAllByAllergensContainingOrderByCreatedAtDesc(String allergenId);
+    List<Dish> findAllByMarksContainingOrderByCreatedAtDesc(String markId);
     Optional<Dish> findByAllergensContaining(String allergenId);
     Optional<Dish> findByMarksContaining(String markId);
 }

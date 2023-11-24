@@ -13,6 +13,7 @@ import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.tools.FieldUpdateFunction;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.attachment.AttachmentTools;
 import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
@@ -57,14 +58,6 @@ public class DishService {
         Content<CategoryTranslationEntry> content = objectMapper.readValue(translation.getContent(), new TypeReference<>() {
         });
 
-        String primaryImage = null;
-        if (dish.getImage() != null ){
-            var attachment = attachmentRepository.findByAttachmentId(dish.getImage());
-            if (attachment.isPresent()){
-                primaryImage = String.format("%s/%s", attachmentsDns, attachment.get().getAttachmentUrl());
-            }
-        }
-
         loggingService.log(LogLevel.INFO, String.format("getDishById %s", dishId));
         return DishResponse.builder()
                 .dishId(dish.getDishId())
@@ -81,7 +74,7 @@ public class DishService {
                 .state(dish.getState())
                 .allergens(dish.getAllergens() == null ? null : Arrays.stream(dish.getAllergens().split(",")).toList())
                 .marks(dish.getMarks() == null ? null : Arrays.stream(dish.getMarks().split(",")).toList())
-                .image(primaryImage)
+                .image(AttachmentTools.getURL(dish, attachmentRepository, attachmentsDns))
                 .build();
 
     }

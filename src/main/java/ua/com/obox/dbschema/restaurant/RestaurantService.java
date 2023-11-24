@@ -25,6 +25,7 @@ import ua.com.obox.dbschema.menu.MenuResponse;
 import ua.com.obox.dbschema.tenant.Tenant;
 import ua.com.obox.dbschema.tenant.TenantRepository;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.attachment.AttachmentTools;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
@@ -299,14 +300,6 @@ public class RestaurantService {
                                                 throw new RuntimeException(e);
                                             }
 
-                                            String primaryImage = null;
-                                            if (dish.getImage() != null ){
-                                                var attachment = attachmentRepository.findByAttachmentId(dish.getImage());
-                                                if (attachment.isPresent()){
-                                                    primaryImage = String.format("%s/%s", attachmentsDns, attachment.get().getAttachmentUrl());
-                                                }
-                                            }
-
                                             return DishResponse.builder()
                                                     .categoryId(dish.getCategory().getCategoryId())
                                                     .dishId(dish.getDishId())
@@ -321,7 +314,7 @@ public class RestaurantService {
                                                     .state(dish.getState())
                                                     .allergens(dish.getAllergens() == null ? null : Arrays.stream(dish.getAllergens().split(",")).toList())
                                                     .marks(dish.getMarks() == null ? null : Arrays.stream(dish.getMarks().split(",")).toList())
-                                                    .image(primaryImage)
+                                                    .image(AttachmentTools.getURL(dish, attachmentRepository, attachmentsDns))
                                                     .content(content.get())
                                                     .build();
                                         }).collect(Collectors.toList());
