@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.menu.Menu;
 import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.dish.Dish;
@@ -43,9 +45,12 @@ public class CategoryService {
     private final DishRepository dishRepository;
     private final EntityOrderRepository entityOrderRepository;
     private final TranslationRepository translationRepository;
+    private final AttachmentRepository attachmentRepository;
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final ResourceBundle translationContent = ResourceBundle.getBundle("translation.messages");
+    @Value("${application.image-dns}")
+    private String attachmentsDns;
 
     public List<DishResponse> getAllDishesByCategoryId(String categoryId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
@@ -78,6 +83,14 @@ public class CategoryService {
                         throw new RuntimeException(e);
                     }
 
+                    String primaryImage = null;
+                    if (dish.getImage() != null ){
+                        var attachment = attachmentRepository.findByAttachmentId(dish.getImage());
+                        if (attachment.isPresent()){
+                            primaryImage = String.format("%s/%s", attachmentsDns, attachment.get().getAttachmentUrl());
+                        }
+                    }
+
                     return DishResponse.builder()
                             .categoryId(dish.getCategory().getCategoryId())
                             .dishId(dish.getDishId())
@@ -92,7 +105,7 @@ public class CategoryService {
                             .state(dish.getState())
                             .allergens(dish.getAllergens() == null ? null : Arrays.stream(dish.getAllergens().split(",")).toList())
                             .marks(dish.getMarks() == null ? null : Arrays.stream(dish.getMarks().split(",")).toList())
-                            .image(dish.getImage())
+                            .image(primaryImage)
                             .content(content.get())
                             .build();
                 })

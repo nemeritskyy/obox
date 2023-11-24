@@ -116,7 +116,7 @@ public class DishController {
             loggingService.log(LogLevel.JSON, servletRequest.getRemoteAddr() + jsonRequest);
             Map<String, String> responseBody = new HashMap<>();
             responseBody.put("error", "Contact the administrator to resolve the problem");
-            throw new BadFieldsResponse(HttpStatus.INTERNAL_SERVER_ERROR, responseBody);
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, responseBody);
         }
         return dish;
     }
