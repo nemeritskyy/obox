@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.attachment.Attachment;
@@ -42,6 +43,8 @@ public class DishService {
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final ResourceBundle translationContent = ResourceBundle.getBundle("translation.messages");
+    @Value("${application.image-dns}")
+    private String attachmentsDns;
 
     public DishResponse getDishById(String dishId, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
@@ -54,6 +57,13 @@ public class DishService {
         Content<CategoryTranslationEntry> content = objectMapper.readValue(translation.getContent(), new TypeReference<>() {
         });
 
+        String primaryImage = null;
+        if (dish.getImage() != null ){
+            var attachment = attachmentRepository.findByAttachmentId(dish.getImage());
+            if (attachment.isPresent()){
+                primaryImage = String.format("%s/%s", attachmentsDns, attachment.get().getAttachmentUrl());
+            }
+        }
 
         loggingService.log(LogLevel.INFO, String.format("getDishById %s", dishId));
         return DishResponse.builder()
@@ -71,7 +81,7 @@ public class DishService {
                 .state(dish.getState())
                 .allergens(dish.getAllergens() == null ? null : Arrays.stream(dish.getAllergens().split(",")).toList())
                 .marks(dish.getMarks() == null ? null : Arrays.stream(dish.getMarks().split(",")).toList())
-                .image(dish.getImage())
+                .image(primaryImage)
                 .build();
 
     }

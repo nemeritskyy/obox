@@ -90,6 +90,7 @@ public class AttachmentService {
         if (dishInfo.isPresent()){
             Dish dish = dishInfo.get();
             dish.setImage(null);
+            dishRepository.save(dish);
         }
 
         AttachmentFTP.deleteAttachment(attachment.getAttachmentUrl());

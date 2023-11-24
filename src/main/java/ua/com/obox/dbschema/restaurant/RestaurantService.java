@@ -5,9 +5,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Session;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.allergen.AllergenRepository;
+import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryResponse;
 import ua.com.obox.dbschema.dish.Dish;
@@ -57,9 +59,12 @@ public class RestaurantService {
     private final TranslationRepository translationRepository;
     private final MarkRepository markRepository;
     private final AllergenRepository allergenRepository;
+    private final AttachmentRepository attachmentRepository;
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
+    @Value("${application.image-dns}")
+    private String attachmentsDns;
 
     public List<MenuResponse> getAllMenusByRestaurantId(String restaurantId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
@@ -293,6 +298,15 @@ public class RestaurantService {
                                             } catch (JsonProcessingException e) {
                                                 throw new RuntimeException(e);
                                             }
+
+                                            String primaryImage = null;
+                                            if (dish.getImage() != null ){
+                                                var attachment = attachmentRepository.findByAttachmentId(dish.getImage());
+                                                if (attachment.isPresent()){
+                                                    primaryImage = String.format("%s/%s", attachmentsDns, attachment.get().getAttachmentUrl());
+                                                }
+                                            }
+
                                             return DishResponse.builder()
                                                     .categoryId(dish.getCategory().getCategoryId())
                                                     .dishId(dish.getDishId())
@@ -307,7 +321,7 @@ public class RestaurantService {
                                                     .state(dish.getState())
                                                     .allergens(dish.getAllergens() == null ? null : Arrays.stream(dish.getAllergens().split(",")).toList())
                                                     .marks(dish.getMarks() == null ? null : Arrays.stream(dish.getMarks().split(",")).toList())
-                                                    .image(dish.getImage())
+                                                    .image(primaryImage)
                                                     .content(content.get())
                                                     .build();
                                         }).collect(Collectors.toList());
@@ -327,7 +341,7 @@ public class RestaurantService {
 
     private void validateRequest(Restaurant request, Restaurant restaurant, String finalAcceptLanguage, Map<String, String> fieldErrors, boolean required) {
         fieldErrors.put("language", Validator.validateLanguage(request.getLanguage(), finalAcceptLanguage));
-        updateField(request.getName(), required, restaurant, fieldErrors, "name",
+        updateField(request.getName(), required, fieldErrors, "name",
                 (name) -> serviceHelper.updateNameField(restaurant::setName, name, finalAcceptLanguage));
         fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
 
@@ -335,7 +349,7 @@ public class RestaurantService {
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
     }
 
-    private <T> void updateField(T value, boolean required, Restaurant restaurant, Map<String, String> fieldErrors, String fieldName, FieldUpdateFunction<T> updateFunction) {
+    private <T> void updateField(T value, boolean required, Map<String, String> fieldErrors, String fieldName, FieldUpdateFunction<T> updateFunction) {
         if (value != null || required) {
             String error = updateFunction.updateField(value);
             if (error != null) {
