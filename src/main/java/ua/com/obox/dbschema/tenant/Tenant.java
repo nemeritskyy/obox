@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
-import ua.com.obox.dbschema.language.Language;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.tools.PreRemoveAssistant;
 import ua.com.obox.dbschema.tools.State;
@@ -38,10 +37,6 @@ public class Tenant {
     @OneToMany(mappedBy = "tenant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
     private List<Restaurant> restaurants;
-
-    @OneToMany(mappedBy = "tenant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonIgnore
-    private List<Language> languages;
 
     @JsonProperty("name")
     @Transient

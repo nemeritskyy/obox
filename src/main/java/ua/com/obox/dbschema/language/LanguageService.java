@@ -2,22 +2,35 @@ package ua.com.obox.dbschema.language;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import ua.com.obox.dbschema.tools.logging.LoggingService;
 
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.ResourceBundle;
 
 @Service
 @RequiredArgsConstructor
 public class LanguageService {
-    private final LoggingService loggingService;
-    private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
     private final LanguageRepository languageRepository;
 
-    public List<Language> getAllLanguages(String tenantId, String acceptLanguage) {
-//        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+    public List<LanguageResponse> getAllLanguages() {
         List<Language> languageList;
-        languageList = languageRepository.findAllByTenant_TenantId(tenantId);
-        return languageList;
+        List<LanguageResponse> responses = new ArrayList<>();
+        languageList = languageRepository.findAll();
+        if (languageList.size() == 0) {
+            languageList.add(Language.builder().name("English").label("en-US").createdAt(Instant.now().getEpochSecond()).updatedAt(Instant.now().getEpochSecond()).build());
+            languageList.add(Language.builder().name("Українська").label("uk-UA").createdAt(Instant.now().getEpochSecond()).updatedAt(Instant.now().getEpochSecond()).build());
+            languageList.add(Language.builder().name("Español").label("es-ES").createdAt(Instant.now().getEpochSecond()).updatedAt(Instant.now().getEpochSecond()).build());
+            languageList.add(Language.builder().name("Français").label("fr-FR").createdAt(Instant.now().getEpochSecond()).updatedAt(Instant.now().getEpochSecond()).build());
+            languageList.add(Language.builder().name("Deutsch").label("de-DE").createdAt(Instant.now().getEpochSecond()).updatedAt(Instant.now().getEpochSecond()).build());
+            languageList.add(Language.builder().name("Italiano").label("it-IT").createdAt(Instant.now().getEpochSecond()).updatedAt(Instant.now().getEpochSecond()).build());
+            languageList.add(Language.builder().name("Português").label("pt-PT").createdAt(Instant.now().getEpochSecond()).updatedAt(Instant.now().getEpochSecond()).build());
+        }
+
+        for (Language language : languageList) {
+            responses.add(LanguageResponse.builder().languageId(language.getLanguageId()).name(language.getName()).label(language.getLabel()).build());
+        }
+
+        languageRepository.saveAll(languageList);
+        return responses;
     }
 }

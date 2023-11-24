@@ -13,8 +13,6 @@ import lombok.NoArgsConstructor;
 public class LanguageResponse {
     @JsonProperty("language_id")
     private String languageId;
-    @JsonProperty("restaurant_id")
-    private String restaurant_id;
     @JsonProperty("name")
     private String name;
     @JsonProperty("label")
