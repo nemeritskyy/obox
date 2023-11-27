@@ -93,7 +93,7 @@ public class UpdateServiceHelper {
         }
         String checkField = Validator.validateWeightUnit(value, acceptLanguage);
         if (checkField == null) {
-            setter.accept(value);
+            setter.accept(value.toUpperCase());
         }
         return checkField;
     }
@@ -110,7 +110,7 @@ public class UpdateServiceHelper {
     }
 
     public static String removeSpacesAndDuplicateSeparators(String str) {
-        return str.replaceAll("\s+", "").replaceAll("/{2,}", "/").replaceAll("^\\/|\\/$", "");
+        return str.replaceAll("\s+", "").replaceAll("/{2,}", "/").replaceAll("^/|/$", "");
     }
 
     public String updateAllergens(Consumer<String> setter, String[] allergens, String acceptLanguage) {

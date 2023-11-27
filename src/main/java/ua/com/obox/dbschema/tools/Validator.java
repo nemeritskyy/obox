@@ -6,6 +6,7 @@ import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
+import ua.com.obox.dbschema.tools.validation.WeightUnits;
 
 import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
@@ -51,13 +52,22 @@ public class Validator {
     }
 
     public static String validateWeightUnit(String str, String acceptLanguage) {
-        if (!str.matches(ValidationConfiguration.UUID_REGEX)) {
+        if (!isValidWeightUnit(str)) {
             staticLoggingService.log(LogLevel.ERROR,
                     translation.getString("en-US.weightUnit")
             );
             return translation.getString(acceptLanguage + ".weightUnit");
         }
         return null;
+    }
+
+    private static boolean isValidWeightUnit(String str) {
+        try {
+            WeightUnits.valueOf(str.toUpperCase());
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     public static String validateWeight(String str, String acceptLanguage) {
