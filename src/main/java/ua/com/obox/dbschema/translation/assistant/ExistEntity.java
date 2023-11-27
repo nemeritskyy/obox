@@ -35,7 +35,8 @@ public class ExistEntity<T extends OnlyName> {
                         });
                         for (String entryLanguage : supportLanguages) {
                             translationEntry = content.getContent().get(entryLanguage);
-                            if (translationEntry != null && translationEntry.getName().equalsIgnoreCase(name)
+                            if (translationEntry != null && translationEntry.getName() != null
+                                    && translationEntry.getName().equalsIgnoreCase(name)
                                     && element.getId().equals(translationExist.getReferenceId())) {
                                 fieldErrors.put("name", translation.getString(errorLanguage + ".nameExists"));
                             }
