@@ -12,6 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import ua.com.obox.dbschema.tools.logging.IPTools;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
@@ -113,7 +114,7 @@ public class DishController {
         try {
             dish = objectMapper.readValue(jsonRequest, Dish.class);
         } catch (Exception e) {
-            loggingService.log(LogLevel.JSON, servletRequest.getRemoteAddr() + jsonRequest);
+            loggingService.log(LogLevel.JSON, String.format("IP: %s / JSON: %s", IPTools.getOriginallyIpFromHeader(servletRequest), jsonRequest));
             Map<String, String> responseBody = new HashMap<>();
             responseBody.put("error", "Contact the administrator to resolve the problem");
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, responseBody);
