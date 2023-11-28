@@ -5,42 +5,51 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.allergen.AllergenRepository;
 import ua.com.obox.dbschema.attachment.AttachmentRepository;
+import ua.com.obox.dbschema.category.Category;
+import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.dish.DishResponse;
 import ua.com.obox.dbschema.mark.MarkRepository;
+import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.tools.attachment.AttachmentTools;
+import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
+import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
+import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
+import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
 import ua.com.obox.dbschema.translation.Translation;
 import ua.com.obox.dbschema.translation.TranslationRepository;
+import ua.com.obox.dbschema.translation.assistant.GetTranslation;
 import ua.com.obox.dbschema.translation.responsebody.CategoryTranslationEntry;
 import ua.com.obox.dbschema.translation.responsebody.Content;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class SearchService {
-    private final RestaurantRepository restaurantRepository;
     private final AllergenRepository allergenRepository;
     private final MarkRepository markRepository;
+    private final CategoryRepository categoryRepository;
     private final DishRepository dishRepository;
     private final TranslationRepository translationRepository;
     private final AttachmentRepository attachmentRepository;
+    private final UpdateServiceHelper serviceHelper;
     private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
     private final LoggingService loggingService;
+    private final GetTranslation getTranslation;
     private String selectedLanguage = "en-US";
 
     @Value("${application.image-dns}")
@@ -137,5 +146,49 @@ public class SearchService {
 
         loggingService.log(LogLevel.INFO, String.format("getAllMarksByAllergenId %s %s %d", markId, Message.FIND_COUNT.getMessage(), responseList.size()));
         return responseList;
+    }
+
+    public List<SearchResponse> searchAllByQuery(SearchQuery query, String errorLanguage) throws JsonProcessingException {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(errorLanguage);
+        Map<String, String> fieldErrors = new ResponseErrorMap<>();
+        fieldErrors.put("title", serviceHelper.updateNameField(query::setTitle, query.getTitle(), finalAcceptLanguage) != null ? translation.getString(finalAcceptLanguage + ".searchLimit") : null);
+        if (fieldErrors.size() > 0)
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+        ObjectMapper objectMapper = new ObjectMapper();
+        String path1;
+        String path2;
+        Category categoryForPath;
+        CategoryTranslationEntry categoryTranslationEntry;
+        Content<CategoryTranslationEntry> categoryTranslationEntryContent;
+        List<SearchResponse> searchResponses = new ArrayList<>();
+        List<String> supportLanguages = ValidationConfiguration.SUPPORT_LANGUAGES;
+        List<Translation> categoriesResults = translationRepository.findAllByReferenceTypeAndContentContainingIgnoreCase("category", query.getTitle());
+        for (Translation category : categoriesResults) {
+            categoryTranslationEntryContent = objectMapper.readValue(category.getContent(), new TypeReference<>() {
+            });
+            for (String entryLanguage : supportLanguages) {
+                categoryTranslationEntry = categoryTranslationEntryContent.getContent().get(entryLanguage);
+                if (categoryTranslationEntry != null && categoryTranslationEntry.getName() != null && categoryTranslationEntry.getName().toLowerCase().contains(query.getTitle().toLowerCase())) {
+                    path1 = getTranslation.getParentNameByEntityId(categoryRepository.findByCategoryId(category.getReferenceId()).get().getMenu().getMenuId(), entryLanguage, errorLanguage);
+                    searchResponses.add(new SearchResponse(category.getReferenceId(), category.getReferenceType(), entryLanguage, path1, categoryTranslationEntry.getName()));
+                }
+
+            }
+        }
+        List<Translation> dishesResults = translationRepository.findAllByReferenceTypeAndContentContainingIgnoreCase("dish", query.getTitle());
+        for (Translation category : dishesResults) {
+            categoryTranslationEntryContent = objectMapper.readValue(category.getContent(), new TypeReference<>() {
+            });
+            for (String entryLanguage : supportLanguages) {
+                categoryTranslationEntry = categoryTranslationEntryContent.getContent().get(entryLanguage);
+                if (categoryTranslationEntry != null && categoryTranslationEntry.getName() != null && categoryTranslationEntry.getName().toLowerCase().contains(query.getTitle().toLowerCase())) {
+                    categoryForPath = dishRepository.findByDishId(category.getReferenceId()).get().getCategory();
+                    path1 = getTranslation.getParentNameByEntityId(categoryForPath.getCategoryId(), entryLanguage, errorLanguage);
+                    path2 = getTranslation.getParentNameByEntityId(categoryForPath.getMenu().getMenuId(), entryLanguage, errorLanguage);
+                    searchResponses.add(new SearchResponse(category.getReferenceId(), category.getReferenceType(), entryLanguage, String.format("%s/%s", path2, path1), categoryTranslationEntry.getName()));
+                }
+            }
+        }
+        return searchResponses;
     }
 }
