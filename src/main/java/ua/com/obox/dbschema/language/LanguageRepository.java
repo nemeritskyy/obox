@@ -6,5 +6,5 @@ import java.util.List;
 import java.util.UUID;
 
 public interface LanguageRepository extends JpaRepository<Language, UUID> {
-    List<Language> findAllByTenant_TenantId(String tenantId);
+    List<Language> findAll();
 }
