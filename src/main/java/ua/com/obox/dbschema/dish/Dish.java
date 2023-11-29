@@ -43,7 +43,7 @@ public class Dish implements IdentifiableId {
     private Integer calories;
 
     private String weight;
-    @Column(columnDefinition = "CHAR(36)")
+    @Column(columnDefinition = "CHAR(2)")
     @JsonProperty("weight_unit")
     private String weightUnit;
 

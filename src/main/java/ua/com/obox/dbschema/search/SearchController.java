@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.search;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -45,6 +46,17 @@ public class SearchController {
     public ResponseEntity<List<DishResponse>> getAllMarksByAllergenId(@PathVariable String markId, @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         List<DishResponse> dishesResponse = service.getAllMarksByAllergenId(markId, acceptLanguage);
+        return ResponseEntity.ok(dishesResponse);
+    }
+
+    @PostMapping
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",
+                    schema = @Schema(example = GET_QUERY_RESULTS))),
+    })
+    public ResponseEntity<List<SearchResponse>> searchAllByQuery(@RequestBody @Schema(example = POST_QUERY_EXAMPLE) SearchQuery query, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
+        String acceptLanguage = httpHeaders.getFirst("Accept-Language");
+        List<SearchResponse> dishesResponse = service.searchAllByQuery(query, acceptLanguage);
         return ResponseEntity.ok(dishesResponse);
     }
 }

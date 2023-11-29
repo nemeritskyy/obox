@@ -10,4 +10,5 @@ public interface TranslationRepository extends JpaRepository<Translation, UUID> 
     Optional<Translation> findAllByTranslationId(String translationId);
     Optional<Translation> findAllByReferenceId(String referenceId);
     List<Translation> findAllByReferenceIdAndReferenceType(String referenceId, String referenceType);
+    List<Translation> findAllByReferenceTypeAndContentContainingIgnoreCase(String referenceType, String query);
 }
