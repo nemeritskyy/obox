@@ -8,6 +8,7 @@ import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletRequest;
 import java.util.ResourceBundle;
 
 @RequiredArgsConstructor
@@ -28,6 +29,13 @@ public class ExceptionTools {
         String errorMessage = String.format(translation.getString(acceptLanguage + translationMessage), entityId);
         String defaultErrorMessage = String.format(translation.getString("en-US" + translationMessage), entityId);
         LoggingResponseHelper.loggingThrowException(LogLevel.ERROR, HttpStatus.NOT_FOUND, errorMessage, defaultErrorMessage, staticLoggingService);
+        return new RuntimeException(errorMessage);
+    }
+
+    public static RuntimeException notFoundException(String translationMessage, String acceptLanguage, String entityId, HttpServletRequest servletRequest) {
+        String errorMessage = String.format(translation.getString(acceptLanguage + translationMessage), entityId);
+        String defaultErrorMessage = String.format(translation.getString("en-US" + translationMessage), entityId);
+        LoggingResponseHelper.loggingThrowException(LogLevel.ERROR, HttpStatus.NOT_FOUND, errorMessage, defaultErrorMessage, staticLoggingService, servletRequest);
         return new RuntimeException(errorMessage);
     }
 

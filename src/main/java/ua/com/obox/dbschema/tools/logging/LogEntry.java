@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.tools.logging;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
@@ -8,6 +9,7 @@ import javax.persistence.*;
 import java.util.Date;
 
 @Data
+@AllArgsConstructor
 @NoArgsConstructor
 @Entity
 @Table(name = "log_entry")
@@ -20,14 +22,18 @@ public class LogEntry {
 
     @Enumerated(EnumType.STRING)
     private LogLevel level;
+
+    @Column(columnDefinition = "CHAR(15)")
+    private String ip;
+
     @Lob
     private String message;
 
-    @Column(name = "query_time")
-    private Date queryTime = new Date();
+    @Column(name = "server_time")
+    private Date serverTime;
 
-    public LogEntry(LogLevel level, String message) {
-        this.level = level;
-        this.message = message;
-    }
+    @Column(name = "unix_time")
+    private long unixTime;
+
+
 }
