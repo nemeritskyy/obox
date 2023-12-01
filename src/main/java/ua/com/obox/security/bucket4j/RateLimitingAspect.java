@@ -28,6 +28,7 @@ public class RateLimitingAspect {
     private final LoggingService loggingService;
     private final List<String> blackList = new ArrayList<>();
     AtomicInteger atomicInteger = new AtomicInteger(0); // for hard tests
+    private static String lastLog = "";
 
     @Autowired
     public RateLimitingAspect(RateLimiterService rateLimiterService, LoggingService loggingService) {
@@ -41,15 +42,9 @@ public class RateLimitingAspect {
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String ipAddress = IPTools.getOriginallyIpFromHeader(servletRequest);
         logging(servletRequest, ipAddress, joinPoint.getSignature().getName());
-
-        if (ipAddress != null && !rateLimiterService.isAllowedGet(ipAddress, "GET")) {
-            if (!blackList.contains(ipAddress)) {
-                loggingService.log(LogLevel.CRITICAL, ipAddress, "TOO MANY REQUESTS");
-                blackList.add(ipAddress);
-            }
-            throw new BadFieldsResponse(HttpStatus.TOO_MANY_REQUESTS);
-        }
+        checkBlacklist(ipAddress, "GET");
     }
+
 
     @Before("execution(* ua.com.obox.dbschema..*Controller.*(..)) && @annotation(org.springframework.web.bind.annotation.PostMapping)")
     public void beforePostMethod(JoinPoint joinPoint) { // post limits
@@ -57,14 +52,7 @@ public class RateLimitingAspect {
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String ipAddress = IPTools.getOriginallyIpFromHeader(servletRequest);
         logging(servletRequest, ipAddress, joinPoint.getSignature().getName());
-
-        if (ipAddress != null && !rateLimiterService.isAllowedPost(ipAddress, "POST")) {
-            if (!blackList.contains(ipAddress)) {
-                loggingService.log(LogLevel.CRITICAL, ipAddress, "TOO MANY REQUESTS");
-                blackList.add(ipAddress);
-            }
-            throw new BadFieldsResponse(HttpStatus.TOO_MANY_REQUESTS);
-        }
+        checkBlacklist(ipAddress, "POST");
     }
 
     @Before("execution(* ua.com.obox.dbschema..*Controller.*(..)) && @annotation(org.springframework.web.bind.annotation.PatchMapping)")
@@ -73,14 +61,7 @@ public class RateLimitingAspect {
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String ipAddress = IPTools.getOriginallyIpFromHeader(servletRequest);
         logging(servletRequest, ipAddress, joinPoint.getSignature().getName());
-
-        if (ipAddress != null && !rateLimiterService.isAllowedPatch(ipAddress, "PATCH")) {
-            if (!blackList.contains(ipAddress)) {
-                loggingService.log(LogLevel.CRITICAL, ipAddress, "TOO MANY REQUESTS");
-                blackList.add(ipAddress);
-            }
-            throw new BadFieldsResponse(HttpStatus.TOO_MANY_REQUESTS);
-        }
+        checkBlacklist(ipAddress, "PATCH");
     }
 
     @Before("execution(* ua.com.obox.dbschema..*Controller.*(..)) && @annotation(org.springframework.web.bind.annotation.DeleteMapping)")
@@ -89,8 +70,11 @@ public class RateLimitingAspect {
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String ipAddress = IPTools.getOriginallyIpFromHeader(servletRequest);
         logging(servletRequest, ipAddress, joinPoint.getSignature().getName());
+        checkBlacklist(ipAddress, "DELETE");
+    }
 
-        if (ipAddress != null && !rateLimiterService.isAllowedDelete(ipAddress, "DELETE")) {
+    private void checkBlacklist(String ipAddress, String type) {
+        if (ipAddress != null && !rateLimiterService.isAllowedGet(ipAddress, type)) {
             if (!blackList.contains(ipAddress)) {
                 loggingService.log(LogLevel.CRITICAL, ipAddress, "TOO MANY REQUESTS");
                 blackList.add(ipAddress);
@@ -100,6 +84,9 @@ public class RateLimitingAspect {
     }
 
     private void logging(HttpServletRequest servletRequest, String ipAddress, String methodName) {
-        loggingService.log(LogLevel.INFO, ipAddress, String.format("%s %s", methodName, servletRequest.getRequestURI()));
+        if (!lastLog.equals(String.format("%s %s", methodName, servletRequest.getRequestURI()))) {
+            lastLog = String.format("%s %s", methodName, servletRequest.getRequestURI());
+            loggingService.log(LogLevel.INFO, ipAddress, String.format("%s %s", methodName, servletRequest.getRequestURI()));
+        }
     }
 }
