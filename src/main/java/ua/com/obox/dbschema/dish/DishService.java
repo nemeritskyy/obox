@@ -47,6 +47,8 @@ public class DishService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
         Dish dish = dishRepository.findByDishId(dishId).orElseThrow(() -> ExceptionTools.notFoundException(".dishNotFound", finalAcceptLanguage, dishId));
+        System.out.println(dish.getDishId());
+        System.out.println(dish.getTranslationId());
         Translation translation = translationRepository.findAllByTranslationId(dish.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, dishId));
 
@@ -98,6 +100,7 @@ public class DishService {
                     .create(dish.getDishId(), "dish", request.getLanguage(), entry);
             dish.setTranslationId(translation.getTranslationId());
         }
+        dishRepository.save(dish);
 
         return DishResponseId.builder()
                 .dishId(dish.getDishId())
