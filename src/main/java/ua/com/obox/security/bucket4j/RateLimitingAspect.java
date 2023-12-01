@@ -1,5 +1,6 @@
 package ua.com.obox.security.bucket4j;
 
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,12 +34,13 @@ public class RateLimitingAspect {
     }
 
     @Before("execution(* ua.com.obox.dbschema..*Controller.*(..)) && @annotation(org.springframework.web.bind.annotation.GetMapping)")
-    public synchronized void beforeControllerMethod() {
+    public synchronized void beforeControllerMethod(JoinPoint joinPoint) {
         System.out.println("join get " + atomicInteger.incrementAndGet());
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String ipAddress = IPTools.getOriginallyIpFromHeader(servletRequest);
+        logging(servletRequest, ipAddress, joinPoint.getSignature().getName());
 
-        if (ipAddress != null && !rateLimiterService.isAllowedGet(ipAddress)) {
+        if (ipAddress != null && !rateLimiterService.isAllowedGet(ipAddress, "GET")) {
             if (!blackList.contains(ipAddress)) {
                 loggingService.log(LogLevel.CRITICAL, ipAddress, "TOO MANY REQUESTS");
                 blackList.add(ipAddress);
@@ -48,17 +50,54 @@ public class RateLimitingAspect {
     }
 
     @Before("execution(* ua.com.obox.dbschema..*Controller.*(..)) && @annotation(org.springframework.web.bind.annotation.PostMapping)")
-    public void beforePostMethod() { // post limits
-        System.out.println("join post");
+    public void beforePostMethod(JoinPoint joinPoint) { // post limits
+        System.out.println("join post " + atomicInteger.incrementAndGet());
+        HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        String ipAddress = IPTools.getOriginallyIpFromHeader(servletRequest);
+        logging(servletRequest, ipAddress, joinPoint.getSignature().getName());
+
+        if (ipAddress != null && !rateLimiterService.isAllowedPost(ipAddress, "POST")) {
+            if (!blackList.contains(ipAddress)) {
+                loggingService.log(LogLevel.CRITICAL, ipAddress, "TOO MANY REQUESTS");
+                blackList.add(ipAddress);
+            }
+            throw new BadFieldsResponse(HttpStatus.TOO_MANY_REQUESTS);
+        }
     }
 
     @Before("execution(* ua.com.obox.dbschema..*Controller.*(..)) && @annotation(org.springframework.web.bind.annotation.PatchMapping)")
-    public void beforePatchMethod() { // post limits
-        System.out.println("join patch");
+    public void beforePatchMethod(JoinPoint joinPoint) { // post limits
+        System.out.println("join patch " + atomicInteger.incrementAndGet());
+        HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        String ipAddress = IPTools.getOriginallyIpFromHeader(servletRequest);
+        logging(servletRequest, ipAddress, joinPoint.getSignature().getName());
+
+        if (ipAddress != null && !rateLimiterService.isAllowedPatch(ipAddress, "PATCH")) {
+            if (!blackList.contains(ipAddress)) {
+                loggingService.log(LogLevel.CRITICAL, ipAddress, "TOO MANY REQUESTS");
+                blackList.add(ipAddress);
+            }
+            throw new BadFieldsResponse(HttpStatus.TOO_MANY_REQUESTS);
+        }
     }
 
     @Before("execution(* ua.com.obox.dbschema..*Controller.*(..)) && @annotation(org.springframework.web.bind.annotation.DeleteMapping)")
-    public void beforeDeleteMethod() { // post limits
-        System.out.println("join delete");
+    public void beforeDeleteMethod(JoinPoint joinPoint) { // post limits
+        System.out.println("join delete " + atomicInteger.incrementAndGet());
+        HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        String ipAddress = IPTools.getOriginallyIpFromHeader(servletRequest);
+        logging(servletRequest, ipAddress, joinPoint.getSignature().getName());
+
+        if (ipAddress != null && !rateLimiterService.isAllowedDelete(ipAddress, "DELETE")) {
+            if (!blackList.contains(ipAddress)) {
+                loggingService.log(LogLevel.CRITICAL, ipAddress, "TOO MANY REQUESTS");
+                blackList.add(ipAddress);
+            }
+            throw new BadFieldsResponse(HttpStatus.TOO_MANY_REQUESTS);
+        }
+    }
+
+    private void logging(HttpServletRequest servletRequest, String ipAddress, String methodName) {
+        loggingService.log(LogLevel.INFO, ipAddress, String.format("%s %s", methodName, servletRequest.getRequestURI()));
     }
 }
