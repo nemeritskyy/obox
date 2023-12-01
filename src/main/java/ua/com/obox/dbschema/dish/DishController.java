@@ -41,11 +41,10 @@ public class DishController {
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<DishResponse> getDishById(
-            HttpServletRequest servletRequest,
             @PathVariable String dishId,
             @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
-        DishResponse dishResponse = service.getDishById(dishId, acceptLanguage, servletRequest);
+        DishResponse dishResponse = service.getDishById(dishId, acceptLanguage);
         return ResponseEntity.ok(dishResponse);
     }
 
@@ -57,11 +56,10 @@ public class DishController {
                     schema = @Schema(example = POST_400_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<DishResponseId> createDish(
-            HttpServletRequest servletRequest,
             @RequestBody @Schema(example = POST_BODY) String jsonRequest,
             @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
-        DishResponseId response = service.createDish(validateJSON(jsonRequest, servletRequest), acceptLanguage, servletRequest);
+        DishResponseId response = service.createDish(validateJSON(jsonRequest), acceptLanguage);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -74,12 +72,11 @@ public class DishController {
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<DishResponseId> setPrimaryImage(
-            HttpServletRequest servletRequest,
             @RequestBody @Schema(example = POST_ADD_PRIMARY_IMAGE) Dish request,
             @RequestHeader HttpHeaders httpHeaders,
             @PathVariable String dishId) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
-        service.setPrimaryImage(request, dishId, acceptLanguage, servletRequest);
+        service.setPrimaryImage(request, dishId, acceptLanguage);
         return ResponseEntity.noContent().build();
     }
 
@@ -92,12 +89,11 @@ public class DishController {
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<Void> patchDishById(
-            HttpServletRequest servletRequest,
             @RequestBody @Schema(example = PATCH_BODY) String jsonRequest,
             @PathVariable String dishId,
             @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
-        service.patchDishById(dishId, validateJSON(jsonRequest, servletRequest), acceptLanguage, servletRequest);
+        service.patchDishById(dishId, validateJSON(jsonRequest), acceptLanguage);
         return ResponseEntity.noContent().build();
     }
 
@@ -108,20 +104,19 @@ public class DishController {
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<Void> deleteDishById(
-            HttpServletRequest servletRequest,
             @PathVariable String dishId,
             @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
-        service.deleteDishById(dishId, acceptLanguage, servletRequest);
+        service.deleteDishById(dishId, acceptLanguage);
         return ResponseEntity.noContent().build();
     }
 
-    private Dish validateJSON(String jsonRequest, HttpServletRequest servletRequest) {
+    private Dish validateJSON(String jsonRequest) {
         Dish dish;
         try {
             dish = objectMapper.readValue(jsonRequest, Dish.class);
         } catch (Exception e) {
-            loggingService.log(LogLevel.JSON, servletRequest, jsonRequest);
+            loggingService.log(LogLevel.JSON, jsonRequest);
             Map<String, String> responseBody = new HashMap<>();
             responseBody.put("error", "Contact the administrator to resolve the problem");
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, responseBody);
