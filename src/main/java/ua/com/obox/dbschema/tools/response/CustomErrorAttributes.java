@@ -19,7 +19,7 @@ class ErrorConfig {
             public Map<String, Object> getErrorAttributes(WebRequest webRequest, ErrorAttributeOptions options) {
                 Map<String, Object> errorAttributes = super.getErrorAttributes(webRequest, options);
                 Throwable error = getError(webRequest);
-                if (error instanceof BadFieldsResponse) {
+                if (error instanceof BadFieldsResponse && ((BadFieldsResponse) error).getFields() != null) {
                     errorAttributes.put("fields", ((BadFieldsResponse) error).getFields());
                 }
                 return errorAttributes;

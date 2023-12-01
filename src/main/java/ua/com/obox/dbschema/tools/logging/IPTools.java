@@ -1,7 +1,10 @@
 package ua.com.obox.dbschema.tools.logging;
 
+import org.springframework.stereotype.Service;
+
 import javax.servlet.http.HttpServletRequest;
 
+@Service
 public class IPTools {
     public static String getOriginallyIpFromHeader(HttpServletRequest servletRequest){
         String clientIP = servletRequest.getHeader("X-Forwarded-For");

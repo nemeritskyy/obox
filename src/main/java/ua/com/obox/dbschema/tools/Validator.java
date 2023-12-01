@@ -71,7 +71,6 @@ public class Validator {
     }
 
     public static String validateWeight(String str, String acceptLanguage) {
-        System.out.println(str);
         if (!str.matches(ValidationConfiguration.WEIGHT_REGEX)) {
             staticLoggingService.log(LogLevel.ERROR,
                     translation.getString("en-US.weight")

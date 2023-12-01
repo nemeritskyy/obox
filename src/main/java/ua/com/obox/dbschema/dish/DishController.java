@@ -46,7 +46,6 @@ public class DishController {
             @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         DishResponse dishResponse = service.getDishById(dishId, acceptLanguage, servletRequest);
-
         return ResponseEntity.ok(dishResponse);
     }
 

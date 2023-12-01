@@ -29,5 +29,14 @@ public class LoggingService {
             e.printStackTrace();
         }
     }
+
+    public void log(LogLevel level, String ip, String message) {
+        LogEntry logEntry = new LogEntry(null, level, ip, message, new Date(), Instant.now().getEpochSecond());
+        try {
+            logRepository.save(logEntry);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 }
 

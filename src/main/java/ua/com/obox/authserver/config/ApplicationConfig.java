@@ -1,8 +1,8 @@
 package ua.com.obox.authserver.config;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import ua.com.obox.authserver.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
 @RequiredArgsConstructor
+@EnableAspectJAutoProxy
 public class ApplicationConfig {
     private final UserRepository repository;
     private static final Logger logger = LogManager.getLogger(ApplicationConfig.class);
