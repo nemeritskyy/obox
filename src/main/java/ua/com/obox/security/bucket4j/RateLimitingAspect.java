@@ -4,6 +4,7 @@ import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -15,8 +16,8 @@ import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Aspect
@@ -26,8 +27,10 @@ public class RateLimitingAspect {
 
     private final RateLimiterService rateLimiterService;
     private final LoggingService loggingService;
-    private final List<String> blackList = new ArrayList<>();
+    private final Map<String, Integer> blackList = new HashMap<>();
     AtomicInteger atomicInteger = new AtomicInteger(0); // for hard tests
+    @Value("${bucket4j.max-requests-per-ip}")
+    private static byte maxManyRequests;
     private static String lastLog = "";
 
     @Autowired
@@ -38,48 +41,58 @@ public class RateLimitingAspect {
 
     @Before("execution(* ua.com.obox.dbschema..*Controller.*(..)) && @annotation(org.springframework.web.bind.annotation.GetMapping)")
     public synchronized void beforeControllerMethod(JoinPoint joinPoint) {
-        System.out.println("join get " + atomicInteger.incrementAndGet());
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String ipAddress = IPTools.getOriginallyIpFromHeader(servletRequest);
+        checkBlockIp(ipAddress);
         logging(servletRequest, ipAddress, joinPoint.getSignature().getName());
         checkBlacklist(ipAddress, "GET");
     }
 
 
     @Before("execution(* ua.com.obox.dbschema..*Controller.*(..)) && @annotation(org.springframework.web.bind.annotation.PostMapping)")
-    public void beforePostMethod(JoinPoint joinPoint) { // post limits
+    public void beforePostMethod(JoinPoint joinPoint) {
         System.out.println("join post " + atomicInteger.incrementAndGet());
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String ipAddress = IPTools.getOriginallyIpFromHeader(servletRequest);
+        checkBlockIp(ipAddress);
         logging(servletRequest, ipAddress, joinPoint.getSignature().getName());
         checkBlacklist(ipAddress, "POST");
     }
 
     @Before("execution(* ua.com.obox.dbschema..*Controller.*(..)) && @annotation(org.springframework.web.bind.annotation.PatchMapping)")
-    public void beforePatchMethod(JoinPoint joinPoint) { // post limits
-        System.out.println("join patch " + atomicInteger.incrementAndGet());
+    public void beforePatchMethod(JoinPoint joinPoint) {
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String ipAddress = IPTools.getOriginallyIpFromHeader(servletRequest);
+        checkBlockIp(ipAddress);
         logging(servletRequest, ipAddress, joinPoint.getSignature().getName());
         checkBlacklist(ipAddress, "PATCH");
     }
 
     @Before("execution(* ua.com.obox.dbschema..*Controller.*(..)) && @annotation(org.springframework.web.bind.annotation.DeleteMapping)")
-    public void beforeDeleteMethod(JoinPoint joinPoint) { // post limits
-        System.out.println("join delete " + atomicInteger.incrementAndGet());
+    public void beforeDeleteMethod(JoinPoint joinPoint) {
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String ipAddress = IPTools.getOriginallyIpFromHeader(servletRequest);
+        checkBlockIp(ipAddress);
         logging(servletRequest, ipAddress, joinPoint.getSignature().getName());
         checkBlacklist(ipAddress, "DELETE");
     }
 
     private void checkBlacklist(String ipAddress, String type) {
         if (ipAddress != null && !rateLimiterService.isAllowedGet(ipAddress, type)) {
-            if (!blackList.contains(ipAddress)) {
+            if (!blackList.containsKey(ipAddress)) {
                 loggingService.log(LogLevel.CRITICAL, ipAddress, "TOO MANY REQUESTS");
-                blackList.add(ipAddress);
+                blackList.put(ipAddress, 1);
+            } else {
+                blackList.put(ipAddress, blackList.get(ipAddress) + 1);
+                System.out.println("count blask " + blackList.get(ipAddress));
             }
             throw new BadFieldsResponse(HttpStatus.TOO_MANY_REQUESTS);
+        }
+    }
+
+    private void checkBlockIp(String ipAddress) {
+        if (blackList.getOrDefault(ipAddress, 0) > maxManyRequests) {
+            throw new BadFieldsResponse(HttpStatus.FORBIDDEN);
         }
     }
 
