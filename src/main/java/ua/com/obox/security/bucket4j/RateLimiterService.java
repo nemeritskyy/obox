@@ -2,8 +2,11 @@ package ua.com.obox.security.bucket4j;
 
 import io.github.bucket4j.Bucket;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -13,6 +16,7 @@ import static java.time.Duration.ofMinutes;
 public class RateLimiterService {
 
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();
+    private final Map<HttpMethod, RateLimitConfig> rateLimitConfigs = new EnumMap<>(HttpMethod.class);
 
     @Value("${bucket4j.get.capacity}")
     private long getCapacity;
@@ -31,30 +35,29 @@ public class RateLimiterService {
     @Value("${bucket4j.delete.regenerate}")
     private long deleteRegenerate;
 
-
-    public boolean isAllowedGet(String ipAddress, String type) {
-        System.out.println(ipAddress.concat(type));
-        buckets.computeIfAbsent(ipAddress.concat(type), k ->
-                Bucket.builder().addLimit(limit -> limit.capacity(getCapacity).refillGreedy(getRegenerate, ofMinutes(1))).build());
-        return buckets.get(ipAddress.concat(type)).tryConsume(1);
+    @PostConstruct
+    private void initRateLimitConfigs() {
+        rateLimitConfigs.put(HttpMethod.GET, new RateLimitConfig(getCapacity, getRegenerate));
+        rateLimitConfigs.put(HttpMethod.POST, new RateLimitConfig(postCapacity, postRegenerate));
+        rateLimitConfigs.put(HttpMethod.PATCH, new RateLimitConfig(patchCapacity, patchRegenerate));
+        rateLimitConfigs.put(HttpMethod.DELETE, new RateLimitConfig(deleteCapacity, deleteRegenerate));
     }
 
-    public boolean isAllowedPost(String ipAddress, String type) {
-        buckets.computeIfAbsent(ipAddress.concat(type), k ->
-                Bucket.builder().addLimit(limit -> limit.capacity(postCapacity).refillGreedy(postRegenerate, ofMinutes(1))).build());
-        return buckets.get(ipAddress.concat(type)).tryConsume(1);
-    }
+    public boolean isAllowed(String ipAddress, HttpMethod method) {
+        RateLimitConfig config = rateLimitConfigs.get(method);
 
-    public boolean isAllowedPatch(String ipAddress, String type) {
-        System.out.println(ipAddress.concat(type));
-        buckets.computeIfAbsent(ipAddress.concat(type), k ->
-                Bucket.builder().addLimit(limit -> limit.capacity(patchCapacity).refillGreedy(patchRegenerate, ofMinutes(1))).build());
-        return buckets.get(ipAddress.concat(type)).tryConsume(1);
-    }
+        System.out.println(ipAddress.concat(method.name()));
+        buckets.compute(ipAddress.concat(method.name()), (key, existingBucket) -> {
+            if (existingBucket == null) {
+                return Bucket.builder()
+                        .addLimit(limit -> limit.capacity(config.getCapacity())
+                                .refillGreedy(config.getRegenerate(), ofMinutes(1)))
+                        .build();
+            } else {
+                return existingBucket;
+            }
+        });
 
-    public boolean isAllowedDelete(String ipAddress, String type) {
-        buckets.computeIfAbsent(ipAddress.concat(type), k ->
-                Bucket.builder().addLimit(limit -> limit.capacity(deleteCapacity).refillGreedy(deleteRegenerate, ofMinutes(1))).build());
-        return buckets.get(ipAddress.concat(type)).tryConsume(1);
+        return buckets.get(ipAddress.concat(method.name())).tryConsume(1);
     }
 }
