@@ -2,11 +2,13 @@ package ua.com.obox.dbschema.tools.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 
@@ -40,14 +42,17 @@ public class UpdateServiceHelper {
         return checkField;
     }
 
-    public String updateWeightField(Consumer<String> setter, String value, String acceptLanguage) {
+    public String updateWeightField(Dish dish, Dish request, String value, Map<String, String> fieldErrors, String acceptLanguage) {
         if (value == null || removeSpacesAndDuplicateSeparators(value).isEmpty()) {
-            setter.accept(null);
+            dish.setWeight(null);
             return null;
         }
         String checkField = Validator.validateWeight(removeSpacesAndDuplicateSeparators(value), acceptLanguage);
         if (checkField == null) {
-            setter.accept(removeSpacesAndDuplicateSeparators(value));
+            dish.setWeight(removeSpacesAndDuplicateSeparators(value));
+        }
+        if (dish.getWeightUnit() == null && request.getWeightUnit() == null) {
+            fieldErrors.put("weight_unit", translation.getString(acceptLanguage + ".weightUnitRequired"));
         }
         return checkField;
     }
@@ -86,14 +91,17 @@ public class UpdateServiceHelper {
         return null;
     }
 
-    public String updateWeightUnit(Consumer<String> setter, String value, String acceptLanguage) {
+    public String updateWeightUnit(Dish dish, String value, Map<String, String> fieldErrors, String acceptLanguage) {
         if (value == null) {
-            setter.accept(null);
+            dish.setWeightUnit(null);
             return null;
         }
         String checkField = Validator.validateWeightUnit(value, acceptLanguage);
         if (checkField == null) {
-            setter.accept(value.toUpperCase());
+            dish.setWeightUnit(value.toUpperCase());
+        }
+        if (dish.getWeight() == null && dish.getWeightUnit() != null) {
+            fieldErrors.put("weight", translation.getString(acceptLanguage + ".weightRequired"));
         }
         return checkField;
     }

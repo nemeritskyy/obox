@@ -180,10 +180,10 @@ public class DishService {
                 (calories) -> serviceHelper.updateIntegerField(dish::setCalories, calories, ValidationConfiguration.MAX_CALORIES, "calories", finalAcceptLanguage), finalAcceptLanguage);
 
         updateField(request.getWeight(), required, dish, fieldErrors, "weight",
-                (weight) -> serviceHelper.updateWeightField(dish::setWeight, weight, finalAcceptLanguage), finalAcceptLanguage);
+                (weight) -> serviceHelper.updateWeightField(dish, request, weight, fieldErrors, finalAcceptLanguage), finalAcceptLanguage);
 
         updateField(request.getWeightUnit(), required, dish, fieldErrors, "weight_unit",
-                (weightUnit) -> serviceHelper.updateWeightUnit(dish::setWeightUnit, weightUnit, finalAcceptLanguage), finalAcceptLanguage);
+                (weightUnit) -> serviceHelper.updateWeightUnit(dish, weightUnit, fieldErrors, finalAcceptLanguage), finalAcceptLanguage);
 
         updateField(request.getInStock(), required, dish, fieldErrors, "in_stock",
                 (inStock) -> serviceHelper.updateState(dish::setInStock, inStock, finalAcceptLanguage), finalAcceptLanguage);
