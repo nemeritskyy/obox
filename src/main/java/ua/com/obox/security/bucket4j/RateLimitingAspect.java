@@ -28,7 +28,7 @@ public class RateLimitingAspect {
 
     private final RateLimiterService rateLimiterService;
     private final LoggingService loggingService;
-    private final Map<String, AtomicInteger> blackList = new HashMap<>();
+    public static Map<String, AtomicInteger> blackList = new HashMap<>();
     private static String lastLog = "";
 
     @Autowired
@@ -82,7 +82,7 @@ public class RateLimitingAspect {
     private void checkBlockIp(String ipAddress, HttpServletRequest servletRequest) {
         AtomicInteger totalManyRequestsFromIp = blackList.getOrDefault(ipAddress, new AtomicInteger(0));
         if (totalManyRequestsFromIp.get() == 10) {
-            SendMessage.sendToTelegram(String.format("\uD83D\uDEA8 IP:%s BLOCKED, LAST REQUEST:%s", ipAddress, servletRequest.getRequestURI()));
+            SendMessage.sendToTelegram(String.format("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 IP:%s BLOCKED,\nLAST REQUEST:%s,\nTO UNBLOCK WRITE:\n/unblock%s", ipAddress, servletRequest.getRequestURI(), ipAddress));
         }
         if (totalManyRequestsFromIp.get() >= 10) {
             totalManyRequestsFromIp.incrementAndGet();

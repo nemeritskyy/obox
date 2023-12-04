@@ -46,7 +46,6 @@ public class RateLimiterService {
     public boolean isAllowed(String ipAddress, HttpMethod method) {
         RateLimitConfig config = rateLimitConfigs.get(method);
 
-        System.out.println(ipAddress.concat(method.name()));
         buckets.compute(ipAddress.concat(method.name()), (key, existingBucket) -> {
             if (existingBucket == null) {
                 return Bucket.builder()
