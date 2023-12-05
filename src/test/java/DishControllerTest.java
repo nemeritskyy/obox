@@ -29,12 +29,10 @@ public class DishControllerTest {
     private final String URL_RESTAURANT = "http://localhost/restaurants/";
     private final String URL_MENU = "http://localhost/menus/";
     private final String URL_CATEGORY = "http://localhost/categories/";
-    private final String URL_ASSOCIATED = "http://localhost/associated/";
     private final String URL_DISH = "http://localhost/dishes/";
     private static String tenantId = null;
     private static String restaurantId = null;
     private static String menuId = null;
-    private static String languageCode = "ua";
 
     @Autowired
     private MockMvc mockMvc;
@@ -101,6 +99,7 @@ public class DishControllerTest {
                 "description", "desc dish for test",
                 "price", 1,
                 "weight", 1,
+                "weight_unit", "gr",
                 "calories", 1,
                 "in_stock", "ENABLED",
                 "state", "ENABLED",
