@@ -4,5 +4,6 @@ public enum LogLevel {
     INFO,
     ERROR,
     JSON,
-    CRITICAL
+    CRITICAL,
+    BOT
 }

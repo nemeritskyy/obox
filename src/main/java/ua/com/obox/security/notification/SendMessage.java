@@ -13,8 +13,9 @@ import java.util.List;
 public class SendMessage {
     private final static String apiToken = "6804603259:AAGpqi-O9AlLhDBx8shkbRerlLyRUI9L3_s";
 
-    private final static List<String> chatsId = List.of(
+    public final static List<String> chatsId = List.of(
             "110085037", // andrew
+            "688726739", // dari
             "6935742919" // andrew test
     );
 

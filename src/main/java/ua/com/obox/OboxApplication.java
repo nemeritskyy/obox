@@ -27,9 +27,11 @@ public class OboxApplication extends SpringBootServletInitializer {
 
     public static void main(String[] args) throws TelegramApiException {
         TimeZone.setDefault(TimeZone.getTimeZone("Europe/Kiev"));
+        if (System.getenv().containsKey("telegram")) {
+            TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+            botsApi.registerBot(new SecurityBot());
+        }
         SpringApplication.run(OboxApplication.class, args);
-        TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-        botsApi.registerBot(new SecurityBot());
     }
 
     @Bean
