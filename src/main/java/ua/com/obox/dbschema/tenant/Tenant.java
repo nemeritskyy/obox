@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.hibernate.annotations.GenericGenerator;
+import ua.com.obox.authserver.user.User;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.tools.PreRemoveAssistant;
 import ua.com.obox.dbschema.tools.State;
@@ -33,6 +34,11 @@ public class Tenant {
 
     private long createdAt;
     private long updatedAt;
+
+    @JsonIgnore
+    @OneToOne
+    @JoinColumn(name = "user_id")
+    private User user;
 
     @OneToMany(mappedBy = "tenant", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore

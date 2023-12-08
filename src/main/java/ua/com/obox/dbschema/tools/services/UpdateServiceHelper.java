@@ -2,13 +2,16 @@ package ua.com.obox.dbschema.tools.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ua.com.obox.authserver.user.User;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 @Service
 public class UpdateServiceHelper {
@@ -120,6 +123,35 @@ public class UpdateServiceHelper {
             } else if (String.join(",", allergens).matches(ValidationConfiguration.UUID_REGEX)) {
                 setter.accept(String.join(",", allergens));
             } else return translation.getString(acceptLanguage + ".badSortedList");
+        }
+        return null;
+    }
+
+    public String checkExistUser(Optional<User> userExist, String errorLanguage) {
+        if (userExist.isPresent()) {
+            return translation.getString(errorLanguage + ".userExist");
+        } else return null;
+    }
+
+    public String checkEmail(String email, String errorLanguage) {
+        Pattern pattern = Pattern.compile("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$");
+        if (!pattern.matcher(email).find()) {
+            return translation.getString(errorLanguage + ".userBadEmail");
+        } else return null;
+    }
+
+    public String checkPassword(String password, String errorLanguage) {
+        Pattern pattern = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
+        if (!pattern.matcher(password).find()) {
+            return translation.getString(errorLanguage + ".userBadEmail");
+        } else return null;
+    }
+
+    public String checkActivate(Optional<User> userExist, String errorLanguage) {
+        if (userExist.isPresent()) {
+            if (!userExist.get().isEnabled()) {
+                return translation.getString(errorLanguage + ".userActivation");
+            }
         }
         return null;
     }
