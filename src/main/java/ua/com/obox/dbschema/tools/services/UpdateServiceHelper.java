@@ -1,7 +1,11 @@
 package ua.com.obox.dbschema.tools.services;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ua.com.obox.authserver.confirmation.Confirm;
+import ua.com.obox.authserver.confirmation.ConfirmRepository;
+import ua.com.obox.authserver.mail.EmailService;
 import ua.com.obox.authserver.user.User;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
@@ -143,12 +147,22 @@ public class UpdateServiceHelper {
     public String checkPassword(String password, String errorLanguage) {
         Pattern pattern = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
         if (!pattern.matcher(password).find()) {
-            return translation.getString(errorLanguage + ".userBadEmail");
+            return translation.getString(errorLanguage + ".badPassword");
         } else return null;
     }
 
-    public String checkActivate(Optional<User> userExist, String errorLanguage) {
+    public String checkActivate(Optional<User> userExist, String errorLanguage, String email, ConfirmRepository confirmRepository, EmailService emailService) {
         if (userExist.isPresent()) {
+
+            Optional<Confirm> alreadyExist = confirmRepository.findByEmail(email);
+            alreadyExist.ifPresent(confirmToken -> {
+                String newToken = RandomStringUtils.random(20, true, true);
+                confirmRepository.delete(alreadyExist.get());
+                Confirm confirm = Confirm.builder().confirmationKey(newToken).email(email).build();
+                confirmRepository.save(confirm);
+                emailService.sendEmailConfirmation(confirm.getEmail(), confirm.getConfirmationKey());
+            });
+
             if (!userExist.get().isEnabled()) {
                 return translation.getString(errorLanguage + ".userActivation");
             }

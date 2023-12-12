@@ -33,7 +33,8 @@ public class WebhookController {
 
     private void onUpdateReceived(Update update) {
         String message = update.getMessage().getText();
-        if (message.contains("/unblock") && SendMessage.chatsId.contains(String.valueOf(update.getMessage().getChatId()))) {
+        Long chatId = update.getMessage().getChatId();
+        if (message.contains("/unblock") && isAllowed(chatId)) {
             String regex = "((?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\\.){3}(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)))";
 
             Pattern pattern = Pattern.compile(regex);
@@ -50,6 +51,14 @@ public class WebhookController {
                 SendMessage.sendToTelegram("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 WRONG FORMAT,\nEXAMPLE TO UNBLOCK WRITE:\n/unblock127.0.0.1");
             }
         }
+        if ((message.equals("/start") || (message.equals("/help")) && isAllowed(chatId))) {
+            String welcome = "**Available commands:**\nAll commands - /help\nUnblock example - /unblock127.0.0.1";
+            SendMessage.forwardTelegram(chatId, welcome);
+        }
+    }
+
+    private boolean isAllowed(Long chatId) {
+        return SendMessage.chatsId.contains(String.valueOf(chatId));
     }
 }
 

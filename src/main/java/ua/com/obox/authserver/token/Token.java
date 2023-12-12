@@ -16,7 +16,7 @@ import lombok.NoArgsConstructor;
 @Entity
 public class Token {
   @Id
-  @GeneratedValue(generator = "uuid2")
+  @GeneratedValue(generator = "uuid2", strategy = GenerationType.IDENTITY)
   @GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
   @Column(columnDefinition = "CHAR(36)")
   @JsonIgnore

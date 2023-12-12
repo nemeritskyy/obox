@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.attachment.ReferenceType;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.ftp.AttachmentFTP;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
@@ -68,6 +69,19 @@ public class AttachmentService {
         attachment.setCreatedAt(Instant.now().getEpochSecond());
         attachment.setUpdatedAt(Instant.now().getEpochSecond());
         attachmentRepository.save(attachment);
+        if (attachment.getReferenceType().equals(ReferenceType.dish.toString())) {
+            List<Attachment> attachments = attachmentRepository.findAllByReferenceId(attachment.getReferenceId());
+            for (Attachment checkExistAttachment : attachments) {
+                if (!checkExistAttachment.getAttachmentId().equals(attachment.getAttachmentId())) {
+                    deleteAttachmentById(checkExistAttachment.getAttachmentId(), acceptLanguage);
+                }
+            }
+
+            dishRepository.findByDishId(attachment.getReferenceId()).ifPresent((dish) -> {
+                dish.setImage(attachment.getAttachmentId());
+                dishRepository.save(dish);
+            });
+        }
         return AttachmentResponseId.builder()
                 .attachmentId(attachment.getAttachmentId())
                 .build();
@@ -87,7 +101,7 @@ public class AttachmentService {
 
         var dishInfo = dishRepository.findByImage(attachment.getAttachmentId());
 
-        if (dishInfo.isPresent()){
+        if (dishInfo.isPresent()) {
             Dish dish = dishInfo.get();
             dish.setImage(null);
             dishRepository.save(dish);

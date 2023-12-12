@@ -2,8 +2,6 @@ package ua.com.obox.authserver.auth;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import ua.com.obox.authserver.config.JwtService;
 import ua.com.obox.authserver.confirmation.Confirm;
@@ -54,7 +52,7 @@ public class AuthenticationService {
     private final TenantRepository tenantRepository;
     private final UpdateServiceHelper serviceHelper;
 
-    public StatusResponse register(User request, String acceptLanguage) throws JsonProcessingException {
+    public void register(User request, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
         Optional<User> userExist = repository.findByEmail(request.getEmail());
@@ -64,7 +62,7 @@ public class AuthenticationService {
             fieldErrors.put("name", serviceHelper.updateNameField(request::setName, request.getName(), finalAcceptLanguage));
             fieldErrors.put("email", serviceHelper.checkExistUser(userExist, finalAcceptLanguage));
             fieldErrors.put("email", serviceHelper.checkEmail(request.getEmail(), finalAcceptLanguage));
-            fieldErrors.put("email", serviceHelper.checkActivate(userExist, finalAcceptLanguage));
+            fieldErrors.put("email", serviceHelper.checkActivate(userExist, finalAcceptLanguage, request.getEmail(), confirmRepository, emailService));
             fieldErrors.put("password", serviceHelper.checkPassword(request.getPassword(), finalAcceptLanguage));
         }
 
@@ -137,16 +135,12 @@ public class AuthenticationService {
 //            var jwtToken = jwtService.generateToken(user);
 //            var refreshToken = jwtService.generateRefreshToken(user);
 //            if (user.isEnabled()) saveUserToken(savedUser, jwtToken);
-            return StatusResponse.builder()
-//                    .emailConfirmation("need to email confirm")
-//                    .accessToken(jwtToken)
-//                    .refreshToken(refreshToken)
-                    .build();
+
         } else {
             Optional<Confirm> alreadyExist = confirmRepository.findByEmail(request.getEmail());
             alreadyExist.ifPresent(confirmToken -> emailService.sendEmailConfirmation(confirmToken.getEmail(), confirmToken.getConfirmationKey()));
         }
-        return StatusResponse.builder().build();
+
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
@@ -169,21 +163,23 @@ public class AuthenticationService {
     }
 
     private void saveUserToken(User user, String jwtToken) {
-        var token = Token.builder()
-                .user(user)
-                .token(jwtToken)
-                .tokenType(TokenType.BEARER)
-                .expired(false)
-                .revoked(false)
-                .build();
-        tokenRepository.save(token);
+        System.out.println("join save user");
+            var token = Token.builder()
+                    .user(user)
+                    .token(jwtToken)
+                    .tokenType(TokenType.BEARER)
+                    .expired(false)
+                    .revoked(false)
+                    .build();
+            tokenRepository.save(token);
     }
 
     private void revokeAllUserTokens(User user) {
-        var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getUserId());
+        var validUserTokens = tokenRepository.findAllValidTokenByUserId(user.getUserId());
         if (validUserTokens.isEmpty())
             return;
         validUserTokens.forEach(token -> {
+            System.out.println("revoke id:" + token.id);
             token.setExpired(true);
             token.setRevoked(true);
         });

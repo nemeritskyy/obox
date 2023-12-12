@@ -16,6 +16,7 @@ public class SendMessage {
     public final static List<String> chatsId = List.of(
             "110085037", // andrew
             "688726739", // dari
+            "292030593", // anastasia
             "6935742919" // andrew test
     );
 
@@ -37,5 +38,24 @@ public class SendMessage {
                 e.printStackTrace();
             }
         }
+    }
+
+    public static void forwardTelegram(long messageTo, String messageForward) {
+        String message = URLEncoder.encode(messageForward);
+        String urlString = UriComponentsBuilder
+                .fromUriString("https://api.telegram.org/bot" + apiToken + "/sendMessage")
+                .queryParam("chat_id", messageTo)
+                .queryParam("text", message)
+                .build()
+                .toUriString();
+
+        try {
+            URL url = new URL(urlString);
+            URLConnection conn = url.openConnection();
+            InputStream is = new BufferedInputStream(conn.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }

@@ -7,6 +7,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.authserver.user.User;
+import ua.com.obox.authserver.user.UserRepository;
 import ua.com.obox.dbschema.attachment.Attachment;
 import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.category.Category;
@@ -39,6 +41,7 @@ public class DishService {
     private final AttachmentRepository attachmentRepository;
     private final TranslationRepository translationRepository;
     private final UpdateServiceHelper serviceHelper;
+    private final UserRepository userRepository;
     private final ResourceBundle translationContent = ResourceBundle.getBundle("translation.messages");
     @Value("${application.image-dns}")
     private String attachmentsDns;
@@ -150,6 +153,7 @@ public class DishService {
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         dish.setImage(request.getImage());
+        dishRepository.save(dish);
     }
 
     private void validateRequest(Dish request, Dish dish, String finalAcceptLanguage, Map<String, String> fieldErrors, boolean required) {
@@ -234,4 +238,19 @@ public class DishService {
         translation.setContent(objectMapper.writeValueAsString(content));
         translation.setUpdatedAt(Instant.now().getEpochSecond());
     }
+
+    public boolean isDishInTenant(String dishId, String userId) {
+        Optional<Dish> optionalDish = dishRepository.findByDishId(dishId);
+        Optional<User> optionalUser = userRepository.findByUserId(userId);
+
+        if (optionalDish.isPresent() && optionalUser.isPresent()) {
+            Dish dish = optionalDish.get();
+            User user = optionalUser.get();
+            String dishTenantId = dish.getCategory().getMenu().getRestaurant().getTenant().getTenantId();
+            return dishTenantId.equals(user.getTenant().getTenantId());
+        }
+
+        return false;
+    }
+
 }
