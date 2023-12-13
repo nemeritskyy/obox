@@ -35,12 +35,12 @@ public class WebhookController {
         String message = update.getMessage().getText();
         Long chatId = update.getMessage().getChatId();
         if (message.contains("/unblock") && isAllowed(chatId)) {
-            String regex = "((?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?\\.){3}(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)))";
+            String regex = "^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}$";
 
             Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(message);
+            Matcher matcher = pattern.matcher(message.substring(8));
             if (matcher.find()) {
-                String ip = matcher.group(1);
+                String ip = matcher.group(0);
                 if (RateLimitingAspect.blackList.containsKey(ip)) {
                     RateLimitingAspect.blackList.remove(ip);
                     SendMessage.sendToTelegram(String.format("\u2705 IP:%s UNBLOCKED by USER: %s (%s)", ip, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName()));
