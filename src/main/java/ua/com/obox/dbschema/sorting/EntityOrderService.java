@@ -68,15 +68,15 @@ public class EntityOrderService {
                                      EntityOrderRepository entityOrderRepository, RestaurantRepository restaurantRepository, MenuRepository menuRepository, CategoryRepository categoryRepository) {
         request.setReferenceType(request.getReferenceType().toLowerCase());
         switch (request.getReferenceType()) {
-            case "dishes" -> {
+            case "category" -> {
                 var categoryInfo = categoryRepository.findByCategoryId(request.getReferenceId());
                 checkEntityInDatabase(categoryInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
-            case "categories" -> {
+            case "menu" -> {
                 var menuInfo = menuRepository.findByMenuId(request.getReferenceId());
                 checkEntityInDatabase(menuInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
-            case "menus", "allergens" -> {
+            case "restaurant" -> {
                 var restaurantInfo = restaurantRepository.findByRestaurantId(request.getReferenceId());
                 checkEntityInDatabase(restaurantInfo, request, finalAcceptLanguage, entityOrderRepository);
             }
