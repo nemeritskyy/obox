@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ua.com.obox.dbschema.dish.DishResponse;
+import ua.com.obox.dbschema.category.CategoryResponse;
 
 import java.util.List;
 
@@ -30,10 +30,10 @@ public class SearchController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALLERGEN_404_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<List<DishResponse>> getAllDishesByAllergenId(@PathVariable String allergenId, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<List<CategoryResponse>> getAllDishesByAllergenId(@PathVariable String allergenId, @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
-        List<DishResponse> dishesResponse = service.getAllDishesByAllergenId(allergenId, acceptLanguage);
-        return ResponseEntity.ok(dishesResponse);
+        List<CategoryResponse> categoryResponseList = service.getAllDishesByAllergenId(allergenId, acceptLanguage);
+        return ResponseEntity.ok(categoryResponseList);
     }
 
     @GetMapping("/{markId}/marks")
@@ -43,10 +43,10 @@ public class SearchController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = MARK_404_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<List<DishResponse>> getAllMarksByAllergenId(@PathVariable String markId, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<List<CategoryResponse>> getAllMarksByAllergenId(@PathVariable String markId, @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
-        List<DishResponse> dishesResponse = service.getAllMarksByAllergenId(markId, acceptLanguage);
-        return ResponseEntity.ok(dishesResponse);
+        List<CategoryResponse> categoryResponseList = service.getAllMarksByAllergenId(markId, acceptLanguage);
+        return ResponseEntity.ok(categoryResponseList);
     }
 
     @PostMapping

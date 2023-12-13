@@ -11,12 +11,11 @@ import ua.com.obox.dbschema.allergen.AllergenRepository;
 import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
+import ua.com.obox.dbschema.category.CategoryResponse;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.dish.DishResponse;
 import ua.com.obox.dbschema.mark.MarkRepository;
-import ua.com.obox.dbschema.menu.MenuRepository;
-import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.tools.attachment.AttachmentTools;
 import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
@@ -55,7 +54,7 @@ public class SearchService {
     @Value("${application.image-dns}")
     private String attachmentsDns;
 
-    public List<DishResponse> getAllDishesByAllergenId(String allergenId, String acceptLanguage) {
+    public List<CategoryResponse> getAllDishesByAllergenId(String allergenId, String acceptLanguage) {
         selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -66,43 +65,70 @@ public class SearchService {
 
         List<Dish> dishes = dishRepository.findAllByAllergensContainingOrderByCreatedAtDesc(allergenId);
 
-        List<DishResponse> responseList = dishes.stream()
-                .map(dish -> {
+        Set<Category> categories = new HashSet<>();
+        for (Dish dish : dishes) {
+            categories.add(dish.getCategory());
+        }
+
+        List<CategoryResponse> categoryResponseList = categories.stream()
+                .map(category -> {
                     try {
-                        translation.set(translationRepository.findAllByTranslationId(dish.getTranslationId()).orElseThrow(() ->
-                                ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, dish.getDishId())));
+                        translation.set(translationRepository.findAllByTranslationId(category.getTranslationId()).orElseThrow(() ->
+                                ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, category.getCategoryId())));
                         content.set(objectMapper.readValue(translation.get().getContent(), new TypeReference<>() {
                         }));
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
 
-                    return DishResponse.builder()
-                            .categoryId(dish.getCategory().getCategoryId())
-                            .dishId(dish.getDishId())
-                            .translationId(dish.getTranslationId())
-                            .price(dish.getPrice())
-                            .specialPrice(dish.getSpecialPrice())
-                            .cookingTime(dish.getCookingTime())
-                            .calories(dish.getCalories())
-                            .weight(dish.getWeight())
-                            .weightUnit(dish.getWeightUnit())
-                            .inStock(dish.getInStock())
-                            .state(dish.getState())
-                            .allergens(dish.getAllergens() == null ? null : Arrays.stream(dish.getAllergens().split(",")).toList())
-                            .marks(dish.getMarks() == null ? null : Arrays.stream(dish.getMarks().split(",")).toList())
-                            .image(AttachmentTools.getURL(dish, attachmentRepository, attachmentsDns))
+                    CategoryResponse categoryResponse = CategoryResponse.builder()
+                            .menuId(category.getMenu().getMenuId())
+                            .categoryId(category.getCategoryId())
+                            .translationId(category.getTranslationId())
+                            .state(category.getState())
                             .content(content.get())
                             .build();
-                })
-                .collect(Collectors.toList());
 
-        loggingService.log(LogLevel.INFO, String.format("getAllDishesByAllergenId %s %s %d", allergenId, Message.FIND_COUNT.getMessage(), responseList.size()));
-        return responseList;
+                    List<DishResponse> dishResponseList = category.getDishes().stream().filter((dishes::contains))
+                            .map(dish -> {
+                                try {
+                                    translation.set(translationRepository.findAllByTranslationId(dish.getTranslationId()).orElseThrow(() ->
+                                            ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, dish.getDishId())));
+                                    content.set(objectMapper.readValue(translation.get().getContent(), new TypeReference<>() {
+                                    }));
+                                } catch (JsonProcessingException e) {
+                                    throw new RuntimeException(e);
+                                }
+
+                                return DishResponse.builder()
+                                        .categoryId(dish.getCategory().getCategoryId())
+                                        .dishId(dish.getDishId())
+                                        .translationId(dish.getTranslationId())
+                                        .price(dish.getPrice())
+                                        .specialPrice(dish.getSpecialPrice())
+                                        .cookingTime(dish.getCookingTime())
+                                        .calories(dish.getCalories())
+                                        .weight(dish.getWeight())
+                                        .weightUnit(dish.getWeightUnit())
+                                        .inStock(dish.getInStock())
+                                        .state(dish.getState())
+                                        .allergens(dish.getAllergens() == null ? null : Arrays.stream(dish.getAllergens().split(",")).toList())
+                                        .marks(dish.getMarks() == null ? null : Arrays.stream(dish.getMarks().split(",")).toList())
+                                        .image(AttachmentTools.getURL(dish, attachmentRepository, attachmentsDns))
+                                        .content(content.get())
+                                        .build();
+                            }).collect(Collectors.toList());
+
+                    categoryResponse.setDishes(dishResponseList);
+                    return categoryResponse;
+                }).toList();
+
+        loggingService.log(LogLevel.INFO, String.format("getAllDishesByAllergenId %s %s %d", allergenId, Message.FIND_COUNT.getMessage(), categoryResponseList.size()));
+        return categoryResponseList;
     }
 
 
-    public List<DishResponse> getAllMarksByAllergenId(String markId, String acceptLanguage) {
+    public List<CategoryResponse> getAllMarksByAllergenId(String markId, String acceptLanguage) {
         selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         ObjectMapper objectMapper = new ObjectMapper();
@@ -113,39 +139,66 @@ public class SearchService {
 
         List<Dish> dishes = dishRepository.findAllByMarksContainingOrderByCreatedAtDesc(markId);
 
-        List<DishResponse> responseList = dishes.stream()
-                .map(dish -> {
+        Set<Category> categories = new HashSet<>();
+        for (Dish dish : dishes) {
+            categories.add(dish.getCategory());
+        }
+
+        List<CategoryResponse> categoryResponseList = categories.stream()
+                .map(category -> {
                     try {
-                        translation.set(translationRepository.findAllByTranslationId(dish.getTranslationId()).orElseThrow(() ->
-                                ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, dish.getDishId())));
+                        translation.set(translationRepository.findAllByTranslationId(category.getTranslationId()).orElseThrow(() ->
+                                ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, category.getCategoryId())));
                         content.set(objectMapper.readValue(translation.get().getContent(), new TypeReference<>() {
                         }));
                     } catch (JsonProcessingException e) {
                         throw new RuntimeException(e);
                     }
 
-                    return DishResponse.builder()
-                            .categoryId(dish.getCategory().getCategoryId())
-                            .dishId(dish.getDishId())
-                            .translationId(dish.getTranslationId())
-                            .price(dish.getPrice())
-                            .specialPrice(dish.getSpecialPrice())
-                            .cookingTime(dish.getCookingTime())
-                            .calories(dish.getCalories())
-                            .weight(dish.getWeight())
-                            .weightUnit(dish.getWeightUnit())
-                            .inStock(dish.getInStock())
-                            .state(dish.getState())
-                            .allergens(dish.getAllergens() == null ? null : Arrays.stream(dish.getAllergens().split(",")).toList())
-                            .marks(dish.getMarks() == null ? null : Arrays.stream(dish.getMarks().split(",")).toList())
-                            .image(AttachmentTools.getURL(dish, attachmentRepository, attachmentsDns))
+                    CategoryResponse categoryResponse = CategoryResponse.builder()
+                            .menuId(category.getMenu().getMenuId())
+                            .categoryId(category.getCategoryId())
+                            .translationId(category.getTranslationId())
+                            .state(category.getState())
                             .content(content.get())
                             .build();
-                })
-                .collect(Collectors.toList());
 
-        loggingService.log(LogLevel.INFO, String.format("getAllMarksByAllergenId %s %s %d", markId, Message.FIND_COUNT.getMessage(), responseList.size()));
-        return responseList;
+                    List<DishResponse> dishResponseList = category.getDishes().stream().filter((dishes::contains))
+                            .map(dish -> {
+                                try {
+                                    translation.set(translationRepository.findAllByTranslationId(dish.getTranslationId()).orElseThrow(() ->
+                                            ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, dish.getDishId())));
+                                    content.set(objectMapper.readValue(translation.get().getContent(), new TypeReference<>() {
+                                    }));
+                                } catch (JsonProcessingException e) {
+                                    throw new RuntimeException(e);
+                                }
+
+                                return DishResponse.builder()
+                                        .categoryId(dish.getCategory().getCategoryId())
+                                        .dishId(dish.getDishId())
+                                        .translationId(dish.getTranslationId())
+                                        .price(dish.getPrice())
+                                        .specialPrice(dish.getSpecialPrice())
+                                        .cookingTime(dish.getCookingTime())
+                                        .calories(dish.getCalories())
+                                        .weight(dish.getWeight())
+                                        .weightUnit(dish.getWeightUnit())
+                                        .inStock(dish.getInStock())
+                                        .state(dish.getState())
+                                        .allergens(dish.getAllergens() == null ? null : Arrays.stream(dish.getAllergens().split(",")).toList())
+                                        .marks(dish.getMarks() == null ? null : Arrays.stream(dish.getMarks().split(",")).toList())
+                                        .image(AttachmentTools.getURL(dish, attachmentRepository, attachmentsDns))
+                                        .content(content.get())
+                                        .build();
+                            }).collect(Collectors.toList());
+
+                    categoryResponse.setDishes(dishResponseList);
+                    return categoryResponse;
+                }).toList();
+
+        loggingService.log(LogLevel.INFO, String.format("getAllMarksByAllergenId %s %s %d", markId, Message.FIND_COUNT.getMessage(), categoryResponseList.size()));
+        return categoryResponseList;
     }
 
     public List<SearchResponse> searchAllByQuery(SearchQuery query, String errorLanguage) throws JsonProcessingException {
