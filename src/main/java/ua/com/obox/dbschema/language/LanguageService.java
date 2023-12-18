@@ -55,6 +55,13 @@ public class LanguageService {
 
         SelectedLanguages selectedLanguages = selectedLanguagesRepository.findByRestaurantId(request.getRestaurantId()).orElse(null);
         if (selectedLanguages != null) {
+            List<String> removedLanguagesId = new ArrayList<>(Arrays.asList(selectedLanguages.getLanguagesList().split(",")));
+            List<String> newList = Arrays.asList(request.getLanguagesArray());
+            removedLanguagesId.removeAll(newList);
+            System.out.println("Removed languages: " + removedLanguagesId);
+
+//            removeTranslation(request.getRestaurantId(), removedLanguagesId);
+
             selectedLanguages.setLanguagesList(String.join(",", request.getLanguagesArray()));
             selectedLanguages.setUpdatedAt(Instant.now().getEpochSecond());
             selectedLanguagesRepository.save(selectedLanguages);

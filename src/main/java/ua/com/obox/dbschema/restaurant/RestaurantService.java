@@ -14,6 +14,10 @@ import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryResponse;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishResponse;
+import ua.com.obox.dbschema.language.Language;
+import ua.com.obox.dbschema.language.LanguageRepository;
+import ua.com.obox.dbschema.language.SelectedLanguages;
+import ua.com.obox.dbschema.language.SelectedLanguagesRepository;
 import ua.com.obox.dbschema.mark.MarkRepository;
 import ua.com.obox.dbschema.sorting.EntityOrder;
 import ua.com.obox.dbschema.sorting.EntityOrderRepository;
@@ -63,6 +67,8 @@ public class RestaurantService {
     private final AttachmentRepository attachmentRepository;
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
+    private final LanguageRepository languageRepository;
+    private final SelectedLanguagesRepository selectedLanguagesRepository;
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
     @Value("${application.image-dns}")
     private String attachmentsDns;
@@ -166,6 +172,17 @@ public class RestaurantService {
             BasicAllergensAndMarks.addBasicAllergens(restaurant.getRestaurantId(), translationRepository, allergenRepository);
         } catch (Exception ex) {
             loggingService.log(LogLevel.ERROR, "Problem with adding basic marks or allergens");
+        }
+
+        Optional<Language> language = languageRepository.findByLabel("uk-UA"); // by default
+        if (language.isPresent()) {
+            SelectedLanguages selectedLanguages = SelectedLanguages.builder()
+                    .restaurantId(restaurant.getRestaurantId())
+                    .languagesList(language.get().getLanguageId())
+                    .createdAt(Instant.now().getEpochSecond())
+                    .updatedAt(Instant.now().getEpochSecond())
+                    .build();
+            selectedLanguagesRepository.save(selectedLanguages);
         }
 
         loggingService.log(LogLevel.INFO, String.format("createRestaurant %s UUID=%s %s", request.getName(), restaurant.getRestaurantId(), Message.CREATE.getMessage()));
