@@ -1,16 +1,28 @@
 package ua.com.obox.dbschema.language;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.restaurant.RestaurantRepository;
+import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
+import ua.com.obox.dbschema.tools.exception.ExceptionTools;
+import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
+import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
+import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
 
 @Service
 @RequiredArgsConstructor
 public class LanguageService {
     private final LanguageRepository languageRepository;
+    private final SelectedLanguagesRepository selectedLanguagesRepository;
+    private final RestaurantRepository restaurantRepository;
+    private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
 
     public List<LanguageResponse> getAllLanguages() {
         List<Language> languageList;
@@ -32,5 +44,28 @@ public class LanguageService {
 
         languageRepository.saveAll(languageList);
         return responses;
+    }
+
+    public void getAllLanguagesForRestaurant(SelectedLanguages request, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        restaurantRepository.findByRestaurantId(request.getRestaurantId()).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, request.getRestaurantId()));
+        Map<String, String> fieldErrors = new ResponseErrorMap<>();
+        if (!String.join(",", request.getLanguagesArray()).matches(ValidationConfiguration.UUID_REGEX)) {
+            fieldErrors.put("languages", translation.getString(finalAcceptLanguage + ".badSortedList"));
+        }
+        if (fieldErrors.size() > 0)
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+
+        SelectedLanguages selectedLanguages = selectedLanguagesRepository.findByRestaurantId(request.getRestaurantId()).orElse(null);
+        if (selectedLanguages != null) {
+            selectedLanguages.setLanguagesList(String.join(",", request.getLanguagesArray()));
+            selectedLanguages.setUpdatedAt(Instant.now().getEpochSecond());
+            selectedLanguagesRepository.save(selectedLanguages);
+        } else {
+            request.setLanguagesList(String.join(",", request.getLanguagesArray()));
+            request.setCreatedAt(Instant.now().getEpochSecond());
+            request.setUpdatedAt(Instant.now().getEpochSecond());
+            selectedLanguagesRepository.save(request);
+        }
     }
 }
