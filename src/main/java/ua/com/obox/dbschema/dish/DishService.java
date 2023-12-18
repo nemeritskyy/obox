@@ -16,9 +16,6 @@ import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.attachment.AttachmentTools;
 import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
-import ua.com.obox.dbschema.tools.exception.Message;
-import ua.com.obox.dbschema.tools.logging.LogLevel;
-import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
@@ -41,7 +38,6 @@ public class DishService {
     private final CategoryRepository categoryRepository;
     private final AttachmentRepository attachmentRepository;
     private final TranslationRepository translationRepository;
-    private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final ResourceBundle translationContent = ResourceBundle.getBundle("translation.messages");
     @Value("${application.image-dns}")
@@ -51,6 +47,8 @@ public class DishService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
         Dish dish = dishRepository.findByDishId(dishId).orElseThrow(() -> ExceptionTools.notFoundException(".dishNotFound", finalAcceptLanguage, dishId));
+        System.out.println(dish.getDishId());
+        System.out.println(dish.getTranslationId());
         Translation translation = translationRepository.findAllByTranslationId(dish.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, dishId));
 
@@ -58,7 +56,6 @@ public class DishService {
         Content<CategoryTranslationEntry> content = objectMapper.readValue(translation.getContent(), new TypeReference<>() {
         });
 
-        loggingService.log(LogLevel.INFO, String.format("getDishById %s", dishId));
         return DishResponse.builder()
                 .dishId(dish.getDishId())
                 .categoryId(dish.getCategory().getCategoryId())
@@ -90,7 +87,6 @@ public class DishService {
                 .category(category.orElse(null))
                 .build();
 
-
         validateRequest(request, dish, finalAcceptLanguage, fieldErrors, true);
 
         dish.setCreatedAt(Instant.now().getEpochSecond());
@@ -104,9 +100,8 @@ public class DishService {
                     .create(dish.getDishId(), "dish", request.getLanguage(), entry);
             dish.setTranslationId(translation.getTranslationId());
         }
+        dishRepository.save(dish);
 
-
-        loggingService.log(LogLevel.INFO, String.format("createDish %s UUID=%s %s", request.getName(), dish.getDishId(), Message.CREATE.getMessage()));
         return DishResponseId.builder()
                 .dishId(dish.getDishId())
                 .build();
@@ -128,11 +123,10 @@ public class DishService {
         }
 
         validateRequest(request, dish, finalAcceptLanguage, fieldErrors, false);
-        updateTranslation(dish, request.getLanguage(), translation, finalAcceptLanguage);
+        updateTranslation(dish, request.getLanguage(), translation);
 
         dish.setUpdatedAt(Instant.now().getEpochSecond());
         dishRepository.save(dish);
-        loggingService.log(LogLevel.INFO, String.format("patchDishById %s %s", dishId, Message.UPDATE.getMessage()));
     }
 
 
@@ -140,7 +134,6 @@ public class DishService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Dish dish = dishRepository.findByDishId(dishId).orElseThrow(() -> ExceptionTools.notFoundException(".dishNotFound", finalAcceptLanguage, dishId));
         dishRepository.delete(dish);
-        loggingService.log(LogLevel.INFO, String.format("deleteDishById %s NAME=%s %s", dishId, dish.getName(), Message.DELETE.getMessage()));
     }
 
     public void setPrimaryImage(Dish request, String dishId, String acceptLanguage) {
@@ -157,7 +150,6 @@ public class DishService {
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         dish.setImage(request.getImage());
-        loggingService.log(LogLevel.INFO, String.format("setPrimaryImage set primary image %s for dish with id %s", request.getImage(), dishId));
     }
 
     private void validateRequest(Dish request, Dish dish, String finalAcceptLanguage, Map<String, String> fieldErrors, boolean required) {
@@ -223,7 +215,7 @@ public class DishService {
         }
     }
 
-    private void updateTranslation(Dish dish, String language, Translation translation, String finalAcceptLanguage) throws JsonProcessingException {
+    private void updateTranslation(Dish dish, String language, Translation translation) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         TypeReference<Content<DishTranslationEntry>> typeReference = new TypeReference<>() {
         };

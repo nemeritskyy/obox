@@ -12,7 +12,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ua.com.obox.dbschema.tools.logging.IPTools;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
@@ -41,10 +40,11 @@ public class DishController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<DishResponse> getDishById(@PathVariable String dishId, @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
+    public ResponseEntity<DishResponse> getDishById(
+            @PathVariable String dishId,
+            @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         DishResponse dishResponse = service.getDishById(dishId, acceptLanguage);
-
         return ResponseEntity.ok(dishResponse);
     }
 
@@ -56,11 +56,10 @@ public class DishController {
                     schema = @Schema(example = POST_400_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<DishResponseId> createDish(
-            HttpServletRequest servletRequest,
             @RequestBody @Schema(example = POST_BODY) String jsonRequest,
             @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
-        DishResponseId response = service.createDish(validateJSON(jsonRequest, servletRequest), acceptLanguage);
+        DishResponseId response = service.createDish(validateJSON(jsonRequest), acceptLanguage);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -72,8 +71,10 @@ public class DishController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<DishResponseId> setPrimaryImage(@RequestBody @Schema(example = POST_ADD_PRIMARY_IMAGE)
-                                                          Dish request, @RequestHeader HttpHeaders httpHeaders, @PathVariable String dishId) {
+    public ResponseEntity<DishResponseId> setPrimaryImage(
+            @RequestBody @Schema(example = POST_ADD_PRIMARY_IMAGE) Dish request,
+            @RequestHeader HttpHeaders httpHeaders,
+            @PathVariable String dishId) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         service.setPrimaryImage(request, dishId, acceptLanguage);
         return ResponseEntity.noContent().build();
@@ -88,12 +89,11 @@ public class DishController {
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
     public ResponseEntity<Void> patchDishById(
-            HttpServletRequest servletRequest,
             @RequestBody @Schema(example = PATCH_BODY) String jsonRequest,
             @PathVariable String dishId,
             @RequestHeader HttpHeaders httpHeaders) throws JsonProcessingException {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
-        service.patchDishById(dishId, validateJSON(jsonRequest, servletRequest), acceptLanguage);
+        service.patchDishById(dishId, validateJSON(jsonRequest), acceptLanguage);
         return ResponseEntity.noContent().build();
     }
 
@@ -103,18 +103,20 @@ public class DishController {
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = ALL_MAPPINGS_404_RESPONSE_EXAMPLE)))
     })
-    public ResponseEntity<Void> deleteDishById(@PathVariable String dishId, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<Void> deleteDishById(
+            @PathVariable String dishId,
+            @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         service.deleteDishById(dishId, acceptLanguage);
         return ResponseEntity.noContent().build();
     }
 
-    private Dish validateJSON(String jsonRequest, HttpServletRequest servletRequest) {
+    private Dish validateJSON(String jsonRequest) {
         Dish dish;
         try {
             dish = objectMapper.readValue(jsonRequest, Dish.class);
         } catch (Exception e) {
-            loggingService.log(LogLevel.JSON, String.format("IP: %s / JSON: %s", IPTools.getOriginallyIpFromHeader(servletRequest), jsonRequest));
+            loggingService.log(LogLevel.JSON, jsonRequest);
             Map<String, String> responseBody = new HashMap<>();
             responseBody.put("error", "Contact the administrator to resolve the problem");
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, responseBody);

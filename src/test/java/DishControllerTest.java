@@ -21,7 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = OboxApplication.class)
-@ActiveProfiles("local")
+@ActiveProfiles({"local","test"})
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class DishControllerTest {
@@ -160,7 +160,6 @@ public class DishControllerTest {
     @Test
     @Order(99)
     public void testDeleteTemporaryAndAssociatedDataTenant() throws Exception {
-        mockMvc.perform(delete(URL_ASSOCIATED + restaurantId)); // delete associated data for test
         mockMvc.perform(delete(URL_TENANT + tenantId + "?forceDelete=true"))
                 .andExpect(status().isNoContent());
     }

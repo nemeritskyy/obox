@@ -12,6 +12,10 @@ public class BadFieldsResponse extends ResponseStatusException {
         super(status);
         this.fields = fields;
     }
+    public BadFieldsResponse(HttpStatus status) {
+        super(status);
+        this.fields = null;
+    }
 
     public Map<String, String> getFields() {
         return fields;
