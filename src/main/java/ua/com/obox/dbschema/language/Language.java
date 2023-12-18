@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.language;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,6 +26,8 @@ public class Language {
     @JoinColumn(name = "label")
     private String label;
 
+    @JsonIgnore
     private long createdAt;
+    @JsonIgnore
     private long updatedAt;
 }

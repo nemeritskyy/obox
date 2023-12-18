@@ -23,13 +23,22 @@ public class LanguageController {
     }
 
     @PostMapping("/set-languages")
-    public ResponseEntity<Void> getLanguagesByRestaurantId(@RequestBody SelectedLanguages selectedLanguages, @RequestHeader HttpHeaders httpHeaders) {
+    public ResponseEntity<Void> postLanguagesByRestaurantId(@RequestBody SelectedLanguages selectedLanguages, @RequestHeader HttpHeaders httpHeaders) {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         try {
-            service.getAllLanguagesForRestaurant(selectedLanguages, acceptLanguage);
+            service.postLanguagesForRestaurant(selectedLanguages, acceptLanguage);
         } catch (Exception e) {
             CatchResponse.getMessage();
         }
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{restaurantId}")
+    public ResponseEntity<List<Language>> getLanguagesByRestaurantId(
+            @PathVariable String restaurantId,
+            @RequestHeader HttpHeaders httpHeaders) {
+        String acceptLanguage = httpHeaders.getFirst("Accept-Language");
+        List<Language> languageList = service.getLanguagesByRestaurantId(restaurantId, acceptLanguage);
+        return ResponseEntity.ok(languageList);
     }
 }

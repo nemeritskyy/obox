@@ -11,10 +11,7 @@ import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -46,7 +43,7 @@ public class LanguageService {
         return responses;
     }
 
-    public void getAllLanguagesForRestaurant(SelectedLanguages request, String acceptLanguage) {
+    public void postLanguagesForRestaurant(SelectedLanguages request, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         restaurantRepository.findByRestaurantId(request.getRestaurantId()).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, request.getRestaurantId()));
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
@@ -67,5 +64,17 @@ public class LanguageService {
             request.setUpdatedAt(Instant.now().getEpochSecond());
             selectedLanguagesRepository.save(request);
         }
+    }
+
+    public List<Language> getLanguagesByRestaurantId(String restaurantId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
+        List<Language> languageList = languageRepository.findAll();
+        Optional<SelectedLanguages> selectedLanguages = selectedLanguagesRepository.findByRestaurantId(restaurantId);
+        if (selectedLanguages.isPresent()) {
+            String containsLanguages = selectedLanguages.get().getLanguagesList();
+            languageList.removeIf(language -> !containsLanguages.contains(language.getLanguageId()));
+        } else return null;
+        return languageList;
     }
 }
