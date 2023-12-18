@@ -1,14 +1,17 @@
 package ua.com.obox.dbschema.language;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
+import ua.com.obox.dbschema.tools.CatchResponse;
 import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
+import ua.com.obox.dbschema.translation.assistant.RemoveContentFromTranslation;
 
 import java.time.Instant;
 import java.util.*;
@@ -19,6 +22,8 @@ public class LanguageService {
     private final LanguageRepository languageRepository;
     private final SelectedLanguagesRepository selectedLanguagesRepository;
     private final RestaurantRepository restaurantRepository;
+    @Autowired
+    private RemoveContentFromTranslation removeContentFromTranslation;
     private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
 
     public List<LanguageResponse> getAllLanguages() {
@@ -47,8 +52,13 @@ public class LanguageService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         restaurantRepository.findByRestaurantId(request.getRestaurantId()).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, request.getRestaurantId()));
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
+        try {
+
         if (!String.join(",", request.getLanguagesArray()).matches(ValidationConfiguration.UUID_REGEX)) {
             fieldErrors.put("languages", translation.getString(finalAcceptLanguage + ".badSortedList"));
+        }
+        } catch (Exception e){
+            CatchResponse.getMessage();
         }
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
@@ -60,7 +70,7 @@ public class LanguageService {
             removedLanguagesId.removeAll(newList);
             System.out.println("Removed languages: " + removedLanguagesId);
 
-//            removeTranslation(request.getRestaurantId(), removedLanguagesId);
+            removeContentFromTranslation.removeContentByRestaurantId(request.getRestaurantId(), removedLanguagesId);
 
             selectedLanguages.setLanguagesList(String.join(",", request.getLanguagesArray()));
             selectedLanguages.setUpdatedAt(Instant.now().getEpochSecond());

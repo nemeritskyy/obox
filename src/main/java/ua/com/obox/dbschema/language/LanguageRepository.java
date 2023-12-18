@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface LanguageRepository extends JpaRepository<Language, UUID> {
     List<Language> findAll();
     Optional<Language> findByLabel(String languageLabel);
+    Optional<Language> findByLanguageId(String id);
 }
