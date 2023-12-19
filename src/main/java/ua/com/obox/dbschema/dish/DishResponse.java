@@ -17,13 +17,15 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonPropertyOrder({"category_id", "dish_id", "translation_id", "state", "in_stock", "content", "price", "special_price", "weight", "weight_unit", "cooking_time", "calories", "image", "allergens", "tags"})
+@JsonPropertyOrder({"category_id", "dish_id", "original_language", "translation_id", "state", "in_stock", "content", "price", "special_price", "weight", "weight_unit", "cooking_time", "calories", "image", "allergens", "tags"})
 public class DishResponse {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("category_id")
     private String categoryId;
     @JsonProperty("dish_id")
     private String dishId;
+    @JsonProperty("original_language")
+    private String originalLanguage;
     @JsonProperty("translation_id")
     private String translationId;
     @JsonUnwrapped

@@ -72,8 +72,13 @@ public class Dish implements IdentifiableId {
 
     private String image;
 
+    @JsonIgnore
     private long createdAt;
+    @JsonIgnore
     private long updatedAt;
+    @JsonIgnore
+    @Column(columnDefinition = "CHAR(5)")
+    private String originalLanguage;
 
     @JsonProperty("category_id")
     @Transient
