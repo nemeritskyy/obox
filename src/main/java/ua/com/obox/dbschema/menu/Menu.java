@@ -37,8 +37,13 @@ public class Menu implements IdentifiableId {
     @JsonIgnore
     private String translationId;
 
+    @JsonIgnore
     private long createdAt;
+    @JsonIgnore
     private long updatedAt;
+    @JsonIgnore
+    @Column(columnDefinition = "CHAR(5)")
+    private String originalLanguage;
 
     @OneToMany(mappedBy = "menu", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore
