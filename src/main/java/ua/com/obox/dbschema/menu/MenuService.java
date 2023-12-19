@@ -78,6 +78,7 @@ public class MenuService {
                     return CategoryResponse.builder()
                             .menuId(category.getMenu().getMenuId())
                             .categoryId(category.getCategoryId())
+                            .originalLanguage(category.getOriginalLanguage())
                             .translationId(category.getTranslationId())
                             .state(category.getState())
                             .content(content.get())

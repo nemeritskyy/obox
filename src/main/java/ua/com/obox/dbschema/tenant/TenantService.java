@@ -62,6 +62,7 @@ public class TenantService {
                     return RestaurantResponse.builder()
                             .tenantId(restaurant.getTenant().getTenantId())
                             .restaurantId(restaurant.getRestaurantId())
+                            .originalLanguage(restaurant.getOriginalLanguage())
                             .translationId(restaurant.getTranslationId())
                             .content(content.get())
                             .build();

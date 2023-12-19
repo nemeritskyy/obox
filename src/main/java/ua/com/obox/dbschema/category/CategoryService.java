@@ -83,6 +83,7 @@ public class CategoryService {
                     return DishResponse.builder()
                             .categoryId(dish.getCategory().getCategoryId())
                             .dishId(dish.getDishId())
+                            .originalLanguage(dish.getOriginalLanguage())
                             .translationId(dish.getTranslationId())
                             .price(dish.getPrice())
                             .specialPrice(dish.getSpecialPrice())

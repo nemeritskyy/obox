@@ -106,6 +106,7 @@ public class RestaurantService {
                     return MenuResponse.builder()
                             .restaurantId(menu.getRestaurant().getRestaurantId())
                             .menuId(menu.getMenuId())
+                            .originalLanguage(menu.getOriginalLanguage())
                             .translationId(menu.getTranslationId())
                             .state(menu.getState())
                             .content(content.get())
@@ -249,6 +250,7 @@ public class RestaurantService {
                     MenuResponse menuResponse = new MenuResponse();
                     menuResponse.setRestaurantId(menu.getRestaurant().getRestaurantId());
                     menuResponse.setMenuId(menu.getMenuId());
+                    menuResponse.setOriginalLanguage(menu.getOriginalLanguage());
                     menuResponse.setTranslationId(menu.getTranslationId());
                     menuResponse.setState(menu.getState());
                     menuResponse.setContent(content.get());
@@ -281,6 +283,7 @@ public class RestaurantService {
                                 CategoryResponse categoryResponse = CategoryResponse.builder()
                                         .menuId(category.getMenu().getMenuId())
                                         .categoryId(category.getCategoryId())
+                                        .originalLanguage(category.getOriginalLanguage())
                                         .translationId(category.getTranslationId())
                                         .state(category.getState())
                                         .content(content.get())
@@ -314,6 +317,7 @@ public class RestaurantService {
                                             return DishResponse.builder()
                                                     .categoryId(dish.getCategory().getCategoryId())
                                                     .dishId(dish.getDishId())
+                                                    .originalLanguage(dish.getOriginalLanguage())
                                                     .translationId(dish.getTranslationId())
                                                     .price(dish.getPrice())
                                                     .specialPrice(dish.getSpecialPrice())
