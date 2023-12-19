@@ -12,9 +12,6 @@ import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.FieldUpdateFunction;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
-import ua.com.obox.dbschema.tools.exception.Message;
-import ua.com.obox.dbschema.tools.logging.LogLevel;
-import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
@@ -41,8 +38,6 @@ public class AllergenService {
     private final EntityOrderRepository entityOrderRepository;
     private final UpdateServiceHelper serviceHelper;
     private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
-    private final LoggingService loggingService;
-
     private String selectedLanguage = "en-US";
 
     public List<AllergenResponse> getAllAllergensByRestaurantId(String restaurantId, String acceptLanguage) {
@@ -65,7 +60,7 @@ public class AllergenService {
             }));
         }
 
-        List<AllergenResponse> responseList = allergens.stream()
+        return allergens.stream()
                 .map(allergen -> {
                     try {
                         translation.set(translationRepository.findAllByTranslationId(allergen.getTranslationId()).orElseThrow(() ->
@@ -78,14 +73,12 @@ public class AllergenService {
 
                     return AllergenResponse.builder()
                             .allergenId(allergen.getAllergenId())
+                            .originalLanguage(allergen.getOriginalLanguage())
                             .translationId(allergen.getTranslationId())
                             .content(content.get())
                             .build();
                 })
                 .collect(Collectors.toList());
-
-        loggingService.log(LogLevel.INFO, String.format("getAllAllergensByRestaurantId %s %s %d", restaurantId, Message.FIND_COUNT.getMessage(), responseList.size()));
-        return responseList;
     }
 
     public AllergenResponse getAllergenById(String allergenId, String acceptLanguage) throws JsonProcessingException {
@@ -99,9 +92,9 @@ public class AllergenService {
         Content<OnlyName> content = objectMapper.readValue(translation.getContent(), new TypeReference<>() {
         });
 
-        loggingService.log(LogLevel.INFO, String.format("getAllergenById %s", allergenId));
         return AllergenResponse.builder()
                 .allergenId(allergen.getAllergenId())
+                .originalLanguage(allergen.getOriginalLanguage())
                 .translationId(allergen.getTranslationId())
                 .content(content)
                 .build();
@@ -113,6 +106,7 @@ public class AllergenService {
         validateRequest(request, fieldErrors, true);
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+        request.setOriginalLanguage(request.getLanguage());
         request.setCreatedAt(Instant.now().getEpochSecond());
         request.setUpdatedAt(Instant.now().getEpochSecond());
         allergenRepository.save(request);
@@ -126,7 +120,6 @@ public class AllergenService {
             allergenRepository.save(request);
         }
 
-        loggingService.log(LogLevel.INFO, String.format("addAllergen %s UUID=%s %s", request.getName(), request.getAllergenId(), Message.CREATE.getMessage()));
         return AllergenResponseId.builder().allergenId(request.getAllergenId()).build();
     }
 
@@ -144,7 +137,6 @@ public class AllergenService {
 
         allergen.setUpdatedAt(Instant.now().getEpochSecond());
         allergenRepository.save(allergen);
-        loggingService.log(LogLevel.INFO, String.format("patchAllergenById %s %s", allergenId, Message.UPDATE.getMessage()));
     }
 
     private void validateRequest(Allergen allergen, Map<String, String> fieldErrors, boolean required) {
@@ -203,6 +195,5 @@ public class AllergenService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Allergen allergen = allergenRepository.findByAllergenId(allergenId).orElseThrow(() -> ExceptionTools.notFoundException(".allergenNotFound", finalAcceptLanguage, allergenId));
         allergenRepository.delete(allergen);
-        loggingService.log(LogLevel.INFO, String.format("deleteAllergenById %s NAME=%s %s", allergenId, allergen.getName(), Message.DELETE.getMessage()));
     }
 }

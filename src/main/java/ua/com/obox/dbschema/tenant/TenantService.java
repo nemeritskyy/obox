@@ -16,9 +16,6 @@ import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
 import ua.com.obox.dbschema.tools.State;
-import ua.com.obox.dbschema.tools.exception.Message;
-import ua.com.obox.dbschema.tools.logging.LogLevel;
-import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
 import ua.com.obox.dbschema.translation.Translation;
 import ua.com.obox.dbschema.translation.TranslationRepository;
@@ -38,7 +35,6 @@ public class TenantService {
     private final TenantRepository tenantRepository;
     private final RestaurantRepository restaurantRepository;
     private final TranslationRepository translationRepository;
-    private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final RequiredServiceHelper requiredServiceHelper;
 
@@ -52,7 +48,7 @@ public class TenantService {
 
         List<Restaurant> restaurants = restaurantRepository.findAllByTenant_TenantId(tenantId);
 
-        List<RestaurantResponse> responseList = restaurants.stream()
+        return restaurants.stream()
                 .map(restaurant -> {
                     try {
                         translation.set(translationRepository.findAllByTranslationId(restaurant.getTranslationId()).orElseThrow(() ->
@@ -66,14 +62,12 @@ public class TenantService {
                     return RestaurantResponse.builder()
                             .tenantId(restaurant.getTenant().getTenantId())
                             .restaurantId(restaurant.getRestaurantId())
+                            .originalLanguage(restaurant.getOriginalLanguage())
                             .translationId(restaurant.getTranslationId())
                             .content(content.get())
                             .build();
                 })
                 .collect(Collectors.toList());
-
-        loggingService.log(LogLevel.INFO, String.format("getAllRestaurantsByTenantId %s %s %d", tenantId, Message.FIND_COUNT.getMessage(), responseList.size()));
-        return responseList;
     }
 
     public TenantResponse getTenantById(String tenantId, String acceptLanguage) throws JsonProcessingException {
@@ -90,9 +84,9 @@ public class TenantService {
         if (tenant.getState().equals(State.DISABLED))
             ExceptionTools.forbiddenResponse(finalAcceptLanguage, tenantId);
 
-        loggingService.log(LogLevel.INFO, String.format("getTenantById %s", tenantId));
         return TenantResponse.builder()
                 .tenantId(tenant.getTenantId())
+                .originalLanguage(tenant.getOriginalLanguage())
                 .translationId(tenant.getTranslationId())
                 .content(content)
                 .build();
@@ -108,8 +102,10 @@ public class TenantService {
 
         validateRequest(request, tenant, finalAcceptLanguage, fieldErrors, true);
 
+        tenant.setOriginalLanguage(request.getLanguage());
         tenant.setCreatedAt(Instant.now().getEpochSecond());
         tenant.setUpdatedAt(Instant.now().getEpochSecond());
+
         tenantRepository.save(tenant);
 
         {
@@ -118,9 +114,9 @@ public class TenantService {
             Translation translation = createTranslation
                     .create(tenant.getTenantId(), "tenant", request.getLanguage(), entry);
             tenant.setTranslationId(translation.getTranslationId());
+            tenantRepository.save(tenant);
         }
 
-        loggingService.log(LogLevel.INFO, String.format("createTenant %s UUID=%s %s", request.getName(), tenant.getTenantId(), Message.CREATE.getMessage()));
         return TenantResponseId.builder()
                 .tenantId(tenant.getTenantId())
                 .build();
@@ -139,7 +135,6 @@ public class TenantService {
 
         tenant.setUpdatedAt(Instant.now().getEpochSecond());
         tenantRepository.save(tenant);
-        loggingService.log(LogLevel.INFO, String.format("patchTenantById %s %s", tenantId, Message.UPDATE.getMessage()));
     }
 
     public void deleteTenantById(String tenantId, boolean forceDelete, String acceptLanguage) {
@@ -153,8 +148,6 @@ public class TenantService {
         } else {
             tenantRepository.delete(tenant);
         }
-
-        loggingService.log(LogLevel.INFO, String.format("deleteTenantById %s NAME=%s %s", tenantId, tenant.getName(), Message.DELETE.getMessage()));
     }
 
     private void validateRequest(Tenant request, Tenant tenant, String finalAcceptLanguage, Map<String, String> fieldErrors, boolean required) {

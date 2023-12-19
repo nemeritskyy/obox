@@ -37,8 +37,13 @@ public class Category implements IdentifiableId {
     @JsonIgnore
     private String translationId;
 
+    @JsonIgnore
     private long createdAt;
+    @JsonIgnore
     private long updatedAt;
+    @JsonIgnore
+    @Column(columnDefinition = "CHAR(5)")
+    private String originalLanguage;
 
     @OneToMany(mappedBy = "category", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     @JsonIgnore

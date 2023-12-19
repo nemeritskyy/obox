@@ -39,8 +39,13 @@ public class Allergen implements IdentifiableId {
     @Column(name = "translation_id", columnDefinition = "CHAR(36)")
     private String translationId;
 
+    @JsonIgnore
     private long createdAt;
+    @JsonIgnore
     private long updatedAt;
+    @JsonIgnore
+    @Column(columnDefinition = "CHAR(5)")
+    private String originalLanguage;
 
     @JsonProperty("language")
     @Transient

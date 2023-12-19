@@ -19,9 +19,6 @@ import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
-import ua.com.obox.dbschema.tools.exception.Message;
-import ua.com.obox.dbschema.tools.logging.LogLevel;
-import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
 import ua.com.obox.dbschema.translation.Translation;
 import ua.com.obox.dbschema.translation.TranslationRepository;
@@ -44,7 +41,6 @@ public class MenuService {
     private final CategoryRepository categoryRepository;
     private final EntityOrderRepository entityOrderRepository;
     private final TranslationRepository translationRepository;
-    private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final ResourceBundle translationContent = ResourceBundle.getBundle("translation.messages");
 
@@ -68,7 +64,7 @@ public class MenuService {
             }));
         }
 
-        List<CategoryResponse> responseList = categories.stream()
+        return categories.stream()
                 .map(category -> {
                     try {
                         translation.set(translationRepository.findAllByTranslationId(category.getTranslationId()).orElseThrow(() ->
@@ -82,15 +78,13 @@ public class MenuService {
                     return CategoryResponse.builder()
                             .menuId(category.getMenu().getMenuId())
                             .categoryId(category.getCategoryId())
+                            .originalLanguage(category.getOriginalLanguage())
                             .translationId(category.getTranslationId())
                             .state(category.getState())
                             .content(content.get())
                             .build();
                 })
                 .collect(Collectors.toList());
-
-        loggingService.log(LogLevel.INFO, String.format("getAllCategoriesByMenuId %s %s %d", menuId, Message.FIND_COUNT.getMessage(), responseList.size()));
-        return responseList;
     }
 
     public MenuResponse getMenuById(String menuId, String acceptLanguage) throws JsonProcessingException {
@@ -104,10 +98,10 @@ public class MenuService {
         Content<MenuTranslationEntry> content = objectMapper.readValue(translation.getContent(), new TypeReference<>() {
         });
 
-        loggingService.log(LogLevel.INFO, String.format("getMenuById %s", menuId));
         return MenuResponse.builder()
                 .restaurantId(menu.getRestaurant().getRestaurantId())
                 .menuId(menu.getMenuId())
+                .originalLanguage(menu.getOriginalLanguage())
                 .translationId(menu.getTranslationId())
                 .content(content)
                 .state(menu.getState())
@@ -128,6 +122,7 @@ public class MenuService {
 
         validateRequest(request, menu, finalAcceptLanguage, fieldErrors, true);
 
+        menu.setOriginalLanguage(request.getLanguage());
         menu.setCreatedAt(Instant.now().getEpochSecond());
         menu.setUpdatedAt(Instant.now().getEpochSecond());
         menuRepository.save(menu);
@@ -138,9 +133,8 @@ public class MenuService {
             Translation translation = createTranslation
                     .create(menu.getMenuId(), "menu", request.getLanguage(), entry);
             menu.setTranslationId(translation.getTranslationId());
+            menuRepository.save(menu);
         }
-
-        loggingService.log(LogLevel.INFO, String.format("createMenu %s UUID=%s %s", request.getName(), menu.getMenuId(), Message.CREATE.getMessage()));
 
         return MenuResponseId.builder()
                 .menuId(menu.getMenuId())
@@ -160,7 +154,6 @@ public class MenuService {
 
         menu.setUpdatedAt(Instant.now().getEpochSecond());
         menuRepository.save(menu);
-        loggingService.log(LogLevel.INFO, String.format("patchMenuById %s %s", menuId, Message.UPDATE.getMessage()));
     }
 
 
@@ -168,7 +161,6 @@ public class MenuService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Menu menu = menuRepository.findByMenuId(menuId).orElseThrow(() -> ExceptionTools.notFoundException(".menuNotFound", finalAcceptLanguage, menuId));
         menuRepository.delete(menu);
-        loggingService.log(LogLevel.INFO, String.format("deleteMenuById %s NAME=%s %s", menuId, menu.getName(), Message.DELETE.getMessage()));
     }
 
     private void validateRequest(Menu request, Menu menu, String finalAcceptLanguage, Map<String, String> fieldErrors, boolean required) {

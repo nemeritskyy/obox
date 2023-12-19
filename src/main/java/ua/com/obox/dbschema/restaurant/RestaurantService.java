@@ -31,7 +31,6 @@ import ua.com.obox.dbschema.tenant.TenantRepository;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.attachment.AttachmentTools;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
-import ua.com.obox.dbschema.tools.exception.Message;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
@@ -93,7 +92,7 @@ public class RestaurantService {
             }));
         }
 
-        List<MenuResponse> responseList = menus.stream()
+        return menus.stream()
                 .map(menu -> {
                     try {
                         translation.set(translationRepository.findAllByTranslationId(menu.getTranslationId()).orElseThrow(() ->
@@ -107,15 +106,13 @@ public class RestaurantService {
                     return MenuResponse.builder()
                             .restaurantId(menu.getRestaurant().getRestaurantId())
                             .menuId(menu.getMenuId())
+                            .originalLanguage(menu.getOriginalLanguage())
                             .translationId(menu.getTranslationId())
                             .state(menu.getState())
                             .content(content.get())
                             .build();
                 })
                 .collect(Collectors.toList());
-
-        loggingService.log(LogLevel.INFO, String.format("getAllMenusByRestaurantId %s %s %d", restaurantId, Message.FIND_COUNT.getMessage(), responseList.size()));
-        return responseList;
     }
 
     public RestaurantResponse getRestaurantById(String restaurantId, String acceptLanguage) throws JsonProcessingException {
@@ -129,10 +126,10 @@ public class RestaurantService {
         Content<RestaurantTranslationEntry> content = objectMapper.readValue(translation.getContent(), new TypeReference<>() {
         });
 
-        loggingService.log(LogLevel.INFO, String.format("getRestaurantById %s", restaurantId));
         return RestaurantResponse.builder()
                 .restaurantId(restaurant.getRestaurantId())
                 .tenantId(restaurant.getTenant().getTenantId())
+                .originalLanguage(restaurant.getOriginalLanguage())
                 .translationId(restaurant.getTranslationId())
                 .content(content)
                 .build();
@@ -155,6 +152,7 @@ public class RestaurantService {
 
         validateRequest(request, restaurant, finalAcceptLanguage, fieldErrors, true);
 
+        restaurant.setOriginalLanguage(request.getLanguage());
         restaurant.setCreatedAt(Instant.now().getEpochSecond());
         restaurant.setUpdatedAt(Instant.now().getEpochSecond());
         restaurantRepository.save(restaurant);
@@ -185,7 +183,6 @@ public class RestaurantService {
             selectedLanguagesRepository.save(selectedLanguages);
         }
 
-        loggingService.log(LogLevel.INFO, String.format("createRestaurant %s UUID=%s %s", request.getName(), restaurant.getRestaurantId(), Message.CREATE.getMessage()));
         return RestaurantResponseId.builder()
                 .restaurantId(restaurant.getRestaurantId())
                 .build();
@@ -203,12 +200,11 @@ public class RestaurantService {
             session.evict(restaurant); // unbind the session
 
             validateRequest(request, restaurant, finalAcceptLanguage, fieldErrors, false);
-            updateTranslation(restaurant, request.getLanguage(), translation, finalAcceptLanguage);
+            updateTranslation(restaurant, request.getLanguage(), translation);
 
             restaurant.setUpdatedAt(Instant.now().getEpochSecond());
             restaurantRepository.save(restaurant);
         }
-        loggingService.log(LogLevel.INFO, String.format("patchRestaurantById %s %s", restaurantId, Message.UPDATE.getMessage()));
     }
 
     public void deleteRestaurantById(String restaurantId, String acceptLanguage) {
@@ -217,7 +213,6 @@ public class RestaurantService {
         Restaurant restaurant = restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
 
         restaurantRepository.delete(restaurant);
-        loggingService.log(LogLevel.INFO, String.format("restaurantId %s NAME=%s %s", restaurantId, restaurant.getName(), Message.DELETE.getMessage()));
     }
 
     public List<MenuResponse> getAllMenusCategoriesDishesByRestaurantId(String restaurantId, String acceptLanguage) {
@@ -241,7 +236,7 @@ public class RestaurantService {
             }));
         }
 
-        List<MenuResponse> responseList = menus.stream()
+        return menus.stream()
                 .map(menu -> {
                     try {
                         translation.set(translationRepository.findAllByTranslationId(menu.getTranslationId()).orElseThrow(() ->
@@ -255,6 +250,7 @@ public class RestaurantService {
                     MenuResponse menuResponse = new MenuResponse();
                     menuResponse.setRestaurantId(menu.getRestaurant().getRestaurantId());
                     menuResponse.setMenuId(menu.getMenuId());
+                    menuResponse.setOriginalLanguage(menu.getOriginalLanguage());
                     menuResponse.setTranslationId(menu.getTranslationId());
                     menuResponse.setState(menu.getState());
                     menuResponse.setContent(content.get());
@@ -287,6 +283,7 @@ public class RestaurantService {
                                 CategoryResponse categoryResponse = CategoryResponse.builder()
                                         .menuId(category.getMenu().getMenuId())
                                         .categoryId(category.getCategoryId())
+                                        .originalLanguage(category.getOriginalLanguage())
                                         .translationId(category.getTranslationId())
                                         .state(category.getState())
                                         .content(content.get())
@@ -320,6 +317,7 @@ public class RestaurantService {
                                             return DishResponse.builder()
                                                     .categoryId(dish.getCategory().getCategoryId())
                                                     .dishId(dish.getDishId())
+                                                    .originalLanguage(dish.getOriginalLanguage())
                                                     .translationId(dish.getTranslationId())
                                                     .price(dish.getPrice())
                                                     .specialPrice(dish.getSpecialPrice())
@@ -344,9 +342,6 @@ public class RestaurantService {
                     return menuResponse;
 
                 }).collect(Collectors.toList());
-
-        loggingService.log(LogLevel.INFO, String.format("getAllMenusCategoriesDishesByRestaurantId %s ", restaurantId));
-        return responseList;
     }
 
     private void validateRequest(Restaurant request, Restaurant restaurant, String finalAcceptLanguage, Map<String, String> fieldErrors, boolean required) {
@@ -368,7 +363,7 @@ public class RestaurantService {
         }
     }
 
-    private void updateTranslation(Restaurant restaurant, String language, Translation translation, String finalAcceptLanguage) throws JsonProcessingException {
+    private void updateTranslation(Restaurant restaurant, String language, Translation translation) throws JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         TypeReference<Content<RestaurantTranslationEntry>> typeReference = new TypeReference<>() {
         };

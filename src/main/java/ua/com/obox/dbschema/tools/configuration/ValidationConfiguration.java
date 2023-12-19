@@ -16,5 +16,5 @@ public class ValidationConfiguration {
     // Attachment
     public final static int MAX_FILE_SIZE = 3 * 1024 * 1024; // in bytes
     public final static int ATTACHMENT_RECOMMENDED_WIDTH = 1024; // in pixels
-    public final static List<String> SUPPORT_LANGUAGES = List.of("uk-UA", "en-US");
+    public final static List<String> SUPPORT_LANGUAGES = List.of("uk-UA", "en-US", "es-ES", "fr-FR", "de-DE", "it-IT", "pt-PT");
 }

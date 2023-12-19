@@ -12,9 +12,6 @@ import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.FieldUpdateFunction;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
-import ua.com.obox.dbschema.tools.exception.Message;
-import ua.com.obox.dbschema.tools.logging.LogLevel;
-import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
@@ -41,7 +38,6 @@ public class MarkService {
     private final EntityOrderRepository entityOrderRepository;
     private final UpdateServiceHelper serviceHelper;
     private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
-    private final LoggingService loggingService;
 
     private String selectedLanguage = "en-US";
 
@@ -65,7 +61,7 @@ public class MarkService {
             }));
         }
 
-        List<MarkResponse> responseList = marks.stream()
+        return marks.stream()
                 .map(mark -> {
                     try {
                         translation.set(translationRepository.findAllByTranslationId(mark.getTranslationId()).orElseThrow(() ->
@@ -78,14 +74,12 @@ public class MarkService {
 
                     return MarkResponse.builder()
                             .markId(mark.getMarkId())
+                            .originalLanguage(mark.getOriginalLanguage())
                             .translationId(mark.getTranslationId())
                             .content(content.get())
                             .build();
                 })
                 .collect(Collectors.toList());
-
-        loggingService.log(LogLevel.INFO, String.format("getAllMarksByRestaurantId %s %s %d", restaurantId, Message.FIND_COUNT.getMessage(), responseList.size()));
-        return responseList;
     }
 
     public MarkResponse getMarkById(String markId, String acceptLanguage) throws JsonProcessingException {
@@ -99,9 +93,9 @@ public class MarkService {
         Content<OnlyName> content = objectMapper.readValue(translation.getContent(), new TypeReference<>() {
         });
 
-        loggingService.log(LogLevel.INFO, String.format("getMarkById %s", markId));
         return MarkResponse.builder()
                 .markId(mark.getMarkId())
+                .originalLanguage(mark.getOriginalLanguage())
                 .translationId(mark.getTranslationId())
                 .content(content)
                 .build();
@@ -113,6 +107,7 @@ public class MarkService {
         validateRequest(request, fieldErrors, true);
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+        request.setOriginalLanguage(request.getLanguage());
         request.setCreatedAt(Instant.now().getEpochSecond());
         request.setUpdatedAt(Instant.now().getEpochSecond());
         markRepository.save(request);
@@ -126,7 +121,6 @@ public class MarkService {
             markRepository.save(request);
         }
 
-        loggingService.log(LogLevel.INFO, String.format("createMark %s UUID=%s %s", request.getName(), request.getMarkId(), Message.CREATE.getMessage()));
         return MarkResponseId.builder().markId(request.getMarkId()).build();
     }
 
@@ -144,7 +138,6 @@ public class MarkService {
 
         mark.setUpdatedAt(Instant.now().getEpochSecond());
         markRepository.save(mark);
-        loggingService.log(LogLevel.INFO, String.format("patchMarkById %s %s", markId, Message.UPDATE.getMessage()));
     }
 
     private void validateRequest(Mark mark, Map<String, String> fieldErrors, boolean required) {
@@ -203,6 +196,5 @@ public class MarkService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Mark mark = markRepository.findByMarkId(markId).orElseThrow(() -> ExceptionTools.notFoundException(".markNotFound", finalAcceptLanguage, markId));
         markRepository.delete(mark);
-        loggingService.log(LogLevel.INFO, String.format("deleteMarkById %s NAME=%s %s", markId, mark.getName(), Message.DELETE.getMessage()));
     }
 }

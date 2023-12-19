@@ -62,6 +62,7 @@ public class DishService {
         return DishResponse.builder()
                 .dishId(dish.getDishId())
                 .categoryId(dish.getCategory().getCategoryId())
+                .originalLanguage(dish.getOriginalLanguage())
                 .translationId(dish.getTranslationId())
                 .content(content)
                 .cookingTime(dish.getCookingTime())
@@ -92,6 +93,7 @@ public class DishService {
 
         validateRequest(request, dish, finalAcceptLanguage, fieldErrors, true);
 
+        dish.setOriginalLanguage(request.getLanguage());
         dish.setCreatedAt(Instant.now().getEpochSecond());
         dish.setUpdatedAt(Instant.now().getEpochSecond());
         dishRepository.save(dish);
@@ -102,8 +104,8 @@ public class DishService {
             Translation translation = createTranslation
                     .create(dish.getDishId(), "dish", request.getLanguage(), entry);
             dish.setTranslationId(translation.getTranslationId());
+            dishRepository.save(dish);
         }
-        dishRepository.save(dish);
 
         return DishResponseId.builder()
                 .dishId(dish.getDishId())

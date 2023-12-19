@@ -32,6 +32,7 @@ public class BasicAllergensAndMarks {
             Mark mark = new Mark();
             mark.setReferenceId(referenceId);
             mark.setReferenceType("mark");
+            mark.setOriginalLanguage("uk-UA");
             mark.setCreatedAt(Instant.now().getEpochSecond());
             mark.setUpdatedAt(Instant.now().getEpochSecond());
             markRepository.save(mark);
@@ -63,6 +64,7 @@ public class BasicAllergensAndMarks {
             Allergen allergen = new Allergen();
             allergen.setReferenceId(referenceId);
             allergen.setReferenceType("allergen");
+            allergen.setOriginalLanguage("uk-UA");
             allergen.setCreatedAt(Instant.now().getEpochSecond());
             allergen.setUpdatedAt(Instant.now().getEpochSecond());
             allergenRepository.save(allergen);

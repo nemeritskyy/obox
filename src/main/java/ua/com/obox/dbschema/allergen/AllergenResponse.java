@@ -14,10 +14,12 @@ import ua.com.obox.dbschema.translation.responsebody.Content;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonPropertyOrder({"allergen_id", "translation_id", "content"})
+@JsonPropertyOrder({"allergen_id", "original_language", "translation_id", "content"})
 public class AllergenResponse {
     @JsonProperty("allergen_id")
     private String allergenId;
+    @JsonProperty("original_language")
+    private String originalLanguage;
     @JsonProperty("translation_id")
     private String translationId;
     @JsonUnwrapped

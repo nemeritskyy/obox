@@ -14,12 +14,14 @@ import ua.com.obox.dbschema.translation.responsebody.RestaurantTranslationEntry;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonPropertyOrder({"tenant_id", "restaurant_id", "translation_id", "content"})
+@JsonPropertyOrder({"tenant_id", "restaurant_id", "original_language", "translation_id", "content"})
 public class RestaurantResponse {
     @JsonProperty("restaurant_id")
     private String restaurantId;
     @JsonProperty("tenant_id")
     private String tenantId;
+    @JsonProperty("original_language")
+    private String originalLanguage;
     @JsonProperty("translation_id")
     private String translationId;
     @JsonUnwrapped
