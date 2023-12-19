@@ -1,16 +1,23 @@
 package ua.com.obox.dbschema.tools.services;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import ua.com.obox.authserver.confirmation.Confirm;
+import ua.com.obox.authserver.confirmation.ConfirmRepository;
+import ua.com.obox.authserver.mail.EmailService;
+import ua.com.obox.authserver.user.User;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
+import java.util.Optional;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 @Service
 public class UpdateServiceHelper {
@@ -135,6 +142,45 @@ public class UpdateServiceHelper {
             } else if (String.join(",", allergens).matches(ValidationConfiguration.UUID_REGEX)) {
                 setter.accept(String.join(",", allergens));
             } else return translation.getString(acceptLanguage + ".badSortedList");
+        }
+        return null;
+    }
+
+    public String checkExistUser(Optional<User> userExist, String errorLanguage) {
+        if (userExist.isPresent()) {
+            return translation.getString(errorLanguage + ".userExist");
+        } else return null;
+    }
+
+    public String checkEmail(String email, String errorLanguage) {
+        Pattern pattern = Pattern.compile("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$");
+        if (!pattern.matcher(email).find()) {
+            return translation.getString(errorLanguage + ".userBadEmail");
+        } else return null;
+    }
+
+    public String checkPassword(String password, String errorLanguage) {
+        Pattern pattern = Pattern.compile("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$");
+        if (!pattern.matcher(password).find()) {
+            return translation.getString(errorLanguage + ".badPassword");
+        } else return null;
+    }
+
+    public String checkActivate(Optional<User> userExist, String errorLanguage, String email, ConfirmRepository confirmRepository, EmailService emailService) {
+        if (userExist.isPresent()) {
+
+            Optional<Confirm> alreadyExist = confirmRepository.findByEmail(email);
+            alreadyExist.ifPresent(confirmToken -> {
+                String newToken = RandomStringUtils.random(20, true, true);
+                confirmRepository.delete(alreadyExist.get());
+                Confirm confirm = Confirm.builder().confirmationKey(newToken).email(email).build();
+                confirmRepository.save(confirm);
+                emailService.sendEmailConfirmation(confirm.getEmail(), confirm.getConfirmationKey());
+            });
+
+            if (!userExist.get().isEnabled()) {
+                return translation.getString(errorLanguage + ".userActivation");
+            }
         }
         return null;
     }

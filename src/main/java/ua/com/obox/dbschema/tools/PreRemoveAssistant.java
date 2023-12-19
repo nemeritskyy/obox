@@ -6,6 +6,8 @@ import ua.com.obox.dbschema.attachment.Attachment;
 import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
+import ua.com.obox.dbschema.language.SelectedLanguages;
+import ua.com.obox.dbschema.language.SelectedLanguagesRepository;
 import ua.com.obox.dbschema.mark.Mark;
 import ua.com.obox.dbschema.mark.MarkRepository;
 import ua.com.obox.dbschema.sorting.EntityOrder;
@@ -16,6 +18,7 @@ import ua.com.obox.dbschema.translation.Translation;
 import ua.com.obox.dbschema.translation.TranslationRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 public class PreRemoveAssistant {
     public static void removeByEntityId(String entityId) {
@@ -56,6 +59,9 @@ public class PreRemoveAssistant {
             translationRepository.deleteAll(translationsAllergens);
             List<Translation> translationsMarks = translationRepository.findAllByReferenceIdAndReferenceType(entityId, "mark");
             translationRepository.deleteAll(translationsMarks);
+            SelectedLanguagesRepository selectedLanguagesRepository = ApplicationContextProvider.getBean(SelectedLanguagesRepository.class);
+            Optional<SelectedLanguages> selectedLanguages = selectedLanguagesRepository.findByRestaurantId(entityId);
+            selectedLanguages.ifPresent(selectedLanguagesRepository::delete);
         }
         removeByEntityId(entityId);
     }

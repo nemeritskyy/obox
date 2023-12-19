@@ -1,6 +1,7 @@
 package ua.com.obox.dbschema.language;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,21 +14,24 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "language")
-public class Language {
+@Table(name = "selected_languages")
+public class SelectedLanguages {
     @Id
     @GeneratedValue(generator = "uuid2")
-    @Column(name = "language_id")
-    private String languageId;
+    @Column(name = "id")
+    private String id;
+    @JsonProperty("restaurant_id")
+    private String restaurantId;
 
-    @JoinColumn(name = "name")
-    private String name;
-
-    @JoinColumn(name = "label")
-    private String label;
-
+    @Lob
+    @JsonIgnore
+    private String languagesList;
     @JsonIgnore
     private long createdAt;
     @JsonIgnore
     private long updatedAt;
+
+    @Transient
+    @JsonProperty("languages")
+    String[] languagesArray;
 }

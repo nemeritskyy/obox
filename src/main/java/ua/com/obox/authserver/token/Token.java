@@ -1,5 +1,7 @@
 package ua.com.obox.authserver.token;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.hibernate.annotations.GenericGenerator;
 import ua.com.obox.authserver.user.User;
 import javax.persistence.*;
 import lombok.AllArgsConstructor;
@@ -14,8 +16,11 @@ import lombok.NoArgsConstructor;
 @Entity
 public class Token {
   @Id
-  @GeneratedValue
-  public Integer id;
+  @GeneratedValue(generator = "uuid2", strategy = GenerationType.IDENTITY)
+  @GenericGenerator(name = "uuid2", strategy = "org.hibernate.id.UUIDGenerator")
+  @Column(columnDefinition = "CHAR(36)")
+  @JsonIgnore
+  public String id;
 
   @Column(unique = true)
   public String token;

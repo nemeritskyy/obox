@@ -16,8 +16,6 @@ import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 
-import javax.servlet.http.HttpServletRequest;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,6 +32,7 @@ public class DishController {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @GetMapping("/{dishId}")
+//    @PreAuthorize("hasPermission(#dishId, 'READ')")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = GET_200_RESPONSE_EXAMPLE))),

@@ -1,9 +1,8 @@
 package ua.com.obox.authserver.auth;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import ua.com.obox.authserver.config.JwtService;
 import ua.com.obox.authserver.confirmation.Confirm;
 import ua.com.obox.authserver.confirmation.ConfirmRepository;
@@ -21,17 +20,21 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.tenant.*;
+import ua.com.obox.dbschema.tools.State;
+import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
+import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
+import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
+import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.mail.MessagingException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
+import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
+import java.util.ResourceBundle;
 
 @Service
 @RequiredArgsConstructor
@@ -42,42 +45,102 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private static final Logger logger = LogManager.getLogger(AuthenticationService.class);
-    @Autowired
-    private EmailService emailService;
+    private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
 
-    public StatusResponse register(RegisterRequest request) throws MessagingException, IOException, NoSuchPaddingException, NoSuchAlgorithmException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-        if (this.repository.findByEmail(request.getEmail()).isEmpty()) { // if user not created
-            var user = User.builder()
-                    .firstname(request.getFirstname())
-                    .lastname(request.getLastname())
+    private final EmailService emailService;
+    private final TenantService tenantService;
+    private final TenantRepository tenantRepository;
+    private final UpdateServiceHelper serviceHelper;
+
+    public void register(User request, String acceptLanguage) throws JsonProcessingException {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        Map<String, String> fieldErrors = new ResponseErrorMap<>();
+        Optional<User> userExist = repository.findByEmail(request.getEmail());
+
+        {
+            fieldErrors.put("language", Validator.validateLanguage(request.getLanguage(), finalAcceptLanguage));
+            fieldErrors.put("name", serviceHelper.updateNameField(request::setName, request.getName(), finalAcceptLanguage));
+            fieldErrors.put("email", serviceHelper.checkExistUser(userExist, finalAcceptLanguage));
+            fieldErrors.put("email", serviceHelper.checkEmail(request.getEmail(), finalAcceptLanguage));
+            fieldErrors.put("email", serviceHelper.checkActivate(userExist, finalAcceptLanguage, request.getEmail(), confirmRepository, emailService));
+            fieldErrors.put("password", serviceHelper.checkPassword(request.getPassword(), finalAcceptLanguage));
+        }
+
+        if (fieldErrors.size() > 0) {
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+        }
+
+        if (userExist.isEmpty()) {
+            TenantResponseId responseId = tenantService.createTenant(
+                    Tenant.builder()
+                            .name(request.getName())
+                            .language(request.getLanguage())
+                            .build(),
+                    finalAcceptLanguage
+            );
+
+            Tenant tenantCreated = tenantRepository.findByTenantId(responseId.getTenantId())
+                    .orElseThrow(() -> new RuntimeException("Tenant not found"));
+
+            User user = User.builder()
                     .email(request.getEmail())
                     .password(passwordEncoder.encode(request.getPassword()))
-                    .enabled(request.getFirstname().equals("Admin") ? true : false) // for admin account enabled (only for testing)
+                    .state(State.DISABLED)
                     .role(Role.USER)
+                    .tenant(tenantCreated)
+                    .createdAt(Instant.now().getEpochSecond())
+                    .updatedAt(Instant.now().getEpochSecond())
                     .build();
+
             repository.save(user);
-            System.out.println(request.getEmail());
-            if (!request.getFirstname().equals("Admin")) {
+            tenantCreated.setUser(user);
+
+//            Tenant tenant = Tenant.builder()
+//                    .name(request.getName())
+//                    .language(request.getLanguage())
+//                    .build();
+//
+//            TenantResponseId responseId = tenantService.createTenant(tenant, finalAcceptLanguage);
+//
+//
+//            Optional<Tenant> tenantGet = tenantRepository.findByTenantId(responseId.getTenantId());
+//            Tenant tenantCreated = null;
+//            if (tenantGet.isPresent()) {
+//                tenantCreated = tenantGet.get();
+//            }
+//
+//            var user = User.builder()
+//                    .email(request.getEmail())
+//                    .password(passwordEncoder.encode(request.getPassword()))
+//                    .state(State.DISABLED)
+//                    .role(Role.USER)
+//                    .tenant(tenantCreated)
+//                    .createdAt(Instant.now().getEpochSecond())
+//                    .updatedAt(Instant.now().getEpochSecond())
+//                    .build();
+//
+//
+//            repository.save(user);
+//            tenantCreated.setUser(user);
+
+            if (!user.isEnabled()) {
                 var confirmToken = RandomStringUtils.random(20, true, true);
                 var confirm = Confirm.builder().confirmationKey(confirmToken).email(request.getEmail()).build();
                 confirmRepository.save(confirm);
-                emailService.sendSimpleMail(request.getEmail(), confirmToken);
+                emailService.sendEmailConfirmation(request.getEmail(), confirmToken);
             }
+
 
 //            var savedUser = repository.save(user);
 //            var jwtToken = jwtService.generateToken(user);
 //            var refreshToken = jwtService.generateRefreshToken(user);
 //            if (user.isEnabled()) saveUserToken(savedUser, jwtToken);
-            return StatusResponse.builder()
-                    .emailConfirmation("need to email confirm")
-//                    .accessToken(jwtToken)
-//                    .refreshToken(refreshToken)
-                    .build();
+
         } else {
-            logger.error("user already exist");
+            Optional<Confirm> alreadyExist = confirmRepository.findByEmail(request.getEmail());
+            alreadyExist.ifPresent(confirmToken -> emailService.sendEmailConfirmation(confirmToken.getEmail(), confirmToken.getConfirmationKey()));
         }
-        return StatusResponse.builder().build();
+
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
@@ -100,21 +163,23 @@ public class AuthenticationService {
     }
 
     private void saveUserToken(User user, String jwtToken) {
-        var token = Token.builder()
-                .user(user)
-                .token(jwtToken)
-                .tokenType(TokenType.BEARER)
-                .expired(false)
-                .revoked(false)
-                .build();
-        tokenRepository.save(token);
+        System.out.println("join save user");
+            var token = Token.builder()
+                    .user(user)
+                    .token(jwtToken)
+                    .tokenType(TokenType.BEARER)
+                    .expired(false)
+                    .revoked(false)
+                    .build();
+            tokenRepository.save(token);
     }
 
     private void revokeAllUserTokens(User user) {
-        var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
+        var validUserTokens = tokenRepository.findAllValidTokenByUserId(user.getUserId());
         if (validUserTokens.isEmpty())
             return;
         validUserTokens.forEach(token -> {
+            System.out.println("revoke id:" + token.id);
             token.setExpired(true);
             token.setRevoked(true);
         });
@@ -149,18 +214,28 @@ public class AuthenticationService {
         }
     }
 
-    public StatusResponse confirmation(String token) {
-        String status = "need to email confirm";
+    public AuthenticationResponse confirmation(String token, String acceptLanguage) {
+        String errorLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Optional<Confirm> confirm = confirmRepository.findByConfirmationKey(token);
         if (confirm.isPresent()) {
-            System.out.println("find confirmation token");
             var user = repository.findByEmail(confirm.get().getEmail())
                     .orElseThrow();
-            user.setEnabled(true);
-            status = "confirm success";
+            user.setState(State.ENABLED);
             repository.save(user);
             confirmRepository.delete(confirm.get());
+
+            var jwtToken = jwtService.generateToken(user);
+            var refreshToken = jwtService.generateRefreshToken(user);
+            if (user.isEnabled()) saveUserToken(user, jwtToken);
+
+            return AuthenticationResponse.builder()
+                    .accessToken(jwtToken)
+                    .refreshToken(refreshToken)
+                    .build();
+        } else {
+            Map<String, String> fieldErrors = new ResponseErrorMap<>();
+            fieldErrors.put("confirmation", translation.getString(errorLanguage + ".expiredLink"));
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
         }
-        return StatusResponse.builder().emailConfirmation(status).build();
     }
 }

@@ -6,4 +6,6 @@ import java.util.Optional;
 
 public interface ConfirmRepository extends JpaRepository<Confirm, Integer> {
     Optional<Confirm> findByConfirmationKey(String confirmationKey);
+
+    Optional<Confirm> findByEmail(String email);
 }

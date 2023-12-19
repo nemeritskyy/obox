@@ -1,16 +1,30 @@
 package ua.com.obox.dbschema.language;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.restaurant.RestaurantRepository;
+import ua.com.obox.dbschema.tools.CatchResponse;
+import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
+import ua.com.obox.dbschema.tools.exception.ExceptionTools;
+import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
+import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
+import ua.com.obox.dbschema.tools.translation.CheckHeader;
+import ua.com.obox.dbschema.translation.assistant.RemoveContentFromTranslation;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class LanguageService {
     private final LanguageRepository languageRepository;
+    private final SelectedLanguagesRepository selectedLanguagesRepository;
+    private final RestaurantRepository restaurantRepository;
+    @Autowired
+    private RemoveContentFromTranslation removeContentFromTranslation;
+    private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
 
     public List<LanguageResponse> getAllLanguages() {
         List<Language> languageList;
@@ -32,5 +46,52 @@ public class LanguageService {
 
         languageRepository.saveAll(languageList);
         return responses;
+    }
+
+    public void postLanguagesForRestaurant(SelectedLanguages request, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        restaurantRepository.findByRestaurantId(request.getRestaurantId()).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, request.getRestaurantId()));
+        Map<String, String> fieldErrors = new ResponseErrorMap<>();
+        try {
+
+        if (!String.join(",", request.getLanguagesArray()).matches(ValidationConfiguration.UUID_REGEX)) {
+            fieldErrors.put("languages", translation.getString(finalAcceptLanguage + ".badSortedList"));
+        }
+        } catch (Exception e){
+            CatchResponse.getMessage();
+        }
+        if (fieldErrors.size() > 0)
+            throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
+
+        SelectedLanguages selectedLanguages = selectedLanguagesRepository.findByRestaurantId(request.getRestaurantId()).orElse(null);
+        if (selectedLanguages != null) {
+            List<String> removedLanguagesId = new ArrayList<>(Arrays.asList(selectedLanguages.getLanguagesList().split(",")));
+            List<String> newList = Arrays.asList(request.getLanguagesArray());
+            removedLanguagesId.removeAll(newList);
+            System.out.println("Removed languages: " + removedLanguagesId);
+
+            removeContentFromTranslation.removeContentByRestaurantId(request.getRestaurantId(), removedLanguagesId);
+
+            selectedLanguages.setLanguagesList(String.join(",", request.getLanguagesArray()));
+            selectedLanguages.setUpdatedAt(Instant.now().getEpochSecond());
+            selectedLanguagesRepository.save(selectedLanguages);
+        } else {
+            request.setLanguagesList(String.join(",", request.getLanguagesArray()));
+            request.setCreatedAt(Instant.now().getEpochSecond());
+            request.setUpdatedAt(Instant.now().getEpochSecond());
+            selectedLanguagesRepository.save(request);
+        }
+    }
+
+    public List<Language> getLanguagesByRestaurantId(String restaurantId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
+        List<Language> languageList = languageRepository.findAll();
+        Optional<SelectedLanguages> selectedLanguages = selectedLanguagesRepository.findByRestaurantId(restaurantId);
+        if (selectedLanguages.isPresent()) {
+            String containsLanguages = selectedLanguages.get().getLanguagesList();
+            languageList.removeIf(language -> !containsLanguages.contains(language.getLanguageId()));
+        } else return null;
+        return languageList;
     }
 }

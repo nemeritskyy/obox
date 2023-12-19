@@ -35,7 +35,7 @@ public class EmailServiceImpl implements EmailService {
         return siteUrl;
     }
 
-    public String sendSimpleMail(String sendTo, String confirmToken) {
+    public String sendEmailConfirmation(String sendTo, String confirmToken) {
         try {
 
             MimeMessage msg = javaMailSender.createMimeMessage();
@@ -45,7 +45,13 @@ public class EmailServiceImpl implements EmailService {
             messageHelper.setSubject("Please confirm your email");
             messageHelper.setText("" +
                     "<html><body>" +
-                    "<a href=\"" + siteUrl + "/api/v1/auth/confirm/" + confirmToken + "\">Confirm your email</a>" +
+                    "Dear user, " + sendTo + ",<br>" +
+                    "You have registered an account on the QR menu creation service for establishments. " +
+                    "<a href=\"" + siteUrl + "/auth/confirm/" + confirmToken + "\">Please confirm your email.</a><br>" +
+                    "If you didn't request this code, you can safely ignore this email. Someone else might have typed your email address by mistake.<br>" +
+                    "<br>" +
+                    "Thanks,<br>" +
+                    "The Obox account team" +
                     "</body></html>", true);
             javaMailSender.send(msg);
             return "Mail Sent Successfully...";
