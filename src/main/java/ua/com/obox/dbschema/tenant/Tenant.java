@@ -31,10 +31,13 @@ public class Tenant {
     @Column(columnDefinition = "VARCHAR(8) DEFAULT '" + State.ENABLED + "'")
     @JsonIgnore
     private String state;
-
+    @JsonIgnore
     private long createdAt;
+    @JsonIgnore
     private long updatedAt;
-
+    @JsonIgnore
+    @Column(columnDefinition = "CHAR(5)")
+    private String originalLanguage;
     @JsonIgnore
     @OneToOne
     @JoinColumn(name = "user_id")
