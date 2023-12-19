@@ -7,12 +7,14 @@ import ua.com.obox.authserver.confirmation.Confirm;
 import ua.com.obox.authserver.confirmation.ConfirmRepository;
 import ua.com.obox.authserver.mail.EmailService;
 import ua.com.obox.authserver.user.User;
+import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
 import java.util.Optional;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -47,16 +49,41 @@ public class UpdateServiceHelper {
         return checkField;
     }
 
-    public String updateWeightField(Consumer<String> setter, String value, String acceptLanguage) {
+    public String updateWeightField(Dish dish, String value, String acceptLanguage) {
         if (value == null || removeSpacesAndDuplicateSeparators(value).isEmpty()) {
-            setter.accept(null);
+            dish.setWeight(null);
             return null;
         }
         String checkField = Validator.validateWeight(removeSpacesAndDuplicateSeparators(value), acceptLanguage);
         if (checkField == null) {
-            setter.accept(removeSpacesAndDuplicateSeparators(value));
+            dish.setWeight(removeSpacesAndDuplicateSeparators(value));
         }
         return checkField;
+    }
+
+    public String updateWeightUnit(Dish dish, String value, String acceptLanguage) {
+        if (value == null || value.equals("")) {
+            dish.setWeightUnit(null);
+            return null;
+        }
+        String checkField = Validator.validateWeightUnit(value, acceptLanguage);
+        if (checkField == null) {
+            dish.setWeightUnit(value.toUpperCase());
+        }
+        return checkField;
+    }
+
+    public String checkWeight(Dish dish, Dish request, Map<String, String> fieldErrors, String acceptLanguage) {
+        if (dish.getWeight() == null && dish.getWeightUnit() != null) {
+            if (!fieldErrors.containsKey("weight"))
+                fieldErrors.put("weight", translation.getString(acceptLanguage + ".weightRequired"));
+        }
+        if (dish.getWeightUnit() == null && (dish.getWeight() != null || request.getWeight() != null)) {
+            if (request.getWeight() != "") {
+                fieldErrors.put("weight_unit", translation.getString(acceptLanguage + ".weightUnitRequired"));
+            }
+        }
+        return null;
     }
 
     public String updateIntegerField(Consumer<Integer> setter, Integer value, int maxValue, String fieldName, String acceptLanguage) {
@@ -91,18 +118,6 @@ public class UpdateServiceHelper {
             }
         }
         return null;
-    }
-
-    public String updateWeightUnit(Consumer<String> setter, String value, String acceptLanguage) {
-        if (value == null) {
-            setter.accept(null);
-            return null;
-        }
-        String checkField = Validator.validateWeightUnit(value, acceptLanguage);
-        if (checkField == null) {
-            setter.accept(value.toUpperCase());
-        }
-        return checkField;
     }
 
     public String updateState(Consumer<String> setter, String value, String acceptLanguage) {

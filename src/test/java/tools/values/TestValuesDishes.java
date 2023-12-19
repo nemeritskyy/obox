@@ -17,6 +17,7 @@ public class TestValuesDishes {
                         "description", "description for dish 1",
                         "price", 1,
                         "weight", 1,
+                        "weight_unit", "gr",
                         "calories", 1,
                         "in_stock", "ENABLED",
                         "state", "ENABLED",
@@ -28,6 +29,7 @@ public class TestValuesDishes {
                         "description", "description for dish 1",
                         "price", 1,
                         "weight", 1,
+                        "weight_unit", "gr",
                         "calories", 1,
                         "in_stock", "ENABLED",
                         "state", "ENABLED",
@@ -39,6 +41,7 @@ public class TestValuesDishes {
                         "description", "description for dish 1",
                         "price", 100_000,
                         "weight", 1,
+                        "weight_unit", "gr",
                         "calories", 1,
                         "in_stock", "ENABLED",
                         "state", "ENABLED",
@@ -50,6 +53,7 @@ public class TestValuesDishes {
                         "description", "description for dish 1",
                         "price", 99.99,
                         "weight", 1,
+                        "weight_unit", "gr",
                         "calories", 1,
                         "in_stock", "ENABLED",
                         "state", "ENABLED",
@@ -61,6 +65,7 @@ public class TestValuesDishes {
                         "description", "description for dish 1",
                         "price", 1,
                         "weight", 1,
+                        "weight_unit", "gr",
                         "calories", 1,
                         "in_stock", "ENABLED",
                         "state", "DISABLED",
@@ -72,6 +77,7 @@ public class TestValuesDishes {
                         "description", RandomStringUtils.random(255, true, true),
                         "price", 1,
                         "weight", 1,
+                        "weight_unit", "gr",
                         "calories", 1,
                         "in_stock", "ENABLED",
                         "state", "ENABLED",
@@ -83,6 +89,7 @@ public class TestValuesDishes {
                         "description", RandomStringUtils.random(255, true, true),
                         "price", 1,
                         "weight", 10_000,
+                        "weight_unit", "gr",
                         "calories", 1,
                         "in_stock", "ENABLED",
                         "state", "ENABLED",
@@ -94,6 +101,7 @@ public class TestValuesDishes {
                         "description", RandomStringUtils.random(255, true, true),
                         "price", 1,
                         "weight", "10000/300/50",
+                        "weight_unit", "gr",
                         "calories", 1,
                         "in_stock", "ENABLED",
                         "state", "ENABLED",
@@ -105,6 +113,7 @@ public class TestValuesDishes {
                         "description", "description",
                         "price", 1,
                         "weight", 100/50,
+                        "weight_unit", "gr",
                         "calories", 30_000,
                         "in_stock", "ENABLED",
                         "state", "ENABLED",
@@ -269,6 +278,7 @@ public class TestValuesDishes {
                         "description", "description",
                         "price", 1,
                         "weight", 10000,
+                        "weight_unit","gr",
                         "calories", 100.5,
                         "state", "ENABLED",
                         "language", "en-US"
@@ -278,6 +288,7 @@ public class TestValuesDishes {
                         "price", 100,
                         "description", "new description",
                         "weight", 10000,
+                        "weight_unit","gr",
                         "calories", 100.5,
                         "state", "ENABLED",
                         "language", "en-US"
@@ -288,6 +299,7 @@ public class TestValuesDishes {
                         "description", "new description",
                         "calories", 100.5,
                         "weight", 10000,
+                        "weight_unit","gr",
                         "state", "ENABLED",
                         "language", "en-US"
                 ),
@@ -297,12 +309,14 @@ public class TestValuesDishes {
                         "description", "",
                         "calories", 100.5,
                         "weight", 10000,
+                        "weight_unit","gr",
                         "state", "ENABLED",
                         "language", "en-US"
                 ),
                 Map.of( // Patch. 4
                         "calories", 500,
                         "weight", 400,
+                        "weight_unit","gr",
                         "language", "en-US"
                 ),
                 Map.of( // Patch. 6
@@ -312,9 +326,8 @@ public class TestValuesDishes {
                 Map.of( // change for Get. 5
                         "description", "",
                         "calories", "",
-//                        "allergens", "",
-//                        "tags", "",
                         "weight", "",
+                        "weight_unit","",
                         "language", "en-US"
                 )
         );
