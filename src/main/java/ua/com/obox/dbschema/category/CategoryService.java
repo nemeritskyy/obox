@@ -19,9 +19,6 @@ import ua.com.obox.dbschema.tools.FieldUpdateFunction;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.attachment.AttachmentTools;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
-import ua.com.obox.dbschema.tools.exception.Message;
-import ua.com.obox.dbschema.tools.logging.LogLevel;
-import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.services.UpdateServiceHelper;
@@ -47,7 +44,6 @@ public class CategoryService {
     private final EntityOrderRepository entityOrderRepository;
     private final TranslationRepository translationRepository;
     private final AttachmentRepository attachmentRepository;
-    private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final ResourceBundle translationContent = ResourceBundle.getBundle("translation.messages");
     @Value("${application.image-dns}")
@@ -73,7 +69,7 @@ public class CategoryService {
             }));
         }
 
-        List<DishResponse> responseList = dishes.stream()
+        return dishes.stream()
                 .map(dish -> {
                     try {
                         translation.set(translationRepository.findAllByTranslationId(dish.getTranslationId()).orElseThrow(() ->
@@ -103,9 +99,6 @@ public class CategoryService {
                             .build();
                 })
                 .collect(Collectors.toList());
-
-        loggingService.log(LogLevel.INFO, String.format("getAllDishesByCategoryId %s %s %d", categoryId, Message.FIND_COUNT.getMessage(), responseList.size()));
-        return responseList;
     }
 
     public CategoryResponse getCategoryById(String categoryId, String acceptLanguage) throws JsonProcessingException {
@@ -119,10 +112,10 @@ public class CategoryService {
         Content<CategoryTranslationEntry> content = objectMapper.readValue(translation.getContent(), new TypeReference<>() {
         });
 
-        loggingService.log(LogLevel.INFO, String.format("getCategoryById %s", categoryId));
         return CategoryResponse.builder()
                 .menuId(category.getMenu().getMenuId())
                 .categoryId(category.getCategoryId())
+                .originalLanguage(category.getOriginalLanguage())
                 .translationId(category.getTranslationId())
                 .content(content)
                 .state(category.getState())
@@ -144,6 +137,7 @@ public class CategoryService {
 
         validateRequest(request, category, finalAcceptLanguage, fieldErrors, true);
 
+        category.setOriginalLanguage(request.getLanguage());
         category.setCreatedAt(Instant.now().getEpochSecond());
         category.setUpdatedAt(Instant.now().getEpochSecond());
         categoryRepository.save(category);
@@ -154,9 +148,9 @@ public class CategoryService {
             Translation translation = createTranslation
                     .create(category.getCategoryId(), "category", request.getLanguage(), entry);
             category.setTranslationId(translation.getTranslationId());
+            categoryRepository.save(category);
         }
 
-        loggingService.log(LogLevel.INFO, String.format("createCategory %s UUID=%s %s", request.getName(), category.getCategoryId(), Message.CREATE.getMessage()));
         return CategoryResponseId.builder()
                 .categoryId(category.getCategoryId())
                 .build();
@@ -175,14 +169,12 @@ public class CategoryService {
 
         category.setUpdatedAt(Instant.now().getEpochSecond());
         categoryRepository.save(category);
-        loggingService.log(LogLevel.INFO, String.format("patchCategoryById %s %s", categoryId, Message.UPDATE.getMessage()));
     }
 
     public void deleteCategoryById(String categoryId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Category category = categoryRepository.findByCategoryId(categoryId).orElseThrow(() -> ExceptionTools.notFoundException(".categoryNotFound", finalAcceptLanguage, categoryId));
         categoryRepository.delete(category);
-        loggingService.log(LogLevel.INFO, String.format("deleteCategoryById %s NAME=%s %s", categoryId, category.getName(), Message.DELETE.getMessage()));
     }
 
     private void validateRequest(Category request, Category category, String finalAcceptLanguage, Map<String, String> fieldErrors, boolean required) {

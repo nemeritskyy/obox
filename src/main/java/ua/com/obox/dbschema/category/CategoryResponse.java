@@ -18,13 +18,15 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonPropertyOrder({"menu_id", "category_id", "translation_id", "state", "content", "dishes"})
+@JsonPropertyOrder({"menu_id", "category_id", "original_language", "translation_id", "state", "content", "dishes"})
 public class CategoryResponse {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("menu_id")
     private String menuId;
     @JsonProperty("category_id")
     private String categoryId;
+    @JsonProperty("original_language")
+    private String originalLanguage;
     @JsonProperty("translation_id")
     private String translationId;
     @JsonProperty("state")
