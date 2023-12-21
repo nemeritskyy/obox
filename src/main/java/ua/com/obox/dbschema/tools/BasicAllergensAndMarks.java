@@ -31,7 +31,7 @@ public class BasicAllergensAndMarks {
         for (Map<String, OnlyName> record : marks) {
             Mark mark = new Mark();
             mark.setReferenceId(referenceId);
-            mark.setReferenceType("mark");
+            mark.setReferenceType("restaurant");
             mark.setOriginalLanguage("uk-UA");
             mark.setCreatedAt(Instant.now().getEpochSecond());
             mark.setUpdatedAt(Instant.now().getEpochSecond());
@@ -40,7 +40,7 @@ public class BasicAllergensAndMarks {
             {
                 CreateTranslation<OnlyName> createTranslation = new CreateTranslation<>(translationRepository);
                 Translation translation = createTranslation
-                        .createBasic(referenceId, mark.getReferenceType(), record);
+                        .createBasic(mark.getMarkId(), "mark", record);
                 mark.setTranslationId(translation.getTranslationId());
                 markRepository.save(mark);
             }
@@ -63,7 +63,7 @@ public class BasicAllergensAndMarks {
         for (Map<String, OnlyName> record : marks) {
             Allergen allergen = new Allergen();
             allergen.setReferenceId(referenceId);
-            allergen.setReferenceType("allergen");
+            allergen.setReferenceType("restaurant");
             allergen.setOriginalLanguage("uk-UA");
             allergen.setCreatedAt(Instant.now().getEpochSecond());
             allergen.setUpdatedAt(Instant.now().getEpochSecond());
@@ -72,7 +72,7 @@ public class BasicAllergensAndMarks {
             {
                 CreateTranslation<OnlyName> createTranslation = new CreateTranslation<>(translationRepository);
                 Translation translation = createTranslation
-                        .createBasic(referenceId, allergen.getReferenceType(), record);
+                        .createBasic(allergen.getAllergenId(), "allergen", record);
                 allergen.setTranslationId(translation.getTranslationId());
                 allergenRepository.save(allergen);
             }
