@@ -42,7 +42,7 @@ public class Validator {
     }
 
     public static String validateVarcharTranslationSupport(String str, String fieldName, String acceptLanguage) {
-        if (str != null && str.trim().isEmpty() || str != null && removeExtraSpaces(str).length() > 255) {
+        if (str != null && str.trim().isEmpty() || str != null && removeExtraSpaces(str).length() > 500) {
             staticLoggingService.log(LogLevel.ERROR,
                     String.format(translation.getString("en-US.varcharLimit"), translation.getString("en-US." + fieldName))
             );
