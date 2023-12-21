@@ -15,7 +15,7 @@ import javax.persistence.*;
 @AllArgsConstructor
 @Entity
 @Table(name = "selected_languages")
-public class SelectedLanguages {
+public class SelectedLanguage {
     @Id
     @GeneratedValue(generator = "uuid2")
     @Column(name = "id")
@@ -23,9 +23,8 @@ public class SelectedLanguages {
     @JsonProperty("restaurant_id")
     private String restaurantId;
 
-    @Lob
-    @JsonIgnore
-    private String languagesList;
+    @JsonProperty("language_id")
+    private String languageId;
     @JsonIgnore
     private long createdAt;
     @JsonIgnore

@@ -16,8 +16,8 @@ import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishResponse;
 import ua.com.obox.dbschema.language.Language;
 import ua.com.obox.dbschema.language.LanguageRepository;
-import ua.com.obox.dbschema.language.SelectedLanguages;
-import ua.com.obox.dbschema.language.SelectedLanguagesRepository;
+import ua.com.obox.dbschema.language.SelectedLanguage;
+import ua.com.obox.dbschema.language.SelectedLanguageRepository;
 import ua.com.obox.dbschema.mark.MarkRepository;
 import ua.com.obox.dbschema.sorting.EntityOrder;
 import ua.com.obox.dbschema.sorting.EntityOrderRepository;
@@ -67,7 +67,7 @@ public class RestaurantService {
     private final LoggingService loggingService;
     private final UpdateServiceHelper serviceHelper;
     private final LanguageRepository languageRepository;
-    private final SelectedLanguagesRepository selectedLanguagesRepository;
+    private final SelectedLanguageRepository selectedLanguageRepository;
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
     @Value("${application.image-dns}")
     private String attachmentsDns;
@@ -172,15 +172,15 @@ public class RestaurantService {
             loggingService.log(LogLevel.ERROR, "Problem with adding basic marks or allergens");
         }
 
-        Optional<Language> language = languageRepository.findByLabel("uk-UA"); // by default
+        Optional<Language> language = languageRepository.findByName("uk-UA"); // by default
         if (language.isPresent()) {
-            SelectedLanguages selectedLanguages = SelectedLanguages.builder()
+            SelectedLanguage selectedLanguage = SelectedLanguage.builder()
                     .restaurantId(restaurant.getRestaurantId())
-                    .languagesList(language.get().getLanguageId())
+                    .languageId(language.get().getLanguageId())
                     .createdAt(Instant.now().getEpochSecond())
                     .updatedAt(Instant.now().getEpochSecond())
                     .build();
-            selectedLanguagesRepository.save(selectedLanguages);
+            selectedLanguageRepository.save(selectedLanguage);
         }
 
         return RestaurantResponseId.builder()
