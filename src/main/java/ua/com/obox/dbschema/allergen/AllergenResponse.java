@@ -14,7 +14,7 @@ import ua.com.obox.dbschema.translation.responsebody.Content;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonPropertyOrder({"allergen_id", "original_language", "translation_id", "content"})
+@JsonPropertyOrder({"allergen_id", "original_language", "translation_id", "color_hex", "emoji", "content"})
 public class AllergenResponse {
     @JsonProperty("allergen_id")
     private String allergenId;
@@ -22,6 +22,10 @@ public class AllergenResponse {
     private String originalLanguage;
     @JsonProperty("translation_id")
     private String translationId;
+    @JsonProperty("color_hex")
+    private String colorHex;
+    @JsonProperty("emoji")
+    private String emoji;
     @JsonUnwrapped
     private Content<OnlyName> content;
 }

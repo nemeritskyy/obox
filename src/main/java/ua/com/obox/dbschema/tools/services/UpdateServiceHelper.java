@@ -13,6 +13,7 @@ import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -79,7 +80,7 @@ public class UpdateServiceHelper {
                 fieldErrors.put("weight", translation.getString(acceptLanguage + ".weightRequired"));
         }
         if (dish.getWeightUnit() == null && (dish.getWeight() != null || request.getWeight() != null)) {
-            if (request.getWeight() != "") {
+            if (!Objects.equals(request.getWeight(), "")) {
                 fieldErrors.put("weight_unit", translation.getString(acceptLanguage + ".weightUnitRequired"));
             }
         }
@@ -183,5 +184,29 @@ public class UpdateServiceHelper {
             }
         }
         return null;
+    }
+
+    public String updateColorHex(Consumer<String> setColorHex, String color, String errorLanguage) {
+        Pattern pattern = Pattern.compile("^#(?:[0-9a-fA-F]{3}){1,2}$");
+        if (color != null && pattern.matcher(color).find()) {
+            setColorHex.accept(color);
+            return null;
+        } else return translation.getString(errorLanguage + ".badColorHex");
+    }
+
+    public String updateEmoji(Consumer<String> setEmoji, String emoji, String errorLanguage) {
+        if (emoji == null) {
+            setEmoji.accept(null);
+            return null;
+        }
+        if (removeExtraSpaces(emoji).isEmpty()) {
+            setEmoji.accept(null);
+            return null;
+        }
+        String checkField = Validator.validateEmoji(emoji, errorLanguage);
+        if (checkField == null) {
+            setEmoji.accept(removeExtraSpaces(emoji));
+        }
+        return checkField;
     }
 }

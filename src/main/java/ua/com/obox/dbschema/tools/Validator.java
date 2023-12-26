@@ -19,6 +19,13 @@ public class Validator {
     private final LoggingService loggingService;
     private static LoggingService staticLoggingService;
 
+    public static String validateEmoji(String emoji, String errorLanguage) {
+        if (emoji != null && emoji.trim().isEmpty() || emoji != null && removeExtraSpaces(emoji).length() > 255) {
+            return String.format(translation.getString(errorLanguage + ".badEmoji"));
+        }
+        return null;
+    }
+
     @PostConstruct
     private void init() {
         staticLoggingService = this.loggingService;

@@ -75,6 +75,8 @@ public class AllergenService {
                             .allergenId(allergen.getAllergenId())
                             .originalLanguage(allergen.getOriginalLanguage())
                             .translationId(allergen.getTranslationId())
+                            .colorHex(allergen.getColorHex())
+                            .emoji(allergen.getEmoji())
                             .content(content.get())
                             .build();
                 })
@@ -96,6 +98,8 @@ public class AllergenService {
                 .allergenId(allergen.getAllergenId())
                 .originalLanguage(allergen.getOriginalLanguage())
                 .translationId(allergen.getTranslationId())
+                .colorHex(allergen.getColorHex())
+                .emoji(allergen.getEmoji())
                 .content(content)
                 .build();
     }
@@ -103,59 +107,65 @@ public class AllergenService {
     public AllergenResponseId createAllergen(Allergen request, String acceptLanguage) throws JsonProcessingException {
         selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
-        validateRequest(request, fieldErrors, true);
+        Allergen allergen = Allergen.builder().build();
+        validateRequest(request, allergen, fieldErrors, true);
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
-        request.setOriginalLanguage(request.getLanguage());
-        request.setCreatedAt(Instant.now().getEpochSecond());
-        request.setUpdatedAt(Instant.now().getEpochSecond());
-        allergenRepository.save(request);
+        allergen.setOriginalLanguage(request.getLanguage());
+        allergen.setCreatedAt(Instant.now().getEpochSecond());
+        allergen.setUpdatedAt(Instant.now().getEpochSecond());
+        allergenRepository.save(allergen);
 
         {
             CreateTranslation<OnlyName> createTranslation = new CreateTranslation<>(translationRepository);
-            MenuTranslationEntry entry = new MenuTranslationEntry(request.getName());
+            MenuTranslationEntry entry = new MenuTranslationEntry(allergen.getName());
             Translation translation = createTranslation
-                    .create(request.getAllergenId(), "allergen", request.getLanguage(), entry);
-            request.setTranslationId(translation.getTranslationId());
-            allergenRepository.save(request);
+                    .create(allergen.getAllergenId(), "allergen", request.getLanguage(), entry);
+            allergen.setTranslationId(translation.getTranslationId());
+            allergenRepository.save(allergen);
         }
 
-        return AllergenResponseId.builder().allergenId(request.getAllergenId()).build();
+        return AllergenResponseId.builder().allergenId(allergen.getAllergenId()).build();
     }
 
     public void patchAllergenById(String allergenId, Allergen request, String acceptLanguage) throws JsonProcessingException {
-        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
-        Allergen allergen = allergenRepository.findByAllergenId(allergenId).orElseThrow(() -> ExceptionTools.notFoundException(".allergenNotFound", finalAcceptLanguage, allergenId));
+        Allergen allergen = allergenRepository.findByAllergenId(allergenId).orElseThrow(() -> ExceptionTools.notFoundException(".allergenNotFound", selectedLanguage, allergenId));
         Translation translation = translationRepository.findAllByTranslationId(allergen.getTranslationId())
-                .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, allergenId));
-
-        validateRequest(request, fieldErrors, false);
-        allergen.setName(request.getName());
+                .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", selectedLanguage, allergenId));
+        validateRequest(request, allergen, fieldErrors, false);
+//        allergen.setName(request.getName());
         updateTranslation(allergen, request.getLanguage(), translation);
-
         allergen.setUpdatedAt(Instant.now().getEpochSecond());
         allergenRepository.save(allergen);
     }
 
-    private void validateRequest(Allergen allergen, Map<String, String> fieldErrors, boolean required) {
-        fieldErrors.put("language", Validator.validateLanguage(allergen.getLanguage(), selectedLanguage));
+    private void validateRequest(Allergen request, Allergen allergen, Map<String, String> fieldErrors, boolean required) {
+        fieldErrors.put("language", Validator.validateLanguage(request.getLanguage(), selectedLanguage));
 
         if (required) {
-            if ("restaurant".equals(allergen.getReferenceType())) {
-                var restaurantInfo = restaurantRepository.findByRestaurantId(allergen.getReferenceId());
-
+            if ("restaurant".equals(request.getReferenceType())) {
+                var restaurantInfo = restaurantRepository.findByRestaurantId(request.getReferenceId());
+                allergen.setReferenceType(request.getReferenceType());
                 if (restaurantInfo.isEmpty()) {
                     fieldErrors.put("reference_id", String.format(translation.getString(selectedLanguage + ".badReferenceId"), allergen.getReferenceId()));
                 }
+                allergen.setReferenceId(request.getReferenceId());
             } else {
                 fieldErrors.put("reference_type", translation.getString(selectedLanguage + ".badReferenceType"));
             }
         }
 
-        updateField(allergen.getName(), required, allergen, fieldErrors, "name",
+        updateField(request.getName(), required, request, fieldErrors, "name",
                 (name) -> serviceHelper.updateNameField(allergen::setName, name, selectedLanguage), selectedLanguage);
+
+        updateField(request.getColorHex(), required, request, fieldErrors, "color_hex",
+                (color) -> serviceHelper.updateColorHex(allergen::setColorHex, color, selectedLanguage), selectedLanguage);
+
+        updateField(request.getEmoji(), false, request, fieldErrors, "emoji",
+                (emoji) -> serviceHelper.updateEmoji(allergen::setEmoji, emoji, selectedLanguage), selectedLanguage);
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);

@@ -31,6 +31,14 @@ public class Mark implements IdentifiableId {
     @JsonProperty("reference_type")
     private String referenceType;
 
+    @Column(columnDefinition = "CHAR(7)")
+    @JsonProperty("color_hex")
+    private String colorHex;
+
+    @JsonProperty("emoji")
+    private String emoji;
+
+
     @JsonProperty("name")
     @Transient
     private String name;
