@@ -76,6 +76,8 @@ public class MarkService {
                             .markId(mark.getMarkId())
                             .originalLanguage(mark.getOriginalLanguage())
                             .translationId(mark.getTranslationId())
+                            .colorHex(mark.getColorHex())
+                            .emoji(mark.getEmoji())
                             .content(content.get())
                             .build();
                 })
@@ -97,66 +99,74 @@ public class MarkService {
                 .markId(mark.getMarkId())
                 .originalLanguage(mark.getOriginalLanguage())
                 .translationId(mark.getTranslationId())
+                .colorHex(mark.getColorHex())
+                .emoji(mark.getEmoji())
                 .content(content)
                 .build();
     }
 
     public MarkResponseId createMark(Mark request, String acceptLanguage) throws JsonProcessingException {
         selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        Mark mark = Mark.builder().build();
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
-        validateRequest(request, fieldErrors, true);
+        validateRequest(request, mark, fieldErrors, true);
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
-        request.setOriginalLanguage(request.getLanguage());
-        request.setCreatedAt(Instant.now().getEpochSecond());
-        request.setUpdatedAt(Instant.now().getEpochSecond());
-        markRepository.save(request);
+        mark.setOriginalLanguage(request.getLanguage());
+        mark.setCreatedAt(Instant.now().getEpochSecond());
+        mark.setUpdatedAt(Instant.now().getEpochSecond());
+        markRepository.save(mark);
 
         {
             CreateTranslation<OnlyName> createTranslation = new CreateTranslation<>(translationRepository);
-            MenuTranslationEntry entry = new MenuTranslationEntry(request.getName());
+            MenuTranslationEntry entry = new MenuTranslationEntry(mark.getName());
             Translation translation = createTranslation
-                    .create(request.getMarkId(), "mark", request.getLanguage(), entry);
-            request.setTranslationId(translation.getTranslationId());
-            markRepository.save(request);
+                    .create(mark.getMarkId(), "mark", request.getLanguage(), entry);
+            mark.setTranslationId(translation.getTranslationId());
+            markRepository.save(mark);
         }
 
-        return MarkResponseId.builder().markId(request.getMarkId()).build();
+        return MarkResponseId.builder().markId(mark.getMarkId()).build();
     }
 
     public void patchMarkById(String markId, Mark request, String acceptLanguage) throws JsonProcessingException {
-        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
-        Mark mark = markRepository.findByMarkId(markId).orElseThrow(() -> ExceptionTools.notFoundException(".markNotFound", finalAcceptLanguage, markId));
+        Mark mark = markRepository.findByMarkId(markId).orElseThrow(() -> ExceptionTools.notFoundException(".markNotFound", selectedLanguage, markId));
         Translation translation = translationRepository.findAllByTranslationId(mark.getTranslationId())
-                .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, markId));
+                .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", selectedLanguage, markId));
 
-        validateRequest(request, fieldErrors, false);
-        mark.setName(request.getName());
+        validateRequest(request, mark, fieldErrors, false);
         updateTranslation(mark, request.getLanguage(), translation);
-
         mark.setUpdatedAt(Instant.now().getEpochSecond());
         markRepository.save(mark);
     }
 
-    private void validateRequest(Mark mark, Map<String, String> fieldErrors, boolean required) {
-        fieldErrors.put("language", Validator.validateLanguage(mark.getLanguage(), selectedLanguage));
+    private void validateRequest(Mark request, Mark mark, Map<String, String> fieldErrors, boolean required) {
+        fieldErrors.put("language", Validator.validateLanguage(request.getLanguage(), selectedLanguage));
 
         if (required) {
-            if ("restaurant".equals(mark.getReferenceType())) {
-                var restaurantInfo = restaurantRepository.findByRestaurantId(mark.getReferenceId());
-
+            if ("restaurant".equals(request.getReferenceType())) {
+                var restaurantInfo = restaurantRepository.findByRestaurantId(request.getReferenceId());
+                mark.setReferenceType(request.getReferenceType());
                 if (restaurantInfo.isEmpty()) {
                     fieldErrors.put("reference_id", String.format(translation.getString(selectedLanguage + ".badReferenceId"), mark.getReferenceId()));
                 }
+                mark.setReferenceId(request.getReferenceId());
             } else {
                 fieldErrors.put("reference_type", translation.getString(selectedLanguage + ".badReferenceType"));
             }
         }
 
-        updateField(mark.getName(), required, mark, fieldErrors, "name",
+        updateField(request.getName(), required, request, fieldErrors, "name",
                 (name) -> serviceHelper.updateNameField(mark::setName, name, selectedLanguage), selectedLanguage);
+
+        updateField(request.getColorHex(), required, request, fieldErrors, "color_hex",
+                (color) -> serviceHelper.updateColorHex(mark::setColorHex, color, selectedLanguage), selectedLanguage);
+
+        updateField(request.getEmoji(), false, request, fieldErrors, "emoji",
+                (emoji) -> serviceHelper.updateEmoji(mark::setEmoji, emoji, selectedLanguage), selectedLanguage);
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
