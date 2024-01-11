@@ -154,7 +154,7 @@ public class AllergenService {
             }
         }
 
-        updateField(request.getName(), required, request, fieldErrors, "name",
+        updateField(request.getName(), true, allergen, fieldErrors, "name",
                 (name) -> serviceHelper.updateNameField(allergen::setName, name, selectedLanguage), selectedLanguage);
 
         if (fieldErrors.size() > 0)

@@ -159,7 +159,7 @@ public class MarkService {
             }
         }
 
-        updateField(request.getName(), required, request, fieldErrors, "name",
+        updateField(request.getName(), required, mark, fieldErrors, "name",
                 (name) -> serviceHelper.updateNameField(mark::setName, name, selectedLanguage), selectedLanguage);
 
         updateField(request.getColorHex(), required, request, fieldErrors, "color_hex",
