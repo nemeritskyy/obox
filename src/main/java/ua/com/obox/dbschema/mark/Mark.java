@@ -31,9 +31,13 @@ public class Mark implements IdentifiableId {
     @JsonProperty("reference_type")
     private String referenceType;
 
-    @Column(columnDefinition = "CHAR(7)")
-    @JsonProperty("color_hex")
-    private String colorHex;
+    @Column(columnDefinition = "VARCHAR(50)")
+    @JsonProperty("color_background")
+    private String colorBackground;
+
+    @Column(columnDefinition = "VARCHAR(50)")
+    @JsonProperty("color_text")
+    private String colorText;
 
     @JsonProperty("emoji")
     private String emoji;

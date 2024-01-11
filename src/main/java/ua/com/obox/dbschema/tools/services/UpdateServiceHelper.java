@@ -186,12 +186,14 @@ public class UpdateServiceHelper {
         return null;
     }
 
-    public String updateColorHex(Consumer<String> setColorHex, String color, String errorLanguage) {
-        Pattern pattern = Pattern.compile("^#(?:[0-9a-fA-F]{3}){1,2}$");
-        if (color != null && pattern.matcher(color).find()) {
-            setColorHex.accept(color);
+    public String updateColor(Consumer<String> setColor, String color, String errorLanguage) {
+        if (color == null || color.length() == 0) {
+            setColor.accept(null);
             return null;
-        } else return translation.getString(errorLanguage + ".badColorHex");
+        } else if (color.length() < 50) {
+            setColor.accept(color);
+            return null;
+        } else return translation.getString(errorLanguage + ".badColor");
     }
 
     public String updateEmoji(Consumer<String> setEmoji, String emoji, String errorLanguage) {
