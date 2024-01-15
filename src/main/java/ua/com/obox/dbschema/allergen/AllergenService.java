@@ -75,8 +75,6 @@ public class AllergenService {
                             .allergenId(allergen.getAllergenId())
                             .originalLanguage(allergen.getOriginalLanguage())
                             .translationId(allergen.getTranslationId())
-                            .colorHex(allergen.getColorHex())
-                            .emoji(allergen.getEmoji())
                             .content(content.get())
                             .build();
                 })
@@ -98,8 +96,6 @@ public class AllergenService {
                 .allergenId(allergen.getAllergenId())
                 .originalLanguage(allergen.getOriginalLanguage())
                 .translationId(allergen.getTranslationId())
-                .colorHex(allergen.getColorHex())
-                .emoji(allergen.getEmoji())
                 .content(content)
                 .build();
     }
@@ -158,14 +154,8 @@ public class AllergenService {
             }
         }
 
-        updateField(request.getName(), required, request, fieldErrors, "name",
+        updateField(request.getName(), true, allergen, fieldErrors, "name",
                 (name) -> serviceHelper.updateNameField(allergen::setName, name, selectedLanguage), selectedLanguage);
-
-        updateField(request.getColorHex(), required, request, fieldErrors, "color_hex",
-                (color) -> serviceHelper.updateColorHex(allergen::setColorHex, color, selectedLanguage), selectedLanguage);
-
-        updateField(request.getEmoji(), false, request, fieldErrors, "emoji",
-                (emoji) -> serviceHelper.updateEmoji(allergen::setEmoji, emoji, selectedLanguage), selectedLanguage);
 
         if (fieldErrors.size() > 0)
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);

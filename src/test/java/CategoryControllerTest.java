@@ -1,7 +1,6 @@
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -16,9 +15,10 @@ import ua.com.obox.OboxApplication;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.equalTo;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = OboxApplication.class)
@@ -35,9 +35,6 @@ public class CategoryControllerTest {
     private static String restaurantId = null;
     private static String menuId = null;
     private static String categoryId = null;
-    private static String languageCode = "ua";
-
-    @Autowired
     private MockMvc mockMvc;
 
     @BeforeEach

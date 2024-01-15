@@ -1,15 +1,16 @@
 spring:
-  messages:
-    encoding: UTF-8;
   datasource:
-    url: jdbc:mysql://localhost:3306/my_db?useSSL=false
-    username: root
-    password: oboxroot
+    url: jdbc:mysql://${LOCAL_DB_HOST}:${LOCAL_DB_PORT}/${LOCAL_DB_NAME}?useSSL=false&useUnicode=true&characterEncoding=UTF-8
+    username: ${LOCAL_DB_USER}
+    password: ${LOCAL_DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      max-lifetime: 90000
+      keepaliveTime: 30000
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         format_sql: true
@@ -18,10 +19,10 @@ spring:
     database: mysql
     database-platform: org.hibernate.dialect.MySQL5Dialect
   mail:
-    host: mail.obox.com.ua
-    port: 587
-    username: support@obox.com.ua
-    password: x
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
+    username: ${MAIL_USER}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -29,25 +30,47 @@ spring:
           starttls.enable: true
   servlet:
     multipart:
-      enabled: true # Включаем поддержку multipart
-      max-file-size: 10MB # Максимальный размер каждого файла
-      max-request-size: 20MB # Максимальный размер запроса (сумма всех файлов)
-      file-size-threshold: 0 # Пороговый размер файлов, при котором они будут записаны во временное хранилище вместо постоянного места
+      enabled: true # multipart support
+      max-file-size: 10MB # max filesize
+      max-request-size: 20MB # max all filesize
+      file-size-threshold: 0 # threshold file size at which they will be written to temporary storage instead of permanent location
 ftp:
-  server: obox.pp.ua
-  port: 21
-  username: x@obox.pp.ua
-  password: x
+  server: ${LOCAL_FTP_HOST}
+  port: ${LOCAL_FTP_PORT}
+  username: ${LOCAL_FTP_USER}
+  password: ${LOCAL_FTP_PASSWORD}
 server:
   error:
     include-stacktrace: never
     include-message: always
 application:
-  url: https://api.obox.pp.ua
-  image-dns: https://attachments.obox.pp.ua
+  url: ${LOCAL_URL}
+  image-dns: ${LOCAL_IMAGE_DNS}
   security:
     jwt:
-      secret-key: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      secret-key: ${SECRET_KEY}
       expiration: 86400000 # a day
       refresh-token:
         expiration: 604800000 # 7 days
+bucket4j:
+  get:
+    capacity: ${GET_CAPACITY}
+    regenerate: ${GET_REGENERATE}
+  post:
+    capacity: ${POST_CAPACITY}
+    regenerate: ${POST_REGENERATE}
+  patch:
+    capacity: ${PATCH_CAPACITY}
+    regenerate: ${PATCH_REGENERATE}
+  delete:
+    capacity: ${DELETE_CAPACITY}
+    regenerate: ${DELETE_REGENERATE}
+telegram:
+  bot:
+    name: ${BOT_NAME}
+    token: ${BOT_TOKEN}
+sentry:
+  dsn: ${SENTRY_DSN}
+  # Set traces-sample-rate to 1.0 to capture 100% of transactions for performance monitoring.
+  # We recommend adjusting this value in production.
+  traces-sample-rate: 1.0

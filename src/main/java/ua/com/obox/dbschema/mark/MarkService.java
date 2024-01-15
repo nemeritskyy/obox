@@ -76,7 +76,8 @@ public class MarkService {
                             .markId(mark.getMarkId())
                             .originalLanguage(mark.getOriginalLanguage())
                             .translationId(mark.getTranslationId())
-                            .colorHex(mark.getColorHex())
+                            .colorBackground(mark.getColorBackground())
+                            .colorText(mark.getColorText())
                             .emoji(mark.getEmoji())
                             .content(content.get())
                             .build();
@@ -99,7 +100,8 @@ public class MarkService {
                 .markId(mark.getMarkId())
                 .originalLanguage(mark.getOriginalLanguage())
                 .translationId(mark.getTranslationId())
-                .colorHex(mark.getColorHex())
+                .colorBackground(mark.getColorBackground())
+                .colorText(mark.getColorText())
                 .emoji(mark.getEmoji())
                 .content(content)
                 .build();
@@ -159,11 +161,14 @@ public class MarkService {
             }
         }
 
-        updateField(request.getName(), required, request, fieldErrors, "name",
+        updateField(request.getName(), required, mark, fieldErrors, "name",
                 (name) -> serviceHelper.updateNameField(mark::setName, name, selectedLanguage), selectedLanguage);
 
-        updateField(request.getColorHex(), required, request, fieldErrors, "color_hex",
-                (color) -> serviceHelper.updateColorHex(mark::setColorHex, color, selectedLanguage), selectedLanguage);
+        updateField(request.getColorBackground(), required, request, fieldErrors, "color_background",
+                (color) -> serviceHelper.updateColor(mark::setColorBackground, color, selectedLanguage), selectedLanguage);
+
+        updateField(request.getColorText(), required, request, fieldErrors, "color_text",
+                (color) -> serviceHelper.updateColor(mark::setColorText, color, selectedLanguage), selectedLanguage);
 
         updateField(request.getEmoji(), false, request, fieldErrors, "emoji",
                 (emoji) -> serviceHelper.updateEmoji(mark::setEmoji, emoji, selectedLanguage), selectedLanguage);

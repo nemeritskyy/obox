@@ -18,7 +18,7 @@ public class BasicAllergensAndMarks {
     public static void addBasicMarks(String referenceId, TranslationRepository translationRepository, MarkRepository markRepository) throws JsonProcessingException {
         List<Map<String, OnlyName>> marks = new ArrayList<>();
 
-        List<String> labelsUA = List.of("Вегетаріанський", "Не містить глютену", "Гостре", "Середньо-гострий", "Рекомендовано", "Веганське");
+        List<String> labelsUA = List.of("Вегетаріанський", "Не містить глютену", "Гостре", "Середньо-гостре", "Рекомендовано", "Веганське");
         List<String> labelsUS = List.of("Vegetarian", "Gluten-free", "Spicy", "Medium-spicy", "Recommended", "Vegan");
 
         for (int i = 0; i < labelsUS.size(); i++) {

@@ -2,7 +2,6 @@ import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -19,7 +18,8 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(classes = OboxApplication.class)
@@ -27,12 +27,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class RestaurantControllerTest {
-    private final String URL_TENANT = "https://api.obox.com.ua/tenants/";
-    private final String URL_RESTAURANT = "https://api.obox.com.ua/restaurants/";
+    private final String URL_TENANT = "http://localhost/tenants/";
+    private final String URL_RESTAURANT = "http://localhost/restaurants/";
     private static String tenantId = null;
     private static String restaurantId = null;
-
-    @Autowired
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -136,9 +134,8 @@ public class RestaurantControllerTest {
     @Test
     @Order(36)
     public void testEmptyAddressSpaceBeforeName() throws Exception { // Get. 2 address null // Get. 3
-        Map<String, Object> requestResponse;
         String testName = " RestaurantName"; // with space
-        String testRestaurantId = null;
+        String testRestaurantId;
         Map<String, Object> requestBody = Map.of(
                 "tenant_id", tenantId, //
                 "name", testName,
