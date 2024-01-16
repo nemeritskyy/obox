@@ -17,7 +17,8 @@ public class SendMessage {
             "110085037", // andrew
             "688726739", // dari
             "292030593", // anastasia
-            "6935742919" // andrew test
+            "6935742919", // andrew test
+            "5064058806" // rodion
     );
 
     public static void sendToTelegram(String messageToAdmin) {
