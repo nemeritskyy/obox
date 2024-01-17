@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -133,14 +132,14 @@ public class AuthenticationService {
     }
 
     private void saveUserToken(User user, String jwtToken) {
-            var token = Token.builder()
-                    .user(user)
-                    .token(jwtToken)
-                    .tokenType(TokenType.BEARER)
-                    .expired(false)
-                    .revoked(false)
-                    .build();
-            tokenRepository.save(token);
+        var token = Token.builder()
+                .user(user)
+                .token(jwtToken)
+                .tokenType(TokenType.BEARER)
+                .expired(false)
+                .revoked(false)
+                .build();
+        tokenRepository.save(token);
     }
 
     private void revokeAllUserTokens(User user) {
@@ -207,24 +206,24 @@ public class AuthenticationService {
         }
     }
 
-    public ResponseEntity<?> logout(
+    public HttpStatus logout(
             HttpServletRequest request
     ) {
         final String authHeader = request.getHeader("Authorization");
         final String jwt;
-        if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return HttpStatus.BAD_REQUEST;
         }
         jwt = authHeader.substring(7);
         var storedToken = tokenRepository.findByToken(jwt)
                 .orElse(null);
-        if (storedToken != null) {
+        if (storedToken != null && !storedToken.expired) {
             storedToken.setExpired(true);
             storedToken.setRevoked(true);
             tokenRepository.save(storedToken);
             SecurityContextHolder.clearContext();
-            return new ResponseEntity<>(HttpStatus.OK);
+            return HttpStatus.OK;
         } else
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            return HttpStatus.UNAUTHORIZED;
     }
 }

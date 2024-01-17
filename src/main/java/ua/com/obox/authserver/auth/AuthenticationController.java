@@ -52,6 +52,6 @@ public class AuthenticationController {
     public ResponseEntity<?> logout(
             HttpServletRequest request
     ) {
-        return ResponseEntity.ok(service.logout(request));
+        return ResponseEntity.status(service.logout(request)).build();
     }
 }
