@@ -1,8 +1,17 @@
 package ua.com.obox.authserver.auth;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 import ua.com.obox.authserver.config.JwtService;
 import ua.com.obox.authserver.confirmation.Confirm;
 import ua.com.obox.authserver.confirmation.ConfirmRepository;
@@ -13,14 +22,10 @@ import ua.com.obox.authserver.token.TokenType;
 import ua.com.obox.authserver.user.Role;
 import ua.com.obox.authserver.user.User;
 import ua.com.obox.authserver.user.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpHeaders;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import ua.com.obox.dbschema.tenant.*;
+import ua.com.obox.dbschema.tenant.Tenant;
+import ua.com.obox.dbschema.tenant.TenantRepository;
+import ua.com.obox.dbschema.tenant.TenantResponseId;
+import ua.com.obox.dbschema.tenant.TenantService;
 import ua.com.obox.dbschema.tools.State;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
@@ -95,47 +100,12 @@ public class AuthenticationService {
             repository.save(user);
             tenantCreated.setUser(user);
 
-//            Tenant tenant = Tenant.builder()
-//                    .name(request.getName())
-//                    .language(request.getLanguage())
-//                    .build();
-//
-//            TenantResponseId responseId = tenantService.createTenant(tenant, finalAcceptLanguage);
-//
-//
-//            Optional<Tenant> tenantGet = tenantRepository.findByTenantId(responseId.getTenantId());
-//            Tenant tenantCreated = null;
-//            if (tenantGet.isPresent()) {
-//                tenantCreated = tenantGet.get();
-//            }
-//
-//            var user = User.builder()
-//                    .email(request.getEmail())
-//                    .password(passwordEncoder.encode(request.getPassword()))
-//                    .state(State.DISABLED)
-//                    .role(Role.USER)
-//                    .tenant(tenantCreated)
-//                    .createdAt(Instant.now().getEpochSecond())
-//                    .updatedAt(Instant.now().getEpochSecond())
-//                    .build();
-//
-//
-//            repository.save(user);
-//            tenantCreated.setUser(user);
-
             if (!user.isEnabled()) {
                 var confirmToken = RandomStringUtils.random(20, true, true);
                 var confirm = Confirm.builder().confirmationKey(confirmToken).email(request.getEmail()).build();
                 confirmRepository.save(confirm);
                 emailService.sendEmailConfirmation(request.getEmail(), confirmToken);
             }
-
-
-//            var savedUser = repository.save(user);
-//            var jwtToken = jwtService.generateToken(user);
-//            var refreshToken = jwtService.generateRefreshToken(user);
-//            if (user.isEnabled()) saveUserToken(savedUser, jwtToken);
-
         } else {
             Optional<Confirm> alreadyExist = confirmRepository.findByEmail(request.getEmail());
             alreadyExist.ifPresent(confirmToken -> emailService.sendEmailConfirmation(confirmToken.getEmail(), confirmToken.getConfirmationKey()));
@@ -163,7 +133,6 @@ public class AuthenticationService {
     }
 
     private void saveUserToken(User user, String jwtToken) {
-        System.out.println("join save user");
             var token = Token.builder()
                     .user(user)
                     .token(jwtToken)
@@ -179,7 +148,6 @@ public class AuthenticationService {
         if (validUserTokens.isEmpty())
             return;
         validUserTokens.forEach(token -> {
-            System.out.println("revoke id:" + token.id);
             token.setExpired(true);
             token.setRevoked(true);
         });
@@ -237,5 +205,26 @@ public class AuthenticationService {
             fieldErrors.put("confirmation", translation.getString(errorLanguage + ".expiredLink"));
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
         }
+    }
+
+    public ResponseEntity<?> logout(
+            HttpServletRequest request
+    ) {
+        final String authHeader = request.getHeader("Authorization");
+        final String jwt;
+        if (authHeader == null ||!authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        jwt = authHeader.substring(7);
+        var storedToken = tokenRepository.findByToken(jwt)
+                .orElse(null);
+        if (storedToken != null) {
+            storedToken.setExpired(true);
+            storedToken.setRevoked(true);
+            tokenRepository.save(storedToken);
+            SecurityContextHolder.clearContext();
+            return new ResponseEntity<>(HttpStatus.OK);
+        } else
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
     }
 }

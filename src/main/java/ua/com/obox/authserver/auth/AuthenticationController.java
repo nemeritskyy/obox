@@ -47,4 +47,11 @@ public class AuthenticationController {
         String acceptLanguage = httpHeaders.getFirst("Accept-Language");
         return service.confirmation(token, acceptLanguage);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(
+            HttpServletRequest request
+    ) {
+        return ResponseEntity.ok(service.logout(request));
+    }
 }

@@ -15,20 +15,26 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import ua.com.obox.dbschema.tools.logging.LogLevel;
+import ua.com.obox.dbschema.tools.logging.LoggingService;
+
+import java.util.ResourceBundle;
 
 @Configuration
 @RequiredArgsConstructor
 @EnableAspectJAutoProxy
 public class ApplicationConfig {
+    private final LoggingService loggingService;
     private final UserRepository repository;
-    private static final Logger logger = LogManager.getLogger(ApplicationConfig.class);
+    private final ResourceBundle translationContent = ResourceBundle.getBundle("translation.messages");
 
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> repository.findByEmail(username)
                 .orElseThrow(() -> {
-                            logger.error("not found user: " + username);
-                            return new UsernameNotFoundException("User not found");
+                            String notFoundError = String.format(translationContent.getString("en-US.userNotFound"), username);
+                            loggingService.log(LogLevel.ERROR, notFoundError);
+                            return new UsernameNotFoundException(notFoundError);
                         }
                 );
     }
