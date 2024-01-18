@@ -68,10 +68,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
             filterChain.doFilter(request, response);
-        } catch (ExpiredJwtException ex) {
-            CustomErrorHandler.handleException(response, ex, HttpStatus.UNAUTHORIZED);
-        } catch (MalformedJwtException | SignatureException ex) {
-            CustomErrorHandler.handleException(response, ex, HttpStatus.BAD_REQUEST);
+        } catch (ExpiredJwtException | MalformedJwtException | SignatureException ex) {
+            CustomErrorHandler.handleException(response, "jwt data is absent or invalid", HttpStatus.BAD_REQUEST);
         }
     }
 }

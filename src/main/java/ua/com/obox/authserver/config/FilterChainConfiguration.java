@@ -30,11 +30,7 @@ public class FilterChainConfiguration {
                 .and()
                 .authorizeRequests()
                 .antMatchers("/").permitAll()
-                .antMatchers(
-                        "/auth/authenticate",
-                        "/auth/refresh-token",
-                        "/auth/logout")
-                .permitAll()
+                .antMatchers("/auth/**").permitAll()
                 .antMatchers(
                         "/v2/api-docs",
                         "/v3/api-docs",
