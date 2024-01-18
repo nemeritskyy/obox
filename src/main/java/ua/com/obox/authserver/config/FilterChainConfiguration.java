@@ -43,7 +43,6 @@ public class FilterChainConfiguration {
                         "/swagger-ui/**",
                         "/swagger-ui.html"
                 ).permitAll()
-                .antMatchers("/dishes/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .authenticationProvider(authenticationProvider)
