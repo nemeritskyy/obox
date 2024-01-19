@@ -27,6 +27,7 @@ public class Restaurant {
     private String restaurantId;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tenant_id")
+    @JsonIgnore
     private Tenant tenant;
 
     @JsonIgnore
@@ -58,13 +59,6 @@ public class Restaurant {
     @JsonProperty("language")
     @Transient
     private String language;
-
-    @JsonIgnore
-    public void setTenantIdForRestaurant(String tenantId) {
-        Tenant tenant = new Tenant();
-        tenant.setTenantId(tenantId);
-        this.tenant = tenant;
-    }
 
     @PreRemove
     public void beforeRemove() {
