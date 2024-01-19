@@ -2,6 +2,7 @@ package ua.com.obox.dbschema.dish;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -32,7 +33,6 @@ public class DishController {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @GetMapping("/{dishId}")
-//    @PreAuthorize("hasPermission(#dishId, 'READ')")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = GET_200_RESPONSE_EXAMPLE))),
@@ -62,6 +62,7 @@ public class DishController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Hidden
     @PostMapping("/{dishId}/set-primary-image")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),

@@ -29,7 +29,10 @@ public class FilterChainConfiguration {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/").permitAll()
+                .antMatchers(
+                        "/",
+                        "/notification-webhook"
+                        ).permitAll()
                 .antMatchers("/auth/**").permitAll()
                 .antMatchers(
                         "/v2/api-docs",

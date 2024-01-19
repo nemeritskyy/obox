@@ -1,14 +1,15 @@
 package ua.com.obox.authserver.user;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.category.Category;
+import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.tools.attachment.ReferenceType;
-import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
+import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,11 +19,13 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserService {
     private final DishRepository dishRepository;
+    private final CategoryRepository categoryRepository;
     private final Map<String, String> accessCache = new HashMap<>();
 
-    public void checkPermissionForUser(ReferenceType referenceType, String requestToEntityId) {
+    public void checkPermissionForUser(ReferenceType referenceType, String requestToEntityId, String acceptLanguage) {
+        System.out.println("join check permission");
         String tenantId = this.getTenantIdFromSecurityContextHolder();
-        String tenantIdFromEntity;
+        String tenantIdFromEntity = "";
         if (!accessCache.containsKey(requestToEntityId)) {
             switch (referenceType) {
                 case dish -> {
@@ -31,18 +34,25 @@ public class UserService {
                             .map(dish -> dish.getCategory().getMenu().getRestaurant().getTenant().getTenantId())
                             .orElse(null);
                 }
-                default -> throw new BadFieldsResponse(HttpStatus.FORBIDDEN);
+                case category -> {
+                    Optional<Category> checkCategoryAccess = categoryRepository.findByCategoryId(requestToEntityId);
+                    tenantIdFromEntity = checkCategoryAccess
+                            .map(category -> category.getMenu().getRestaurant().getTenant().getTenantId())
+                            .orElse(null);
+                }
+                default -> throwNotFound(ReferenceType.entity, requestToEntityId, acceptLanguage);
             }
+            System.out.println("tenant from entity " + tenantIdFromEntity);
             if (tenantId.equals(tenantIdFromEntity)) {
                 accessCache.put(requestToEntityId, tenantId);
                 System.out.println("have access");
             } else {
-                throw new BadFieldsResponse(HttpStatus.FORBIDDEN);
+                throwNotFound(referenceType, requestToEntityId, acceptLanguage);
             }
         } else {
             System.out.println("exist in cache");
             if (!accessCache.get(requestToEntityId).equals(tenantId))
-                throw new BadFieldsResponse(HttpStatus.FORBIDDEN);
+                throwNotFound(referenceType, requestToEntityId, acceptLanguage);
         }
     }
 
@@ -50,5 +60,9 @@ public class UserService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
         return user.getTenant().getTenantId();
+    }
+
+    private void throwNotFound(ReferenceType referenceType, String requestToEntityId, String acceptLanguage) {
+        throw ExceptionTools.notFoundExceptionWithoutLogging("." + referenceType.name() + "NotFound", acceptLanguage, requestToEntityId);
     }
 }
