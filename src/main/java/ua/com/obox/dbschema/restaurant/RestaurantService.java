@@ -355,7 +355,7 @@ public class RestaurantService {
                 (name) -> serviceHelper.updateNameField(restaurant::setName, name, finalAcceptLanguage));
         fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
 
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
     }
 
@@ -379,7 +379,7 @@ public class RestaurantService {
                 restaurant.setName(languagesMap.get(language).getName());
             if (restaurant.getAddress() == null) {
                 restaurant.setAddress(content.getContent().get(language).getAddress());
-            } else if (restaurant.getAddress().equals("")) {
+            } else if (restaurant.getAddress().isEmpty()) {
                 restaurant.setAddress(null);
             }
         }

@@ -201,7 +201,7 @@ public class CategoryService {
         updateField(request.getDescription(), required, category, fieldErrors, "description",
                 (description) -> serviceHelper.updateVarcharField(category::setDescription, description, "description", finalAcceptLanguage), finalAcceptLanguage);
 
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
     }
 
@@ -231,7 +231,7 @@ public class CategoryService {
                 category.setName(languagesMap.get(language).getName());
             if (category.getDescription() == null) {
                 category.setDescription(content.getContent().get(language).getDescription());
-            } else if (category.getDescription().equals("")) {
+            } else if (category.getDescription().isEmpty()) {
                 category.setDescription(null);
             }
         }

@@ -156,7 +156,7 @@ public class DishService {
         if (attachment.isEmpty())
             fieldErrors.put("image", String.format(translationContent.getString(finalAcceptLanguage + ".attachmentNotFound"), request.getImage()));
 
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         dish.setImage(request.getImage());
@@ -205,7 +205,7 @@ public class DishService {
         updateField(request.getState(), required, dish, fieldErrors, "state",
                 (state) -> serviceHelper.updateState(dish::setState, state, finalAcceptLanguage), finalAcceptLanguage);
 
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
     }
 
@@ -213,9 +213,6 @@ public class DishService {
         if (value != null || required) {
             if (Objects.equals(fieldName, "name") && dish.getCategory() != null) {
                 ExistEntity<DishTranslationEntry> existEntity = new ExistEntity<>(translationRepository);
-                /**
-                 * validate exists on menu level, because dish will to move from one category to other
-                 * */
                 List<Category> sameParentCategories = categoryRepository.findAllByMenu_MenuId(dish.getCategory().getMenu().getMenuId());
                 List<Dish> allDishesForMenu = new ArrayList<>();
                 for (Category category : sameParentCategories) {
@@ -242,7 +239,7 @@ public class DishService {
                 dish.setName(languagesMap.get(language).getName());
             if (dish.getDescription() == null) {
                 dish.setDescription(content.getContent().get(language).getDescription());
-            } else if (dish.getDescription().equals("")) {
+            } else if (dish.getDescription().isEmpty()) {
                 dish.setDescription(null);
             }
         }

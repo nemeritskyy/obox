@@ -182,7 +182,7 @@ public class MenuService {
         updateField(request.getState(), required, menu, fieldErrors, "state",
                 (state) -> serviceHelper.updateState(menu::setState, state, finalAcceptLanguage), finalAcceptLanguage);
 
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
     }
 
