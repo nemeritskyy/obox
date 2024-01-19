@@ -52,8 +52,6 @@ public class DishService {
         Dish dish = dishRepository.findByDishId(dishId).orElseThrow(() -> ExceptionTools.notFoundException(".dishNotFound", finalAcceptLanguage, dishId));
         userService.checkPermissionForUser(ReferenceType.dish, dishId, finalAcceptLanguage);
 
-        System.out.println(dish.getDishId());
-        System.out.println(dish.getTranslationId());
         Translation translation = translationRepository.findAllByTranslationId(dish.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, dishId));
 
@@ -120,10 +118,10 @@ public class DishService {
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
         Dish dish = dishRepository.findByDishId(dishId).orElseThrow(() -> ExceptionTools.notFoundException(".dishNotFound", finalAcceptLanguage, dishId));
+        userService.checkPermissionForUser(ReferenceType.dish, dishId, finalAcceptLanguage);
+
         Translation translation = translationRepository.findAllByTranslationId(dish.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, dishId));
-
-        userService.checkPermissionForUser(ReferenceType.dish, dishId, finalAcceptLanguage);
 
         if (request.getCategoryId() != null && !request.getCategoryId().isEmpty()) {
             Optional<Category> category = categoryRepository.findByCategoryId(request.getCategoryId());

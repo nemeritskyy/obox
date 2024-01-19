@@ -8,6 +8,8 @@ import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
+import ua.com.obox.dbschema.menu.Menu;
+import ua.com.obox.dbschema.menu.MenuRepository;
 import ua.com.obox.dbschema.tools.attachment.ReferenceType;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 
@@ -20,6 +22,7 @@ import java.util.Optional;
 public class UserService {
     private final DishRepository dishRepository;
     private final CategoryRepository categoryRepository;
+    private final MenuRepository menuRepository;
     private final Map<String, String> accessCache = new HashMap<>();
 
     public void checkPermissionForUser(ReferenceType referenceType, String requestToEntityId, String acceptLanguage) {
@@ -38,6 +41,12 @@ public class UserService {
                     Optional<Category> checkCategoryAccess = categoryRepository.findByCategoryId(requestToEntityId);
                     tenantIdFromEntity = checkCategoryAccess
                             .map(category -> category.getMenu().getRestaurant().getTenant().getTenantId())
+                            .orElse(null);
+                }
+                case menu -> {
+                    Optional<Menu> checkMenuAccess = menuRepository.findByMenuId(requestToEntityId);
+                    tenantIdFromEntity = checkMenuAccess
+                            .map(menu -> menu.getRestaurant().getTenant().getTenantId())
                             .orElse(null);
                 }
                 default -> throwNotFound(ReferenceType.entity, requestToEntityId, acceptLanguage);
@@ -63,6 +72,6 @@ public class UserService {
     }
 
     private void throwNotFound(ReferenceType referenceType, String requestToEntityId, String acceptLanguage) {
-        throw ExceptionTools.notFoundExceptionWithoutLogging("." + referenceType.name() + "NotFound", acceptLanguage, requestToEntityId);
+        ExceptionTools.notFoundExceptionWithoutLogging("." + referenceType.name() + "NotFound", acceptLanguage, requestToEntityId);
     }
 }
