@@ -54,13 +54,13 @@ public class CategoryService {
 
     public List<DishResponse> getAllDishesByCategoryId(String categoryId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
-        ObjectMapper objectMapper = new ObjectMapper();
-        AtomicReference<Content<CategoryTranslationEntry>> content = new AtomicReference<>();
-        AtomicReference<Translation> translation = new AtomicReference<>();
 
         categoryRepository.findByCategoryId(categoryId).orElseThrow(() -> ExceptionTools.notFoundException(".categoryNotFound", finalAcceptLanguage, categoryId));
         userService.checkPermissionForUser(ReferenceType.category, categoryId, finalAcceptLanguage);
 
+        ObjectMapper objectMapper = new ObjectMapper();
+        AtomicReference<Content<CategoryTranslationEntry>> content = new AtomicReference<>();
+        AtomicReference<Translation> translation = new AtomicReference<>();
         List<Dish> dishes = dishRepository.findAllByCategory_CategoryIdOrderByCreatedAtDesc(categoryId);
 
         // for sorting results

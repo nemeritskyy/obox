@@ -10,6 +10,8 @@ import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.menu.Menu;
 import ua.com.obox.dbschema.menu.MenuRepository;
+import ua.com.obox.dbschema.restaurant.Restaurant;
+import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.tools.attachment.ReferenceType;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 
@@ -23,6 +25,7 @@ public class UserService {
     private final DishRepository dishRepository;
     private final CategoryRepository categoryRepository;
     private final MenuRepository menuRepository;
+    private final RestaurantRepository restaurantRepository;
     private final Map<String, String> accessCache = new HashMap<>();
 
     public void checkPermissionForUser(ReferenceType referenceType, String requestToEntityId, String acceptLanguage) {
@@ -47,6 +50,12 @@ public class UserService {
                     Optional<Menu> checkMenuAccess = menuRepository.findByMenuId(requestToEntityId);
                     tenantIdFromEntity = checkMenuAccess
                             .map(menu -> menu.getRestaurant().getTenant().getTenantId())
+                            .orElse(null);
+                }
+                case restaurant -> {
+                    Optional<Restaurant> checkRestaurantAccess = restaurantRepository.findByRestaurantId(requestToEntityId);
+                    tenantIdFromEntity = checkRestaurantAccess
+                            .map(restaurant -> restaurant.getTenant().getTenantId())
                             .orElse(null);
                 }
                 default -> throwNotFound(ReferenceType.entity, requestToEntityId, acceptLanguage);
