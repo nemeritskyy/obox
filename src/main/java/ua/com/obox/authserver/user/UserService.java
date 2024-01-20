@@ -2,6 +2,8 @@ package ua.com.obox.authserver.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import ua.com.obox.dbschema.category.Category;
@@ -33,53 +35,55 @@ public class UserService {
 
     public void checkPermissionForUser(ReferenceType referenceType, String requestToEntityId, String acceptLanguage) {
         System.out.println("join check permission");
-        String tenantId = this.getTenantIdFromSecurityContextHolder();
-        String tenantIdFromEntity = "";
-        if (!accessCache.containsKey(requestToEntityId)) {
-            switch (referenceType) {
-                case dish -> {
-                    Optional<Dish> checkDishAccess = dishRepository.findByDishId(requestToEntityId);
-                    tenantIdFromEntity = checkDishAccess
-                            .map(dish -> dish.getCategory().getMenu().getRestaurant().getTenant().getTenantId())
-                            .orElse(null);
+        if (!this.haveSuperUserPermission()) {
+            String tenantId = this.getTenantIdFromSecurityContextHolder();
+            String tenantIdFromEntity = "";
+            if (!accessCache.containsKey(requestToEntityId)) {
+                switch (referenceType) {
+                    case dish -> {
+                        Optional<Dish> checkDishAccess = dishRepository.findByDishId(requestToEntityId);
+                        tenantIdFromEntity = checkDishAccess
+                                .map(dish -> dish.getCategory().getMenu().getRestaurant().getTenant().getTenantId())
+                                .orElse(null);
+                    }
+                    case category -> {
+                        Optional<Category> checkCategoryAccess = categoryRepository.findByCategoryId(requestToEntityId);
+                        tenantIdFromEntity = checkCategoryAccess
+                                .map(category -> category.getMenu().getRestaurant().getTenant().getTenantId())
+                                .orElse(null);
+                    }
+                    case menu -> {
+                        Optional<Menu> checkMenuAccess = menuRepository.findByMenuId(requestToEntityId);
+                        tenantIdFromEntity = checkMenuAccess
+                                .map(menu -> menu.getRestaurant().getTenant().getTenantId())
+                                .orElse(null);
+                    }
+                    case restaurant -> {
+                        Optional<Restaurant> checkRestaurantAccess = restaurantRepository.findByRestaurantId(requestToEntityId);
+                        tenantIdFromEntity = checkRestaurantAccess
+                                .map(restaurant -> restaurant.getTenant().getTenantId())
+                                .orElse(null);
+                    }
+                    case tenant -> {
+                        Optional<Tenant> checkTenantAccess = tenantRepository.findByTenantId(requestToEntityId);
+                        tenantIdFromEntity = checkTenantAccess
+                                .map(Tenant::getTenantId)
+                                .orElse(null);
+                    }
+                    default -> throwNotFound(ReferenceType.entity, requestToEntityId, acceptLanguage);
                 }
-                case category -> {
-                    Optional<Category> checkCategoryAccess = categoryRepository.findByCategoryId(requestToEntityId);
-                    tenantIdFromEntity = checkCategoryAccess
-                            .map(category -> category.getMenu().getRestaurant().getTenant().getTenantId())
-                            .orElse(null);
+                System.out.println("tenant from entity " + tenantIdFromEntity);
+                if (tenantId.equals(tenantIdFromEntity)) {
+                    accessCache.put(requestToEntityId, tenantId);
+                    System.out.println("have access");
+                } else {
+                    throwNotFound(referenceType, requestToEntityId, acceptLanguage);
                 }
-                case menu -> {
-                    Optional<Menu> checkMenuAccess = menuRepository.findByMenuId(requestToEntityId);
-                    tenantIdFromEntity = checkMenuAccess
-                            .map(menu -> menu.getRestaurant().getTenant().getTenantId())
-                            .orElse(null);
-                }
-                case restaurant -> {
-                    Optional<Restaurant> checkRestaurantAccess = restaurantRepository.findByRestaurantId(requestToEntityId);
-                    tenantIdFromEntity = checkRestaurantAccess
-                            .map(restaurant -> restaurant.getTenant().getTenantId())
-                            .orElse(null);
-                }
-                case tenant -> {
-                    Optional<Tenant> checkTenantAccess = tenantRepository.findByTenantId(requestToEntityId);
-                    tenantIdFromEntity = checkTenantAccess
-                            .map(Tenant::getTenantId)
-                            .orElse(null);
-                }
-                default -> throwNotFound(ReferenceType.entity, requestToEntityId, acceptLanguage);
-            }
-            System.out.println("tenant from entity " + tenantIdFromEntity);
-            if (tenantId.equals(tenantIdFromEntity)) {
-                accessCache.put(requestToEntityId, tenantId);
-                System.out.println("have access");
             } else {
-                throwNotFound(referenceType, requestToEntityId, acceptLanguage);
+                System.out.println("exist in cache");
+                if (!accessCache.get(requestToEntityId).equals(tenantId))
+                    throwNotFound(referenceType, requestToEntityId, acceptLanguage);
             }
-        } else {
-            System.out.println("exist in cache");
-            if (!accessCache.get(requestToEntityId).equals(tenantId))
-                throwNotFound(referenceType, requestToEntityId, acceptLanguage);
         }
     }
 
@@ -87,6 +91,16 @@ public class UserService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
         return user.getTenant().getTenantId();
+    }
+
+    private boolean haveSuperUserPermission() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication.getPrincipal() instanceof User) {
+            User user = (User) authentication.getPrincipal();
+            GrantedAuthority superUserAuthority = new SimpleGrantedAuthority("ROLE_ADMIN");
+            return user.getAuthorities().contains(superUserAuthority);
+        }
+        return false;
     }
 
     private void throwNotFound(ReferenceType referenceType, String requestToEntityId, String acceptLanguage) {
