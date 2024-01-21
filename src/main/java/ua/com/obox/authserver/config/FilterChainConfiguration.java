@@ -31,7 +31,8 @@ public class FilterChainConfiguration {
                 .authorizeRequests()
                 .antMatchers(
                         "/",
-                        "/notification-webhook"
+                        "/notification-webhook",
+                        "/search/**"
                         ).permitAll()
                 .antMatchers("/auth/**").permitAll()
                 .antMatchers(
