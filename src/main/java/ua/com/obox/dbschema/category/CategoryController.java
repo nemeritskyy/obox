@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ua.com.obox.dbschema.dish.DishResponse;
 
@@ -19,6 +20,7 @@ import static ua.com.obox.dbschema.tools.examples.CategoryResponseExample.*;
 
 @RestController
 @RequestMapping("/categories")
+@PreAuthorize("hasAnyRole('ADMIN','USER')")
 @RequiredArgsConstructor
 @Tag(name = "Categories")
 public class CategoryController {

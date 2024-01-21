@@ -21,6 +21,7 @@ import static ua.com.obox.dbschema.tools.examples.TenantResponseExample.*;
 
 @RestController
 @RequestMapping("/tenants")
+@PreAuthorize("hasAnyRole('ADMIN','USER')")
 @RequiredArgsConstructor
 
 @Tag(name = "Tenants")
@@ -56,7 +57,7 @@ public class TenantController {
     }
 
     @PostMapping("/")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Success", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = POST_201_RESPONSE_EXAMPLE))),
@@ -84,7 +85,7 @@ public class TenantController {
     }
 
     @DeleteMapping("/{tenantId}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "404", description = "Not found", content = @Content(mediaType = "application/json",
