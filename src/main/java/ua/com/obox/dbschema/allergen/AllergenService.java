@@ -6,11 +6,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.authserver.user.UserService;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.sorting.EntityOrder;
 import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.FieldUpdateFunction;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.attachment.ReferenceType;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
@@ -37,17 +39,19 @@ public class AllergenService {
     private final TranslationRepository translationRepository;
     private final EntityOrderRepository entityOrderRepository;
     private final UpdateServiceHelper serviceHelper;
+    private final UserService userService;
     private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
     private String selectedLanguage = "en-US";
 
     public List<AllergenResponse> getAllAllergensByRestaurantId(String restaurantId, String acceptLanguage) {
         selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
+        restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", selectedLanguage, restaurantId));
+        userService.checkPermissionForUser(ReferenceType.restaurant, restaurantId, selectedLanguage);
+
         ObjectMapper objectMapper = new ObjectMapper();
         AtomicReference<Content<OnlyName>> content = new AtomicReference<>();
         AtomicReference<Translation> translation = new AtomicReference<>();
-
-        restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", selectedLanguage, restaurantId));
-
         List<Allergen> allergens = allergenRepository.findAllByReferenceIdOrderByCreatedAtDesc(restaurantId);
 
         // for sorting results
@@ -85,6 +89,8 @@ public class AllergenService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
         Allergen allergen = allergenRepository.findByAllergenId(allergenId).orElseThrow(() -> ExceptionTools.notFoundException(".allergenNotFound", finalAcceptLanguage, allergenId));
+        userService.checkPermissionForUser(ReferenceType.allergen, allergenId, selectedLanguage);
+
         Translation translation = translationRepository.findAllByTranslationId(allergen.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, allergenId));
 
@@ -102,10 +108,13 @@ public class AllergenService {
 
     public AllergenResponseId createAllergen(Allergen request, String acceptLanguage) throws JsonProcessingException {
         selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
+        userService.checkPermissionForUser(ReferenceType.restaurant, request.getReferenceId(), request.getReferenceType(), selectedLanguage);
+
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
         Allergen allergen = Allergen.builder().build();
         validateRequest(request, allergen, fieldErrors, true);
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
         allergen.setOriginalLanguage(request.getLanguage());
         allergen.setCreatedAt(Instant.now().getEpochSecond());
@@ -129,10 +138,12 @@ public class AllergenService {
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
         Allergen allergen = allergenRepository.findByAllergenId(allergenId).orElseThrow(() -> ExceptionTools.notFoundException(".allergenNotFound", selectedLanguage, allergenId));
+        userService.checkPermissionForUser(ReferenceType.allergen, allergenId, selectedLanguage);
+
         Translation translation = translationRepository.findAllByTranslationId(allergen.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", selectedLanguage, allergenId));
+
         validateRequest(request, allergen, fieldErrors, false);
-//        allergen.setName(request.getName());
         updateTranslation(allergen, request.getLanguage(), translation);
         allergen.setUpdatedAt(Instant.now().getEpochSecond());
         allergenRepository.save(allergen);
@@ -194,6 +205,7 @@ public class AllergenService {
     public void deleteAllergenById(String allergenId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Allergen allergen = allergenRepository.findByAllergenId(allergenId).orElseThrow(() -> ExceptionTools.notFoundException(".allergenNotFound", finalAcceptLanguage, allergenId));
+        userService.checkPermissionForUser(ReferenceType.allergen, allergenId, selectedLanguage);
         allergenRepository.delete(allergen);
     }
 }

@@ -7,6 +7,8 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import ua.com.obox.dbschema.allergen.Allergen;
+import ua.com.obox.dbschema.allergen.AllergenRepository;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.dish.Dish;
@@ -34,6 +36,7 @@ public class UserService {
     private final RestaurantRepository restaurantRepository;
     private final TenantRepository tenantRepository;
     private final MarkRepository markRepository;
+    private final AllergenRepository allergenRepository;
 
     private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
     private final Map<String, String> accessCache = new HashMap<>();
@@ -79,6 +82,12 @@ public class UserService {
                         Optional<Mark> checkMarkAccess = markRepository.findByMarkId(requestToEntityId);
                         tenantIdFromEntity = checkMarkAccess
                                 .map(mark -> Objects.requireNonNull(restaurantRepository.findByRestaurantId(mark.getReferenceId()).orElse(null)).getTenant().getTenantId())
+                                .orElse(null);
+                    }
+                    case allergen -> {
+                        Optional<Allergen> checkAllergenAccess = allergenRepository.findByAllergenId(requestToEntityId);
+                        tenantIdFromEntity = checkAllergenAccess
+                                .map(allergen -> Objects.requireNonNull(restaurantRepository.findByRestaurantId(allergen.getReferenceId()).orElse(null)).getTenant().getTenantId())
                                 .orElse(null);
                     }
                     default -> throwNotFound(ReferenceType.entity, requestToEntityId, acceptLanguage);
