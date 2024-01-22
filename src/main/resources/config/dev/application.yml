@@ -49,9 +49,9 @@ application:
   security:
     jwt:
       secret-key: ${SECRET_KEY}
-      expiration: 86400000 # a day
+      expiration: 1800000 # 30 min
       refresh-token:
-        expiration: 604800000 # 7 days
+        expiration: 86400000 # 1 day
 bucket4j:
   get:
     capacity: ${GET_CAPACITY}
