@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import ua.com.obox.authserver.user.UserService;
+import ua.com.obox.dbschema.tools.attachment.ReferenceType;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
 import ua.com.obox.dbschema.translation.responsebody.Content;
@@ -12,6 +14,7 @@ import ua.com.obox.dbschema.translation.responsebody.Content;
 @RequiredArgsConstructor
 public class TranslationService {
     private final TranslationRepository translationRepository;
+    private final UserService userService;
 
     public TranslationResponse getAllTranslationById(String translationId, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
@@ -19,7 +22,7 @@ public class TranslationService {
             ExceptionTools.notFoundResponse(".translationNotFound", finalAcceptLanguage, translationId);
             return null;
         });
-        assert translationFromDB != null;
+        userService.checkPermissionForUser(ReferenceType.valueOf(translationFromDB.getReferenceType()), translationFromDB.getReferenceId(), finalAcceptLanguage);
 
         TranslationResponse translationResponse = TranslationResponse.builder().build();
         ObjectMapper objectMapper = new ObjectMapper();
