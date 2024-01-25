@@ -40,6 +40,7 @@ ftp:
   username: ${LOCAL_FTP_USER}
   password: ${LOCAL_FTP_PASSWORD}
 server:
+  port: 8080
   error:
     include-stacktrace: never
     include-message: always
