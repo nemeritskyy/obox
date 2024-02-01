@@ -10,11 +10,13 @@
     </parent>
     <groupId>ua.com.obox</groupId>
     <artifactId>obox</artifactId>
-    <version>0.1.16-DEV</version>
+    <version>${obox.version}-${obox.deployment.type}</version>
     <packaging>jar</packaging>
     <name>obox</name>
     <description>obox</description>
     <properties>
+        <obox.version>0.1.17</obox.version>
+        <obox.deployment.type>DEV</obox.deployment.type>
         <java.version>19</java.version>
         <dotenv.version>4.0.0</dotenv.version>
         <jwt.version>0.11.5</jwt.version>
@@ -29,6 +31,7 @@
         <heroku.maven.version>3.0.7</heroku.maven.version>
         <mockito.version>5.8.0</mockito.version>
         <mysql.connector.version>8.2.0</mysql.connector.version>
+        <docker.client.version>1.4.13</docker.client.version>
     </properties>
     <profiles>
         <profile>
@@ -251,6 +254,29 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>com.spotify</groupId>
+                <artifactId>dockerfile-maven-plugin</artifactId>
+                <version>${docker.client.version}</version>
+                <executions>
+                    <execution>
+                        <id>build-image</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>push</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <repository>nemeritskyy/obox-dev</repository>
+                    <tag>${obox.version}-${obox.deployment.type}</tag>
+                    <useMavenSettingsForAuth>true</useMavenSettingsForAuth>
+                    <dockerfile>${project.basedir}/Dockerfile</dockerfile>
+                    <skip>false</skip>
+                </configuration>
             </plugin>
         </plugins>
     </build>
