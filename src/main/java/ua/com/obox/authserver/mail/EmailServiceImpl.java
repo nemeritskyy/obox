@@ -15,8 +15,8 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender javaMailSender;
     @Value("${spring.mail.username}")
     private String sender;
-    @Value("${application.url}")
-    String siteUrl;
+    @Value("${confirmation-registration}")
+    String confirmUrl;
 
     @Autowired
     public EmailServiceImpl(JavaMailSender javaMailSender) {
@@ -47,7 +47,7 @@ public class EmailServiceImpl implements EmailService {
                     "<html><body>" +
                     "Dear user, " + sendTo + ",<br>" +
                     "You have registered an account on the QR menu creation service for establishments. " +
-                    "<a href=\"" + siteUrl + "/auth/confirm/" + confirmToken + "\">Please confirm your email.</a><br>" +
+                    "<a href=\"" + confirmUrl + confirmToken + "\">Please confirm your email.</a><br>" +
                     "If you didn't request this code, you can safely ignore this email. Someone else might have typed your email address by mistake.<br>" +
                     "<br>" +
                     "Thanks,<br>" +
