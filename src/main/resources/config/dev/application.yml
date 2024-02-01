@@ -47,6 +47,7 @@ server:
 application:
   url: ${DEV_URL}
   image-dns: ${DEV_IMAGE_DNS}
+  confirmation-registration: ${DEV_CONFIRM_URL}
   security:
     jwt:
       secret-key: ${SECRET_KEY}
