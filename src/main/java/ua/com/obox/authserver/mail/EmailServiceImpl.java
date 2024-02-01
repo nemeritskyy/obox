@@ -15,7 +15,7 @@ public class EmailServiceImpl implements EmailService {
     private final JavaMailSender javaMailSender;
     @Value("${spring.mail.username}")
     private String sender;
-    @Value("${confirmation-registration}")
+    @Value("${application.confirmation-registration}")
     String confirmUrl;
 
     @Autowired

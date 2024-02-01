@@ -11,7 +11,7 @@ import java.net.URLEncoder;
 import java.util.List;
 
 public class SendMessage {
-    private final static String apiToken = "6804603259:AAGpqi-O9AlLhDBx8shkbRerlLyRUI9L3_s";
+    private final static String apiToken = "6804603259:AAF1rsE65CK7Fq0sXouv0HzxH93eNhVOTjE";
 
     public final static List<String> chatsId = List.of(
             "110085037", // andrew
