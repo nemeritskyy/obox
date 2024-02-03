@@ -1,6 +1,7 @@
 package ua.com.obox.dbschema.tools.logging;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.GenericGenerator;
@@ -13,6 +14,7 @@ import java.util.Date;
 @NoArgsConstructor
 @Entity
 @Table(name = "log_entry")
+@Builder
 public class LogEntry {
     @Id
     @GeneratedValue(generator = "uuid2")
@@ -35,5 +37,8 @@ public class LogEntry {
     @Column(name = "unix_time")
     private long unixTime;
 
-
+    @Override
+    public String toString() {
+        return String.format("%s - %s %s [%s]\n", serverTime, ip, message, unixTime);
+    }
 }

@@ -10,7 +10,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import ua.com.obox.authserver.exception.CustomAuthenticationEntryPoint;
+import ua.com.obox.dbschema.tools.logging.LogToFile;
 
 @Configuration
 @EnableWebSecurity
@@ -25,6 +27,7 @@ public class FilterChainConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf().disable()
+                .addFilterBefore(new LogToFile(), BasicAuthenticationFilter.class)
                 .exceptionHandling(customizer -> customizer.authenticationEntryPoint(customAuthenticationEntryPoint))
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()

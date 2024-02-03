@@ -29,7 +29,6 @@ public class RateLimitingAspect {
     private final RateLimiterService rateLimiterService;
     private final LoggingService loggingService;
     public static Map<String, AtomicInteger> blackList = new HashMap<>();
-    private static String lastLog = "";
 
     @Before("execution(* ua.com.obox.dbschema..*Controller.*(..)) && @annotation(org.springframework.web.bind.annotation.GetMapping)")
     public synchronized void beforeControllerMethod(JoinPoint joinPoint) {
@@ -56,7 +55,6 @@ public class RateLimitingAspect {
         HttpServletRequest servletRequest = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String ipAddress = IPTools.getOriginallyIpFromHeader(servletRequest);
         checkBlockIp(ipAddress, servletRequest);
-        logging(servletRequest, ipAddress, joinPoint.getSignature().getName());
         checkBlacklist(ipAddress, type);
     }
 
@@ -82,14 +80,6 @@ public class RateLimitingAspect {
         if (totalManyRequestsFromIp.get() >= 10) {
             totalManyRequestsFromIp.incrementAndGet();
             throw new BadFieldsResponse(HttpStatus.FORBIDDEN);
-        }
-    }
-
-    private void logging(HttpServletRequest servletRequest, String ipAddress, String methodName) {
-        String url = servletRequest.getRequestURI();
-        if (!lastLog.equals(String.format("%s %s", methodName, url))) {
-            lastLog = String.format("%s %s", methodName, url);
-            loggingService.log(LogLevel.INFO, ipAddress, String.format("%s %s", methodName, url));
         }
     }
 }
