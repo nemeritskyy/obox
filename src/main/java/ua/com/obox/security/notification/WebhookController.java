@@ -24,6 +24,7 @@ import java.util.regex.Pattern;
 public class WebhookController {
     private final LoggingService loggingService;
     private final UserRepository userRepository;
+    private final SendMessage sendMessage;
 
     @PostMapping("/notification-webhook")
     public ResponseEntity<String> handleWebhook(@RequestBody Update payload) {
@@ -48,17 +49,17 @@ public class WebhookController {
                 String ip = matcher.group(0);
                 if (RateLimitingAspect.blackList.containsKey(ip)) {
                     RateLimitingAspect.blackList.remove(ip);
-                    SendMessage.sendToTelegram(String.format("\u2705 IP:%s UNBLOCKED by USER: %s (%s)", ip, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName()));
+                    sendMessage.sendToTelegram(String.format("\u2705 IP:%s UNBLOCKED by USER: %s (%s)", ip, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName()));
                 } else {
-                    SendMessage.sendToTelegram(String.format("\uD83D\uDEA8 IP:%s NOT FOUND by USER: %s (%s)", ip, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName()));
+                    sendMessage.sendToTelegram(String.format("\uD83D\uDEA8 IP:%s NOT FOUND by USER: %s (%s)", ip, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName()));
                 }
             } else {
-                SendMessage.sendToTelegram("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 WRONG FORMAT,\nEXAMPLE TO UNBLOCK WRITE:\n/unblock127.0.0.1");
+                sendMessage.sendToTelegram("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 WRONG FORMAT,\nEXAMPLE TO UNBLOCK WRITE:\n/unblock127.0.0.1");
             }
         }
         if ((message.startsWith("/start") || (message.equals("/help")) && isAllowed(chatId))) {
             String welcome = "**Available commands:**\nAll commands - /help\nUnblock example - /unblock127.0.0.1\n/setadmin your@email.com";
-            SendMessage.forwardTelegram(chatId, welcome);
+            sendMessage.forwardTelegram(chatId, welcome);
         }
         if (message.startsWith("/setadmin") && isAllowed(chatId)) {
             String regex = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$";
@@ -72,18 +73,18 @@ public class WebhookController {
                     User userToAdmin = user.get();
                     userToAdmin.setRole(Role.ADMIN);
                     userRepository.save(userToAdmin);
-                    SendMessage.sendToTelegram(String.format("\u2705 USER :%s HAS RECEIVED ADMINISTRATOR RIGHTS", userEmail));
+                    sendMessage.sendToTelegram(String.format("\u2705 USER :%s HAS RECEIVED ADMINISTRATOR RIGHTS", userEmail));
                 } else {
-                    SendMessage.sendToTelegram(String.format("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 USER %s NOT FOUND", userEmail));
+                    sendMessage.sendToTelegram(String.format("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 USER %s NOT FOUND", userEmail));
                 }
             } else {
-                SendMessage.sendToTelegram("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 WRONG EMAIL FORMAT,\nEXAMPLE:\n/setadmin your@email.com");
+                sendMessage.sendToTelegram("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 WRONG EMAIL FORMAT,\nEXAMPLE:\n/setadmin your@email.com");
             }
         }
     }
 
     private boolean isAllowed(Long chatId) {
-        return SendMessage.chatsId.contains(String.valueOf(chatId));
+        return sendMessage.chatsId.contains(String.valueOf(chatId));
     }
 }
 

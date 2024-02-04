@@ -4,6 +4,8 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.web.servlet.support.SpringBootServletInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.Environment;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
@@ -20,10 +22,10 @@ public class OboxApplication extends SpringBootServletInitializer {
 
     public static void main(String[] args) throws TelegramApiException {
         TimeZone.setDefault(TimeZone.getTimeZone("Europe/Kiev"));
-        if (System.getenv().containsKey("telegram")) {
-            TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            botsApi.registerBot(new SecurityBot());
-        }
-        SpringApplication.run(OboxApplication.class, args);
+        ConfigurableApplicationContext context = SpringApplication.run(OboxApplication.class, args);
+        Environment env = context.getEnvironment();
+
+        TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+        botsApi.registerBot(new SecurityBot(env.getProperty("telegram.bot.token"), env.getProperty("telegram.bot.name")));
     }
 }

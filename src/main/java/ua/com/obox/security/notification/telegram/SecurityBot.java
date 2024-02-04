@@ -4,6 +4,13 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.objects.Update;
 
 public class SecurityBot extends TelegramLongPollingBot {
+    private final String botUsername;
+
+    public SecurityBot(String botToken, String botName) {
+        super(botToken);
+        this.botUsername = botName;
+    }
+
     @Override
     public void onUpdateReceived(Update update) {
 
@@ -11,11 +18,7 @@ public class SecurityBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotUsername() {
-        return "OboxSecurity";
+        return botUsername;
     }
 
-    @Override
-    public String getBotToken() {
-        return "6804603259:AAF1rsE65CK7Fq0sXouv0HzxH93eNhVOTjE";
-    }
 }

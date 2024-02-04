@@ -1,5 +1,7 @@
 package ua.com.obox.security.notification;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.BufferedInputStream;
@@ -10,8 +12,10 @@ import java.net.URLConnection;
 import java.net.URLEncoder;
 import java.util.List;
 
+@Component
 public class SendMessage {
-    private final static String apiToken = "6804603259:AAF1rsE65CK7Fq0sXouv0HzxH93eNhVOTjE";
+    @Value("${telegram.bot.token}")
+    private String apiToken;
 
     public final static List<String> chatsId = List.of(
             "110085037", // andrew
@@ -22,7 +26,7 @@ public class SendMessage {
             "5064058806" // rodion
     );
 
-    public static void sendToTelegram(String messageToAdmin) {
+    public void sendToTelegram(String messageToAdmin) {
         String message = URLEncoder.encode(messageToAdmin);
         for (String telegramId : chatsId) {
             String urlString = UriComponentsBuilder
@@ -42,7 +46,7 @@ public class SendMessage {
         }
     }
 
-    public static void forwardTelegram(long messageTo, String messageForward) {
+    public void forwardTelegram(long messageTo, String messageForward) {
         String message = URLEncoder.encode(messageForward);
         String urlString = UriComponentsBuilder
                 .fromUriString("https://api.telegram.org/bot" + apiToken + "/sendMessage")
@@ -60,4 +64,5 @@ public class SendMessage {
         }
 
     }
+
 }

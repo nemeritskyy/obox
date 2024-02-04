@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class RateLimitingAspect {
     private final RateLimiterService rateLimiterService;
     private final LoggingService loggingService;
+    private final SendMessage sendMessage;
     public static Map<String, AtomicInteger> blackList = new HashMap<>();
 
     @Before("execution(* ua.com.obox.dbschema..*Controller.*(..)) && @annotation(org.springframework.web.bind.annotation.GetMapping)")
@@ -63,7 +64,7 @@ public class RateLimitingAspect {
         if (ipAddress != null && !rateLimiterService.isAllowed(ipAddress, type)) {
             if (!blackList.containsKey(ipAddress)) {
                 loggingService.log(LogLevel.CRITICAL, ipAddress, "TOO MANY REQUESTS");
-                SendMessage.sendToTelegram(String.format("\u26A0 IP:%s TOO MANY REQUESTS", ipAddress));
+                sendMessage.sendToTelegram(String.format("\u26A0 IP:%s TOO MANY REQUESTS", ipAddress));
                 blackList.put(ipAddress, new AtomicInteger(1));
             } else {
                 blackList.get(ipAddress).incrementAndGet();
@@ -75,7 +76,7 @@ public class RateLimitingAspect {
     private void checkBlockIp(String ipAddress, HttpServletRequest servletRequest) {
         AtomicInteger totalManyRequestsFromIp = blackList.getOrDefault(ipAddress, new AtomicInteger(0));
         if (totalManyRequestsFromIp.get() == 10) {
-            SendMessage.sendToTelegram(String.format("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 IP:%s BLOCKED,\nLAST REQUEST:%s,\nTO UNBLOCK WRITE:\n/unblock%s", ipAddress, servletRequest.getRequestURI(), ipAddress));
+            sendMessage.sendToTelegram(String.format("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 IP:%s BLOCKED,\nLAST REQUEST:%s,\nTO UNBLOCK WRITE:\n/unblock%s", ipAddress, servletRequest.getRequestURI(), ipAddress));
         }
         if (totalManyRequestsFromIp.get() >= 10) {
             totalManyRequestsFromIp.incrementAndGet();
