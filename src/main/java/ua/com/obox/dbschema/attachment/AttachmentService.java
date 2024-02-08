@@ -2,13 +2,16 @@ package ua.com.obox.dbschema.attachment;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.authserver.user.UserService;
 import ua.com.obox.dbschema.dish.Dish;
 import ua.com.obox.dbschema.dish.DishRepository;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.attachment.ReferenceType;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.ftp.AttachmentFTP;
+import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.translation.CheckHeader;
 
 import java.io.IOException;
@@ -23,11 +26,17 @@ public class AttachmentService {
     private final AttachmentRepository attachmentRepository;
     private final DishRepository dishRepository;
     private final AttachmentFTP attachmentFTP;
+    private final UserService userService;
     @Value("${application.image-dns}")
     private String attachmentsDns;
 
     public List<AttachmentResponse> getAllAttachmentsByEntityId(String entityId, String acceptLanguage) {
+        String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         List<Attachment> attachments = attachmentRepository.findAllByReferenceId(entityId);
+
+        if (!attachments.isEmpty()) {
+            checkAccess(attachments.get(0).getReferenceType(), attachments.get(0).getReferenceId(), finalAcceptLanguage);
+        } else throw new BadFieldsResponse(HttpStatus.NOT_FOUND);
 
         return attachments.stream()
                 .map(attachment -> AttachmentResponse.builder()
@@ -48,6 +57,8 @@ public class AttachmentService {
             return null;
         });
 
+        checkAccess(attachment.getReferenceType(), attachment.getReferenceId(), finalAcceptLanguage);
+
         return AttachmentResponse.builder()
                 .attachmentId(attachment.getAttachmentId())
                 .referenceId(attachment.getReferenceId())
@@ -58,6 +69,9 @@ public class AttachmentService {
 
     public AttachmentResponseId createAttachment(Attachment request, String acceptLanguage) throws IOException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
+        checkAccess(request.getReferenceType(), request.getReferenceId(), finalAcceptLanguage);
+
         String attachmentUUID = String.valueOf(UUID.randomUUID());
         String attachmentUrl = attachmentFTP.uploadAttachment(request.getAttachment(), request.getReferenceId(), request.getReferenceType(), attachmentUUID, finalAcceptLanguage);
         Attachment attachment = Attachment.builder()
@@ -97,6 +111,8 @@ public class AttachmentService {
             return null;
         });
 
+        checkAccess(attachment.getReferenceType(), attachment.getReferenceId(), finalAcceptLanguage);
+
         attachmentRepository.delete(attachment);
 
         var dishInfo = dishRepository.findByImage(attachment.getAttachmentId());
@@ -108,5 +124,14 @@ public class AttachmentService {
         }
 
         AttachmentFTP.deleteAttachment(attachment.getAttachmentUrl());
+    }
+
+    private void checkAccess(String requestReferenceType, String requestToEntityId, String acceptLanguage) {
+        switch (requestReferenceType) {
+            case "dish" -> {
+                userService.checkPermissionForUser(ReferenceType.dish, requestToEntityId, acceptLanguage);
+            }
+            default -> throw new BadFieldsResponse(HttpStatus.BAD_REQUEST);
+        }
     }
 }

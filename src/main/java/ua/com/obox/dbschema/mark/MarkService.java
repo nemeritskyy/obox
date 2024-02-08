@@ -6,11 +6,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.authserver.user.UserService;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.sorting.EntityOrder;
 import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.FieldUpdateFunction;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.attachment.ReferenceType;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
@@ -37,21 +39,23 @@ public class MarkService {
     private final TranslationRepository translationRepository;
     private final EntityOrderRepository entityOrderRepository;
     private final UpdateServiceHelper serviceHelper;
+    private final UserService userService;
     private static final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
 
     private String selectedLanguage = "en-US";
 
     public List<MarkResponse> getAllMarksByRestaurantId(String restaurantId, String acceptLanguage) {
         selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
+        restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", selectedLanguage, restaurantId));
+        userService.checkPermissionForUser(ReferenceType.restaurant, restaurantId, selectedLanguage);
+
         ObjectMapper objectMapper = new ObjectMapper();
         AtomicReference<Content<OnlyName>> content = new AtomicReference<>();
         AtomicReference<Translation> translation = new AtomicReference<>();
 
-        restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", selectedLanguage, restaurantId));
-
         List<Mark> marks = markRepository.findAllByReferenceIdOrderByCreatedAtDesc(restaurantId);
 
-        // for sorting results
         EntityOrder sortingExist = entityOrderRepository.findByReferenceIdAndReferenceType(restaurantId, "marks").orElse(null);
         if (sortingExist != null) {
             List<String> MenuIdsInOrder = Arrays.stream(sortingExist.getSortedList().split(",")).toList();
@@ -89,6 +93,8 @@ public class MarkService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
         Mark mark = markRepository.findByMarkId(markId).orElseThrow(() -> ExceptionTools.notFoundException(".markNotFound", finalAcceptLanguage, markId));
+        userService.checkPermissionForUser(ReferenceType.mark, markId, selectedLanguage);
+
         Translation translation = translationRepository.findAllByTranslationId(mark.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, markId));
 
@@ -109,10 +115,13 @@ public class MarkService {
 
     public MarkResponseId createMark(Mark request, String acceptLanguage) throws JsonProcessingException {
         selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
+        userService.checkPermissionForUser(ReferenceType.restaurant, request.getReferenceId(), request.getReferenceType(), selectedLanguage);
+
         Mark mark = Mark.builder().build();
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
         validateRequest(request, mark, fieldErrors, true);
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
         mark.setOriginalLanguage(request.getLanguage());
         mark.setCreatedAt(Instant.now().getEpochSecond());
@@ -133,9 +142,12 @@ public class MarkService {
 
     public void patchMarkById(String markId, Mark request, String acceptLanguage) throws JsonProcessingException {
         selectedLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
-        Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
         Mark mark = markRepository.findByMarkId(markId).orElseThrow(() -> ExceptionTools.notFoundException(".markNotFound", selectedLanguage, markId));
+        userService.checkPermissionForUser(ReferenceType.mark, markId, selectedLanguage);
+
+        Map<String, String> fieldErrors = new ResponseErrorMap<>();
+
         Translation translation = translationRepository.findAllByTranslationId(mark.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", selectedLanguage, markId));
 
@@ -149,7 +161,7 @@ public class MarkService {
         fieldErrors.put("language", Validator.validateLanguage(request.getLanguage(), selectedLanguage));
 
         if (required) {
-            if ("restaurant".equals(request.getReferenceType())) {
+            if ("restaurant" .equals(request.getReferenceType())) {
                 var restaurantInfo = restaurantRepository.findByRestaurantId(request.getReferenceId());
                 mark.setReferenceType(request.getReferenceType());
                 if (restaurantInfo.isEmpty()) {
@@ -173,7 +185,7 @@ public class MarkService {
         updateField(request.getEmoji(), false, request, fieldErrors, "emoji",
                 (emoji) -> serviceHelper.updateEmoji(mark::setEmoji, emoji, selectedLanguage), selectedLanguage);
 
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
     }
 
@@ -210,6 +222,7 @@ public class MarkService {
     public void deleteMarkById(String markId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Mark mark = markRepository.findByMarkId(markId).orElseThrow(() -> ExceptionTools.notFoundException(".markNotFound", finalAcceptLanguage, markId));
+        userService.checkPermissionForUser(ReferenceType.mark, markId, selectedLanguage);
         markRepository.delete(mark);
     }
 }

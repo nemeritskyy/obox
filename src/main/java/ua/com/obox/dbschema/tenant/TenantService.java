@@ -6,11 +6,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.authserver.user.UserService;
 import ua.com.obox.dbschema.tools.RequiredServiceHelper;
 import ua.com.obox.dbschema.restaurant.Restaurant;
 import ua.com.obox.dbschema.restaurant.RestaurantRepository;
 import ua.com.obox.dbschema.restaurant.RestaurantResponse;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.attachment.ReferenceType;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
@@ -37,15 +39,17 @@ public class TenantService {
     private final TranslationRepository translationRepository;
     private final UpdateServiceHelper serviceHelper;
     private final RequiredServiceHelper requiredServiceHelper;
+    private final UserService userService;
 
     public List<RestaurantResponse> getAllRestaurantsByTenantId(String tenantId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
+        tenantRepository.findByTenantId(tenantId).orElseThrow(() -> ExceptionTools.notFoundException(".tenantNotFound", finalAcceptLanguage, tenantId));
+        userService.checkPermissionForUser(ReferenceType.tenant, tenantId, finalAcceptLanguage);
+
         ObjectMapper objectMapper = new ObjectMapper();
         AtomicReference<Content<RestaurantTranslationEntry>> content = new AtomicReference<>();
         AtomicReference<Translation> translation = new AtomicReference<>();
-
-        tenantRepository.findByTenantId(tenantId).orElseThrow(() -> ExceptionTools.notFoundException(".tenantNotFound", finalAcceptLanguage, tenantId));
-
         List<Restaurant> restaurants = restaurantRepository.findAllByTenant_TenantId(tenantId);
 
         return restaurants.stream()
@@ -74,6 +78,8 @@ public class TenantService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
         Tenant tenant = tenantRepository.findByTenantId(tenantId).orElseThrow(() -> ExceptionTools.notFoundException(".tenantNotFound", finalAcceptLanguage, tenantId));
+        userService.checkPermissionForUser(ReferenceType.tenant, tenantId, finalAcceptLanguage);
+
         Translation translation = translationRepository.findAllByTranslationId(tenant.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, tenantId));
 
@@ -127,6 +133,8 @@ public class TenantService {
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
         Tenant tenant = tenantRepository.findByTenantId(tenantId).orElseThrow(() -> ExceptionTools.notFoundException(".tenantNotFound", finalAcceptLanguage, tenantId));
+        userService.checkPermissionForUser(ReferenceType.tenant, tenantId, finalAcceptLanguage);
+
         Translation translation = translationRepository.findAllByTranslationId(tenant.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, tenantId));
 
@@ -157,7 +165,7 @@ public class TenantService {
         } else {
             fieldErrors.put("name", requiredServiceHelper.updateNameIfNeeded(request.getName(), tenant, finalAcceptLanguage));
         }
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
     }
 

@@ -7,8 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import ua.com.obox.authserver.user.User;
-import ua.com.obox.authserver.user.UserRepository;
+import ua.com.obox.authserver.user.UserService;
 import ua.com.obox.dbschema.attachment.Attachment;
 import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.category.Category;
@@ -16,6 +15,7 @@ import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.tools.FieldUpdateFunction;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.attachment.AttachmentTools;
+import ua.com.obox.dbschema.tools.attachment.ReferenceType;
 import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
@@ -41,7 +41,7 @@ public class DishService {
     private final AttachmentRepository attachmentRepository;
     private final TranslationRepository translationRepository;
     private final UpdateServiceHelper serviceHelper;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final ResourceBundle translationContent = ResourceBundle.getBundle("translation.messages");
     @Value("${application.image-dns}")
     private String attachmentsDns;
@@ -50,8 +50,8 @@ public class DishService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
         Dish dish = dishRepository.findByDishId(dishId).orElseThrow(() -> ExceptionTools.notFoundException(".dishNotFound", finalAcceptLanguage, dishId));
-        System.out.println(dish.getDishId());
-        System.out.println(dish.getTranslationId());
+        userService.checkPermissionForUser(ReferenceType.dish, dishId, finalAcceptLanguage);
+
         Translation translation = translationRepository.findAllByTranslationId(dish.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, dishId));
 
@@ -82,6 +82,7 @@ public class DishService {
 
     public DishResponseId createDish(Dish request, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        userService.checkPermissionForUser(ReferenceType.category, request.getCategoryId(), finalAcceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
         Optional<Category> category = categoryRepository.findByCategoryId(request.getCategoryId());
         if (category.isEmpty())
@@ -117,6 +118,8 @@ public class DishService {
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
         Dish dish = dishRepository.findByDishId(dishId).orElseThrow(() -> ExceptionTools.notFoundException(".dishNotFound", finalAcceptLanguage, dishId));
+        userService.checkPermissionForUser(ReferenceType.dish, dishId, finalAcceptLanguage);
+
         Translation translation = translationRepository.findAllByTranslationId(dish.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, dishId));
 
@@ -138,6 +141,7 @@ public class DishService {
     public void deleteDishById(String dishId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Dish dish = dishRepository.findByDishId(dishId).orElseThrow(() -> ExceptionTools.notFoundException(".dishNotFound", finalAcceptLanguage, dishId));
+        userService.checkPermissionForUser(ReferenceType.dish, dishId, finalAcceptLanguage);
         dishRepository.delete(dish);
     }
 
@@ -146,12 +150,13 @@ public class DishService {
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
         Dish dish = dishRepository.findByDishId(dishId).orElseThrow(() -> ExceptionTools.notFoundException(".dishNotFound", finalAcceptLanguage, dishId));
+        userService.checkPermissionForUser(ReferenceType.dish, dishId, finalAcceptLanguage);
 
         Optional<Attachment> attachment = attachmentRepository.findByAttachmentId(request.getImage());
         if (attachment.isEmpty())
             fieldErrors.put("image", String.format(translationContent.getString(finalAcceptLanguage + ".attachmentNotFound"), request.getImage()));
 
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
 
         dish.setImage(request.getImage());
@@ -200,7 +205,7 @@ public class DishService {
         updateField(request.getState(), required, dish, fieldErrors, "state",
                 (state) -> serviceHelper.updateState(dish::setState, state, finalAcceptLanguage), finalAcceptLanguage);
 
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
     }
 
@@ -208,7 +213,6 @@ public class DishService {
         if (value != null || required) {
             if (Objects.equals(fieldName, "name") && dish.getCategory() != null) {
                 ExistEntity<DishTranslationEntry> existEntity = new ExistEntity<>(translationRepository);
-                /*validate exists on menu level, because dish will to move from one category to other*/
                 List<Category> sameParentCategories = categoryRepository.findAllByMenu_MenuId(dish.getCategory().getMenu().getMenuId());
                 List<Dish> allDishesForMenu = new ArrayList<>();
                 for (Category category : sameParentCategories) {
@@ -235,7 +239,7 @@ public class DishService {
                 dish.setName(languagesMap.get(language).getName());
             if (dish.getDescription() == null) {
                 dish.setDescription(content.getContent().get(language).getDescription());
-            } else if (dish.getDescription().equals("")) {
+            } else if (dish.getDescription().isEmpty()) {
                 dish.setDescription(null);
             }
         }
@@ -243,19 +247,4 @@ public class DishService {
         translation.setContent(objectMapper.writeValueAsString(content));
         translation.setUpdatedAt(Instant.now().getEpochSecond());
     }
-
-    public boolean isDishInTenant(String dishId, String userId) {
-        Optional<Dish> optionalDish = dishRepository.findByDishId(dishId);
-        Optional<User> optionalUser = userRepository.findByUserId(userId);
-
-        if (optionalDish.isPresent() && optionalUser.isPresent()) {
-            Dish dish = optionalDish.get();
-            User user = optionalUser.get();
-            String dishTenantId = dish.getCategory().getMenu().getRestaurant().getTenant().getTenantId();
-            return dishTenantId.equals(user.getTenant().getTenantId());
-        }
-
-        return false;
-    }
-
 }

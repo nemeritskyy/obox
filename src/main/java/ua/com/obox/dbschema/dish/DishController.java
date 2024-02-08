@@ -2,6 +2,7 @@ package ua.com.obox.dbschema.dish;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -11,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
@@ -23,6 +25,7 @@ import static ua.com.obox.dbschema.tools.examples.DishResponseExample.*;
 
 @RestController
 @RequestMapping("/dishes")
+@PreAuthorize("hasAnyRole('ADMIN','USER')")
 @RequiredArgsConstructor
 @Tag(name = "Dishes")
 public class DishController {
@@ -32,7 +35,6 @@ public class DishController {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @GetMapping("/{dishId}")
-//    @PreAuthorize("hasPermission(#dishId, 'READ')")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",
                     schema = @Schema(example = GET_200_RESPONSE_EXAMPLE))),
@@ -62,6 +64,7 @@ public class DishController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Hidden
     @PostMapping("/{dishId}/set-primary-image")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),

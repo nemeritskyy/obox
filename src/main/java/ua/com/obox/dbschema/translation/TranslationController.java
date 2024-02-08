@@ -9,12 +9,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import static ua.com.obox.dbschema.tools.examples.TranslationResponseExample.*;
 
 @RestController
 @RequestMapping("/translations")
+@PreAuthorize("hasAnyRole('ADMIN','USER')")
 @RequiredArgsConstructor
 @Tag(name = "Translation")
 public class TranslationController {

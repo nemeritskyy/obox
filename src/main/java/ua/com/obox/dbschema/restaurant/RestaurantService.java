@@ -8,6 +8,7 @@ import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.authserver.user.UserService;
 import ua.com.obox.dbschema.allergen.AllergenRepository;
 import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.category.Category;
@@ -30,6 +31,7 @@ import ua.com.obox.dbschema.tenant.Tenant;
 import ua.com.obox.dbschema.tenant.TenantRepository;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.attachment.AttachmentTools;
+import ua.com.obox.dbschema.tools.attachment.ReferenceType;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
@@ -68,18 +70,20 @@ public class RestaurantService {
     private final UpdateServiceHelper serviceHelper;
     private final LanguageRepository languageRepository;
     private final SelectedLanguageRepository selectedLanguageRepository;
+    private final UserService userService;
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
     @Value("${application.image-dns}")
     private String attachmentsDns;
 
     public List<MenuResponse> getAllMenusByRestaurantId(String restaurantId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
+        restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
+        userService.checkPermissionForUser(ReferenceType.restaurant, restaurantId, finalAcceptLanguage);
+
         ObjectMapper objectMapper = new ObjectMapper();
         AtomicReference<Content<MenuTranslationEntry>> content = new AtomicReference<>();
         AtomicReference<Translation> translation = new AtomicReference<>();
-
-        restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
-
         List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantIdOrderByCreatedAt(restaurantId);
 
         // for sorting results
@@ -119,6 +123,8 @@ public class RestaurantService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
         Restaurant restaurant = restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
+        userService.checkPermissionForUser(ReferenceType.restaurant, restaurantId, finalAcceptLanguage);
+
         Translation translation = translationRepository.findAllByTranslationId(restaurant.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, restaurantId));
 
@@ -137,14 +143,12 @@ public class RestaurantService {
 
     public RestaurantResponseId createRestaurant(Restaurant request, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        userService.checkPermissionForUser(ReferenceType.tenant, request.getTenantId(), finalAcceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
-
-        request.setTenantIdForRestaurant(request.getTenantId());
 
         Optional<Tenant> tenant = tenantRepository.findByTenantId(request.getTenantId());
         if (tenant.isEmpty())
             fieldErrors.put("tenant_id", String.format(translation.getString(finalAcceptLanguage + ".tenantNotFound"), request.getTenant().getTenantId()));
-
 
         Restaurant restaurant = Restaurant.builder()
                 .tenant(tenant.orElse(null))
@@ -194,6 +198,8 @@ public class RestaurantService {
 
         try (Session session = entityManager.unwrap(Session.class)) {
             Restaurant restaurant = restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
+            userService.checkPermissionForUser(ReferenceType.restaurant, restaurantId, finalAcceptLanguage);
+
             Translation translation = translationRepository.findAllByTranslationId(restaurant.getTranslationId())
                     .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, restaurantId));
 
@@ -209,21 +215,20 @@ public class RestaurantService {
 
     public void deleteRestaurantById(String restaurantId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
-
         Restaurant restaurant = restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
-
+        userService.checkPermissionForUser(ReferenceType.restaurant, restaurantId, finalAcceptLanguage);
         restaurantRepository.delete(restaurant);
     }
 
     public List<MenuResponse> getAllMenusCategoriesDishesByRestaurantId(String restaurantId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
+        restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
+        userService.checkPermissionForUser(ReferenceType.restaurant, restaurantId, finalAcceptLanguage);
+
         ObjectMapper objectMapper = new ObjectMapper();
         AtomicReference<Content> content = new AtomicReference<>();
         AtomicReference<Translation> translation = new AtomicReference<>();
-
-        restaurantRepository.findByRestaurantId(restaurantId).orElseThrow(() -> ExceptionTools.notFoundException(".restaurantNotFound", finalAcceptLanguage, restaurantId));
-
         List<Menu> menus = menuRepository.findAllByRestaurant_RestaurantIdOrderByCreatedAt(restaurantId);
 
         // for sorting results
@@ -350,7 +355,7 @@ public class RestaurantService {
                 (name) -> serviceHelper.updateNameField(restaurant::setName, name, finalAcceptLanguage));
         fieldErrors.put("address", serviceHelper.updateVarcharField(restaurant::setAddress, request.getAddress(), "address", finalAcceptLanguage));
 
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
     }
 
@@ -374,7 +379,7 @@ public class RestaurantService {
                 restaurant.setName(languagesMap.get(language).getName());
             if (restaurant.getAddress() == null) {
                 restaurant.setAddress(content.getContent().get(language).getAddress());
-            } else if (restaurant.getAddress().equals("")) {
+            } else if (restaurant.getAddress().isEmpty()) {
                 restaurant.setAddress(null);
             }
         }

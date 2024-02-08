@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.attachment;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -9,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -18,12 +20,14 @@ import static ua.com.obox.dbschema.tools.examples.AttachmentsResponseExample.*;
 
 @RestController
 @RequestMapping("/attachments")
+@PreAuthorize("hasAnyRole('ADMIN','USER')")
 @RequiredArgsConstructor
 
 @Tag(name = "Attachments")
 public class AttachmentController {
     private final AttachmentService service;
 
+    @Hidden
     @GetMapping("/{entityId}/attachments")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Success", content = @Content(mediaType = "application/json",

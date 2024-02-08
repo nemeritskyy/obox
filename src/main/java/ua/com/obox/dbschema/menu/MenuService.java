@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.authserver.user.UserService;
 import ua.com.obox.dbschema.category.Category;
 import ua.com.obox.dbschema.category.CategoryRepository;
 import ua.com.obox.dbschema.category.CategoryResponse;
@@ -15,6 +16,7 @@ import ua.com.obox.dbschema.sorting.EntityOrder;
 import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.FieldUpdateFunction;
 import ua.com.obox.dbschema.tools.Validator;
+import ua.com.obox.dbschema.tools.attachment.ReferenceType;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
@@ -42,16 +44,18 @@ public class MenuService {
     private final EntityOrderRepository entityOrderRepository;
     private final TranslationRepository translationRepository;
     private final UpdateServiceHelper serviceHelper;
+    private final UserService userService;
     private final ResourceBundle translationContent = ResourceBundle.getBundle("translation.messages");
 
     public List<CategoryResponse> getAllCategoriesByMenuId(String menuId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
+        menuRepository.findByMenuId(menuId).orElseThrow(() -> ExceptionTools.notFoundException(".menuNotFound", finalAcceptLanguage, menuId));
+        userService.checkPermissionForUser(ReferenceType.menu, menuId, finalAcceptLanguage);
+
         ObjectMapper objectMapper = new ObjectMapper();
         AtomicReference<Content<CategoryTranslationEntry>> content = new AtomicReference<>();
         AtomicReference<Translation> translation = new AtomicReference<>();
-
-        menuRepository.findByMenuId(menuId).orElseThrow(() -> ExceptionTools.notFoundException(".menuNotFound", finalAcceptLanguage, menuId));
-
         List<Category> categories = categoryRepository.findAllByMenu_MenuId(menuId);
 
         // for sorting results
@@ -91,6 +95,8 @@ public class MenuService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
         Menu menu = menuRepository.findByMenuId(menuId).orElseThrow(() -> ExceptionTools.notFoundException(".menuNotFound", finalAcceptLanguage, menuId));
+        userService.checkPermissionForUser(ReferenceType.menu, menuId, finalAcceptLanguage);
+
         Translation translation = translationRepository.findAllByTranslationId(menu.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, menuId));
 
@@ -110,6 +116,7 @@ public class MenuService {
 
     public MenuResponseId createMenu(Menu request, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        userService.checkPermissionForUser(ReferenceType.restaurant, request.getRestaurantId(), finalAcceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
         Optional<Restaurant> restaurant = restaurantRepository.findByRestaurantId(request.getRestaurantId());
@@ -146,6 +153,8 @@ public class MenuService {
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
         Menu menu = menuRepository.findByMenuId(menuId).orElseThrow(() -> ExceptionTools.notFoundException(".menuNotFound", finalAcceptLanguage, menuId));
+        userService.checkPermissionForUser(ReferenceType.menu, menuId, finalAcceptLanguage);
+
         Translation translation = translationRepository.findAllByTranslationId(menu.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, menuId));
 
@@ -160,6 +169,7 @@ public class MenuService {
     public void deleteMenuById(String menuId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Menu menu = menuRepository.findByMenuId(menuId).orElseThrow(() -> ExceptionTools.notFoundException(".menuNotFound", finalAcceptLanguage, menuId));
+        userService.checkPermissionForUser(ReferenceType.menu, menuId, finalAcceptLanguage);
         menuRepository.delete(menu);
     }
 
@@ -172,7 +182,7 @@ public class MenuService {
         updateField(request.getState(), required, menu, fieldErrors, "state",
                 (state) -> serviceHelper.updateState(menu::setState, state, finalAcceptLanguage), finalAcceptLanguage);
 
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
     }
 

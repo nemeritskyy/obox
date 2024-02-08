@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import static ua.com.obox.dbschema.tools.examples.LanguageResponseExample.*;
 
 @RestController
 @RequestMapping("/languages")
+@PreAuthorize("hasAnyRole('ADMIN','USER')")
 @RequiredArgsConstructor
 @Tag(name = "Languages")
 public class LanguageController {
@@ -33,7 +35,6 @@ public class LanguageController {
     }
 
     @PostMapping("/")
-    @GetMapping("/")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "204", description = "No Content"),
             @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(mediaType = "application/json",

@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import ua.com.obox.authserver.user.UserService;
 import ua.com.obox.dbschema.attachment.AttachmentRepository;
 import ua.com.obox.dbschema.menu.Menu;
 import ua.com.obox.dbschema.menu.MenuRepository;
@@ -18,6 +19,7 @@ import ua.com.obox.dbschema.sorting.EntityOrderRepository;
 import ua.com.obox.dbschema.tools.FieldUpdateFunction;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.attachment.AttachmentTools;
+import ua.com.obox.dbschema.tools.attachment.ReferenceType;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
 import ua.com.obox.dbschema.tools.response.BadFieldsResponse;
 import ua.com.obox.dbschema.tools.response.ResponseErrorMap;
@@ -45,18 +47,20 @@ public class CategoryService {
     private final TranslationRepository translationRepository;
     private final AttachmentRepository attachmentRepository;
     private final UpdateServiceHelper serviceHelper;
+    private final UserService userService;
     private final ResourceBundle translationContent = ResourceBundle.getBundle("translation.messages");
     @Value("${application.image-dns}")
     private String attachmentsDns;
 
     public List<DishResponse> getAllDishesByCategoryId(String categoryId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+
+        categoryRepository.findByCategoryId(categoryId).orElseThrow(() -> ExceptionTools.notFoundException(".categoryNotFound", finalAcceptLanguage, categoryId));
+        userService.checkPermissionForUser(ReferenceType.category, categoryId, finalAcceptLanguage);
+
         ObjectMapper objectMapper = new ObjectMapper();
         AtomicReference<Content<CategoryTranslationEntry>> content = new AtomicReference<>();
         AtomicReference<Translation> translation = new AtomicReference<>();
-
-        categoryRepository.findByCategoryId(categoryId).orElseThrow(() -> ExceptionTools.notFoundException(".categoryNotFound", finalAcceptLanguage, categoryId));
-
         List<Dish> dishes = dishRepository.findAllByCategory_CategoryIdOrderByCreatedAtDesc(categoryId);
 
         // for sorting results
@@ -106,6 +110,8 @@ public class CategoryService {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
 
         Category category = categoryRepository.findByCategoryId(categoryId).orElseThrow(() -> ExceptionTools.notFoundException(".categoryNotFound", finalAcceptLanguage, categoryId));
+        userService.checkPermissionForUser(ReferenceType.category, categoryId, finalAcceptLanguage);
+
         Translation translation = translationRepository.findAllByTranslationId(category.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, categoryId));
 
@@ -125,6 +131,7 @@ public class CategoryService {
 
     public CategoryResponseId createCategory(Category request, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        userService.checkPermissionForUser(ReferenceType.menu, request.getMenuId(), finalAcceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
         Optional<Menu> menu = menuRepository.findByMenuId(request.getMenuId());
@@ -159,9 +166,12 @@ public class CategoryService {
 
     public void patchCategoryById(String categoryId, Category request, String acceptLanguage) throws JsonProcessingException {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
+        userService.checkPermissionForUser(ReferenceType.category, categoryId, finalAcceptLanguage);
         Map<String, String> fieldErrors = new ResponseErrorMap<>();
 
         Category category = categoryRepository.findByCategoryId(categoryId).orElseThrow(() -> ExceptionTools.notFoundException(".categoryNotFound", finalAcceptLanguage, categoryId));
+        userService.checkPermissionForUser(ReferenceType.category, categoryId, finalAcceptLanguage);
+
         Translation translation = translationRepository.findAllByTranslationId(category.getTranslationId())
                 .orElseThrow(() -> ExceptionTools.notFoundException(".translationNotFound", finalAcceptLanguage, categoryId));
 
@@ -175,6 +185,7 @@ public class CategoryService {
     public void deleteCategoryById(String categoryId, String acceptLanguage) {
         String finalAcceptLanguage = CheckHeader.checkHeaderLanguage(acceptLanguage);
         Category category = categoryRepository.findByCategoryId(categoryId).orElseThrow(() -> ExceptionTools.notFoundException(".categoryNotFound", finalAcceptLanguage, categoryId));
+        userService.checkPermissionForUser(ReferenceType.category, categoryId, finalAcceptLanguage);
         categoryRepository.delete(category);
     }
 
@@ -190,7 +201,7 @@ public class CategoryService {
         updateField(request.getDescription(), required, category, fieldErrors, "description",
                 (description) -> serviceHelper.updateVarcharField(category::setDescription, description, "description", finalAcceptLanguage), finalAcceptLanguage);
 
-        if (fieldErrors.size() > 0)
+        if (!fieldErrors.isEmpty())
             throw new BadFieldsResponse(HttpStatus.BAD_REQUEST, fieldErrors);
     }
 
@@ -220,7 +231,7 @@ public class CategoryService {
                 category.setName(languagesMap.get(language).getName());
             if (category.getDescription() == null) {
                 category.setDescription(content.getContent().get(language).getDescription());
-            } else if (category.getDescription().equals("")) {
+            } else if (category.getDescription().isEmpty()) {
                 category.setDescription(null);
             }
         }

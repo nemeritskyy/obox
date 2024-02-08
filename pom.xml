@@ -10,7 +10,7 @@
     </parent>
     <groupId>ua.com.obox</groupId>
     <artifactId>obox</artifactId>
-    <version>0.1.10-DEV</version>
+    <version>0.1.16-DEV</version>
     <packaging>war</packaging>
     <name>obox</name>
     <description>obox</description>
@@ -92,7 +92,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- json libraries -->
+        <!-- JWT libraries -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>

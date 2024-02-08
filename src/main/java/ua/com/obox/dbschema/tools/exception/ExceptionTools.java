@@ -3,12 +3,12 @@ package ua.com.obox.dbschema.tools.exception;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.dbschema.tools.services.LoggingResponseHelper;
 
 import javax.annotation.PostConstruct;
-import javax.servlet.http.HttpServletRequest;
 import java.util.ResourceBundle;
 
 @RequiredArgsConstructor
@@ -32,11 +32,8 @@ public class ExceptionTools {
         return new RuntimeException(errorMessage);
     }
 
-    public static RuntimeException notFoundException(String translationMessage, String acceptLanguage, String entityId, HttpServletRequest servletRequest) {
-        String errorMessage = String.format(translation.getString(acceptLanguage + translationMessage), entityId);
-        String defaultErrorMessage = String.format(translation.getString("en-US" + translationMessage), entityId);
-        LoggingResponseHelper.loggingThrowException(LogLevel.ERROR, HttpStatus.NOT_FOUND, errorMessage, defaultErrorMessage, staticLoggingService, servletRequest);
-        return new RuntimeException(errorMessage);
+    public static void notFoundExceptionWithoutLogging(String translationMessage, String acceptLanguage, String entityId) {
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND, String.format(translation.getString(acceptLanguage + translationMessage), entityId));
     }
 
     public static void notFoundResponse(String translationMessage, String acceptLanguage, String entityId) {
