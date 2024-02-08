@@ -22,7 +22,11 @@ import io.swagger.v3.oas.annotations.servers.Server;
         ),
         servers = {
                 @Server(
-                        description = "Obox Dev",
+                        description = "Obox Dev VPS (NEW)",
+                        url = "https://dev.obox.pp.ua"
+                ),
+                @Server(
+                        description = "Obox Dev Old",
                         url = "https://api.obox.pp.ua"
                 ),
                 @Server(

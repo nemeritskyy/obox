@@ -40,12 +40,14 @@ ftp:
   username: ${DEV_FTP_USER}
   password: ${DEV_FTP_PASSWORD}
 server:
+  port: 8080
   error:
     include-stacktrace: never
     include-message: always
 application:
   url: ${DEV_URL}
   image-dns: ${DEV_IMAGE_DNS}
+  confirmation-registration: ${DEV_CONFIRM_URL}
   security:
     jwt:
       secret-key: ${SECRET_KEY}

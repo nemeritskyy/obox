@@ -16,6 +16,7 @@ public class SendMessage {
     public final static List<String> chatsId = List.of(
             "110085037", // andrew
             "688726739", // dari
+            "296348102", // olena
             "292030593", // anastasia
             "6935742919", // andrew test
             "5064058806" // rodion

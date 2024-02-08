@@ -16,6 +16,6 @@ public class SecurityBot extends TelegramLongPollingBot {
 
     @Override
     public String getBotToken() {
-        return "6804603259:AAGpqi-O9AlLhDBx8shkbRerlLyRUI9L3_s";
+        return "6804603259:AAF1rsE65CK7Fq0sXouv0HzxH93eNhVOTjE";
     }
 }
