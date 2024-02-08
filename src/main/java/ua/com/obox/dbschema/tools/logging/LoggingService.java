@@ -18,7 +18,7 @@ import java.util.Date;
 public class LoggingService implements EnvironmentAware {
 
     private final LogRepository logRepository;
-    private static String logPath;
+    public static String logPath;
 
     @Override
     public void setEnvironment(Environment environment) {
