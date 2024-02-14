@@ -10,6 +10,7 @@ import ua.com.obox.authserver.user.User;
 import ua.com.obox.authserver.user.UserRepository;
 import ua.com.obox.dbschema.tenant.TenantRepository;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
+import ua.com.obox.security.bucket4j.RateLimitingAspect;
 
 import java.util.List;
 
@@ -37,5 +38,9 @@ public class QaService {
 
         tenantRepository.delete(user.getTenant());
         userRepository.delete(user);
+    }
+
+    public void unblockByUserIp(String userIp) {
+        RateLimitingAspect.blackList.remove(userIp);
     }
 }

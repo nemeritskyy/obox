@@ -17,4 +17,10 @@ public class QaController {
         qaService.deleteUserByEmail(userEmail);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("user/unblock={userIp}")
+    public ResponseEntity<Void> unblockByUserIp(@PathVariable String userIp) {
+        qaService.unblockByUserIp(userIp);
+        return ResponseEntity.noContent().build();
+    }
 }

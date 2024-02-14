@@ -37,7 +37,7 @@ public class WebhookController {
         return ResponseEntity.ok("OK");
     }
 
-    private void onUpdateReceived(Update update) {
+    public void onUpdateReceived(Update update) {
         String message = update.getMessage().getText();
         Long chatId = update.getMessage().getChatId();
         if (message.startsWith("/unblock") && isAllowed(chatId)) {
@@ -54,7 +54,7 @@ public class WebhookController {
                     sendMessage.sendToTelegram(String.format("\uD83D\uDEA8 IP:%s NOT FOUND by USER: %s (%s)", ip, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName()));
                 }
             } else {
-                sendMessage.sendToTelegram("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 WRONG FORMAT,\nEXAMPLE TO UNBLOCK WRITE:\n/unblock127.0.0.1");
+                    sendMessage.sendToTelegram("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 WRONG FORMAT,\nEXAMPLE TO UNBLOCK WRITE:\n/unblock127.0.0.1");
             }
         }
         if ((message.startsWith("/start") || (message.equals("/help")) && isAllowed(chatId))) {

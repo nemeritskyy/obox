@@ -53,7 +53,6 @@ public class LoggingService implements EnvironmentAware {
     }
 
     public static void addRecordToLog(String logging) {
-        System.out.println("join log");
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
         String todayDate = dateFormat.format(new Date());
 
@@ -61,10 +60,10 @@ public class LoggingService implements EnvironmentAware {
         File logFile = new File(logFilePath);
         try (FileWriter fileWriter = new FileWriter(logFile, true)) {
             fileWriter.write(logging);
+            System.out.print(logging);
         } catch (IOException e) {
             System.out.printf("Error writing log entry to file: {%s %s}", logFilePath, e);
         }
     }
-
 }
 

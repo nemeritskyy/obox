@@ -26,6 +26,11 @@ public class OboxApplication extends SpringBootServletInitializer {
         Environment env = context.getEnvironment();
 
         TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-        botsApi.registerBot(new SecurityBot(env.getProperty("telegram.bot.token"), env.getProperty("telegram.bot.name")));
+        SecurityBot bot = new SecurityBot(env.getProperty("telegram.bot.token"), env.getProperty("telegram.bot.name"));
+        try {
+            botsApi.registerBot(bot);
+        } catch (TelegramApiException e) {
+            System.out.println(e);
+        }
     }
 }

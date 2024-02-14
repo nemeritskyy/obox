@@ -42,7 +42,6 @@ public class UserService {
     private final Map<String, String> accessCache = new HashMap<>();
 
     public void checkPermissionForUser(ReferenceType referenceType, String requestToEntityId, String acceptLanguage) {
-        System.out.println("join check permission");
         if (!this.haveSuperUserPermission()) {
             String tenantId = this.getTenantIdFromSecurityContextHolder();
             String tenantIdFromEntity = "";
@@ -92,15 +91,12 @@ public class UserService {
                     }
                     default -> throwNotFound(ReferenceType.entity, requestToEntityId, acceptLanguage);
                 }
-                System.out.println("tenant from entity " + tenantIdFromEntity);
                 if (tenantId.equals(tenantIdFromEntity)) {
                     accessCache.put(requestToEntityId, tenantId);
-                    System.out.println("have access");
                 } else {
                     throwNotFound(referenceType, requestToEntityId, acceptLanguage);
                 }
             } else {
-                System.out.println("exist in cache");
                 if (!accessCache.get(requestToEntityId).equals(tenantId))
                     throwNotFound(referenceType, requestToEntityId, acceptLanguage);
             }
