@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class LogSenderTask implements Runnable {
+public class LogSenderTask {
     static SendMessage sendMessage = ApplicationContextProvider.getBean(SendMessage.class);
 
     public static void findByRequest(String command, String chatId) {
@@ -63,15 +63,6 @@ public class LogSenderTask implements Runnable {
             }
         }
         return matchingLines;
-    }
-
-    @Override
-    public void run() {
-        try {
-//            sendLogFile();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public static SendDocument getLastLog(String command, String chatId) throws ParseException {

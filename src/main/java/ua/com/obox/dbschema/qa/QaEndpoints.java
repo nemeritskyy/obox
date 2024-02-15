@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/qa")
 @RequiredArgsConstructor
-public class QaController {
+public class QaEndpoints {
     private final QaService qaService;
     @DeleteMapping("user/email={userEmail}")
     public ResponseEntity<Void> deleteUserByEmail(@PathVariable String userEmail) {
