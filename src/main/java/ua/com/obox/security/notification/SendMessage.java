@@ -24,7 +24,7 @@ public class SendMessage {
     @Value("${telegram.bot.token}")
     private String apiToken;
 
-    public final static List<String> chatsId = List.of(
+    public final static List<String> allowChatId = List.of(
             "110085037" // andrew
             , "688726739" // dari
             , "296348102" // olena
@@ -35,7 +35,7 @@ public class SendMessage {
 
     public void sendToTelegram(String messageToAdmin) {
         String message = URLEncoder.encode(messageToAdmin);
-        for (String telegramId : chatsId) {
+        for (String telegramId : allowChatId) {
             String urlString = UriComponentsBuilder
                     .fromUriString("https://api.telegram.org/bot" + apiToken + "/sendMessage")
                     .queryParam("chat_id", telegramId)

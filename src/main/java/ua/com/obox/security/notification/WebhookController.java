@@ -14,6 +14,8 @@ import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 import ua.com.obox.security.bucket4j.RateLimitingAspect;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,7 +40,7 @@ public class WebhookController {
     }
 
     public void onUpdateReceived(Update update) {
-        String message = update.getMessage().getText();
+        String message = update.getMessage().getText().replaceAll("_", ".");
         Long chatId = update.getMessage().getChatId();
         if (message.startsWith("/unblock") && isAllowed(chatId)) {
             String regex = "^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}$";
@@ -54,11 +56,19 @@ public class WebhookController {
                     sendMessage.sendToTelegram(String.format("\uD83D\uDEA8 IP:%s NOT FOUND by USER: %s (%s)", ip, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName()));
                 }
             } else {
-                    sendMessage.sendToTelegram("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 WRONG FORMAT,\nEXAMPLE TO UNBLOCK WRITE:\n/unblock127.0.0.1");
+                sendMessage.sendToTelegram("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 WRONG FORMAT,\nEXAMPLE TO UNBLOCK WRITE:\n/unblock127.0.0.1");
             }
         }
         if ((message.startsWith("/start") || (message.equals("/help")) && isAllowed(chatId))) {
-            String welcome = "**Available commands:**\nAll commands - /help\nUnblock example - /unblock127.0.0.1\n/setadmin your@email.com";
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+            String logExampleDate = dateFormat.format(new Date());
+            String welcome = "**Available commands:**" +
+                    "\n/help" +
+                    "\n/unblock92_249_92_46 [for fast use] or /unblock127.0.0.1" +
+                    "\n/setadmin your@email.com" +
+                    "\n/log" +
+                    "\n/log" + logExampleDate.replaceAll("-", "_") + " [for fast use] or /log " + logExampleDate +
+                    "\n/logfind {request} [return last 100 results]";
             sendMessage.forwardTelegram(chatId, welcome);
         }
         if (message.startsWith("/setadmin") && isAllowed(chatId)) {
@@ -84,7 +94,7 @@ public class WebhookController {
     }
 
     private boolean isAllowed(Long chatId) {
-        return sendMessage.chatsId.contains(String.valueOf(chatId));
+        return sendMessage.allowChatId.contains(String.valueOf(chatId));
     }
 }
 
