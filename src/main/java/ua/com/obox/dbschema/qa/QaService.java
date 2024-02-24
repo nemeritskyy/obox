@@ -9,8 +9,8 @@ import ua.com.obox.authserver.token.TokenRepository;
 import ua.com.obox.authserver.user.User;
 import ua.com.obox.authserver.user.UserRepository;
 import ua.com.obox.dbschema.tenant.TenantRepository;
+import ua.com.obox.dbschema.tools.ip.IPBlackList;
 import ua.com.obox.dbschema.tools.exception.ExceptionTools;
-import ua.com.obox.security.bucket4j.RateLimitingAspect;
 
 import java.util.List;
 
@@ -41,6 +41,6 @@ public class QaService {
     }
 
     public void unblockByUserIp(String userIp) {
-        RateLimitingAspect.blackList.remove(userIp);
+        IPBlackList.blackList.remove(userIp);
     }
 }

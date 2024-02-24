@@ -10,9 +10,9 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import ua.com.obox.authserver.user.Role;
 import ua.com.obox.authserver.user.User;
 import ua.com.obox.authserver.user.UserRepository;
+import ua.com.obox.dbschema.tools.ip.IPBlackList;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
-import ua.com.obox.security.bucket4j.RateLimitingAspect;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -49,8 +49,8 @@ public class WebhookController {
             Matcher matcher = pattern.matcher(message.substring(8));
             if (matcher.find()) {
                 String ip = matcher.group(0);
-                if (RateLimitingAspect.blackList.containsKey(ip)) {
-                    RateLimitingAspect.blackList.remove(ip);
+                if (IPBlackList.blackList.containsKey(ip)) {
+                    IPBlackList.blackList.remove(ip);
                     sendMessage.sendToTelegram(String.format("\u2705 IP:%s UNBLOCKED by USER: %s (%s)", ip, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName()));
                 } else {
                     sendMessage.sendToTelegram(String.format("\uD83D\uDEA8 IP:%s NOT FOUND by USER: %s (%s)", ip, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName()));
@@ -94,7 +94,7 @@ public class WebhookController {
     }
 
     private boolean isAllowed(Long chatId) {
-        return sendMessage.allowChatId.contains(String.valueOf(chatId));
+        return SendMessage.allowChatId.contains(String.valueOf(chatId));
     }
 }
 
