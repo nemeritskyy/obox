@@ -10,7 +10,14 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.firewall.HttpFirewall;
+import org.springframework.security.web.firewall.StrictHttpFirewall;
+import ua.com.obox.authserver.config.filter.LogAndSuppressRequestRejectedExceptionFilter;
 import ua.com.obox.authserver.exception.CustomAuthenticationEntryPoint;
+import ua.com.obox.dbschema.tools.attachment.ApplicationContextProvider;
+import ua.com.obox.dbschema.tools.ip.IPBlackList;
+import ua.com.obox.dbschema.tools.logging.LogToFile;
 
 @Configuration
 @EnableWebSecurity
@@ -22,9 +29,19 @@ public class FilterChainConfiguration {
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Bean
+    public HttpFirewall allowUrlEncodedSlashHttpFirewall() {
+        StrictHttpFirewall firewall = new StrictHttpFirewall();
+        firewall.setAllowUrlEncodedSlash(true);
+        firewall.setAllowSemicolon(true);
+        return firewall;
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf().disable()
+                .addFilterBefore(new LogAndSuppressRequestRejectedExceptionFilter(ApplicationContextProvider.getBean(IPBlackList.class)), BasicAuthenticationFilter.class)
+                .addFilterBefore(new LogToFile(), BasicAuthenticationFilter.class)
                 .exceptionHandling(customizer -> customizer.authenticationEntryPoint(customAuthenticationEntryPoint))
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
@@ -32,7 +49,8 @@ public class FilterChainConfiguration {
                 .antMatchers(
                         "/",
                         "/notification-webhook",
-                        "/search/**"
+                        "/search/**",
+                        "/qa/**"
                         ).permitAll()
                 .antMatchers("/auth/**").permitAll()
                 .antMatchers(

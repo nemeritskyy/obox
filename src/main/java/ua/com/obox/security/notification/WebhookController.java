@@ -10,10 +10,12 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import ua.com.obox.authserver.user.Role;
 import ua.com.obox.authserver.user.User;
 import ua.com.obox.authserver.user.UserRepository;
+import ua.com.obox.dbschema.tools.ip.IPBlackList;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
-import ua.com.obox.security.bucket4j.RateLimitingAspect;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,6 +26,7 @@ import java.util.regex.Pattern;
 public class WebhookController {
     private final LoggingService loggingService;
     private final UserRepository userRepository;
+    private final SendMessage sendMessage;
 
     @PostMapping("/notification-webhook")
     public ResponseEntity<String> handleWebhook(@RequestBody Update payload) {
@@ -36,8 +39,8 @@ public class WebhookController {
         return ResponseEntity.ok("OK");
     }
 
-    private void onUpdateReceived(Update update) {
-        String message = update.getMessage().getText();
+    public void onUpdateReceived(Update update) {
+        String message = update.getMessage().getText().replaceAll("_", ".");
         Long chatId = update.getMessage().getChatId();
         if (message.startsWith("/unblock") && isAllowed(chatId)) {
             String regex = "^((25[0-5]|(2[0-4]|1\\d|[1-9]|)\\d)\\.?\\b){4}$";
@@ -46,19 +49,27 @@ public class WebhookController {
             Matcher matcher = pattern.matcher(message.substring(8));
             if (matcher.find()) {
                 String ip = matcher.group(0);
-                if (RateLimitingAspect.blackList.containsKey(ip)) {
-                    RateLimitingAspect.blackList.remove(ip);
-                    SendMessage.sendToTelegram(String.format("\u2705 IP:%s UNBLOCKED by USER: %s (%s)", ip, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName()));
+                if (IPBlackList.blackList.containsKey(ip)) {
+                    IPBlackList.blackList.remove(ip);
+                    sendMessage.sendToTelegram(String.format("\u2705 IP:%s UNBLOCKED by USER: %s (%s)", ip, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName()));
                 } else {
-                    SendMessage.sendToTelegram(String.format("\uD83D\uDEA8 IP:%s NOT FOUND by USER: %s (%s)", ip, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName()));
+                    sendMessage.sendToTelegram(String.format("\uD83D\uDEA8 IP:%s NOT FOUND by USER: %s (%s)", ip, update.getMessage().getFrom().getFirstName(), update.getMessage().getFrom().getUserName()));
                 }
             } else {
-                SendMessage.sendToTelegram("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 WRONG FORMAT,\nEXAMPLE TO UNBLOCK WRITE:\n/unblock127.0.0.1");
+                sendMessage.sendToTelegram("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 WRONG FORMAT,\nEXAMPLE TO UNBLOCK WRITE:\n/unblock127.0.0.1");
             }
         }
         if ((message.startsWith("/start") || (message.equals("/help")) && isAllowed(chatId))) {
-            String welcome = "**Available commands:**\nAll commands - /help\nUnblock example - /unblock127.0.0.1\n/setadmin your@email.com";
-            SendMessage.forwardTelegram(chatId, welcome);
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+            String logExampleDate = dateFormat.format(new Date());
+            String welcome = "**Available commands:**" +
+                    "\n/help" +
+                    "\n/unblock92_249_92_46 [for fast use] or /unblock127.0.0.1" +
+                    "\n/setadmin your@email.com" +
+                    "\n/log" +
+                    "\n/log" + logExampleDate.replaceAll("-", "_") + " [for fast use] or /log " + logExampleDate +
+                    "\n/logfind {request} [return last 100 results]";
+            sendMessage.forwardTelegram(chatId, welcome);
         }
         if (message.startsWith("/setadmin") && isAllowed(chatId)) {
             String regex = "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$";
@@ -72,18 +83,18 @@ public class WebhookController {
                     User userToAdmin = user.get();
                     userToAdmin.setRole(Role.ADMIN);
                     userRepository.save(userToAdmin);
-                    SendMessage.sendToTelegram(String.format("\u2705 USER :%s HAS RECEIVED ADMINISTRATOR RIGHTS", userEmail));
+                    sendMessage.sendToTelegram(String.format("\u2705 USER :%s HAS RECEIVED ADMINISTRATOR RIGHTS", userEmail));
                 } else {
-                    SendMessage.sendToTelegram(String.format("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 USER %s NOT FOUND", userEmail));
+                    sendMessage.sendToTelegram(String.format("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 USER %s NOT FOUND", userEmail));
                 }
             } else {
-                SendMessage.sendToTelegram("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 WRONG EMAIL FORMAT,\nEXAMPLE:\n/setadmin your@email.com");
+                sendMessage.sendToTelegram("\uD83D\uDEA8\uD83D\uDEA8\uD83D\uDEA8 WRONG EMAIL FORMAT,\nEXAMPLE:\n/setadmin your@email.com");
             }
         }
     }
 
     private boolean isAllowed(Long chatId) {
-        return SendMessage.chatsId.contains(String.valueOf(chatId));
+        return SendMessage.allowChatId.contains(String.valueOf(chatId));
     }
 }
 

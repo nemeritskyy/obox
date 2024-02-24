@@ -69,8 +69,8 @@ bucket4j:
     regenerate: ${DELETE_REGENERATE}
 telegram:
   bot:
-    name: ${BOT_NAME}
-    token: ${BOT_TOKEN}
+    name: ${LOCAL_BOT_NAME}
+    token: ${LOCAL_BOT_TOKEN}
 sentry:
   dsn: ${SENTRY_DSN}
   # Set traces-sample-rate to 1.0 to capture 100% of transactions for performance monitoring.

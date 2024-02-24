@@ -128,6 +128,7 @@ public class AuthenticationService {
         return AuthenticationResponse.builder()
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
+                .tenantId(user.getTenant().getTenantId())
                 .build();
     }
 
@@ -152,6 +153,7 @@ public class AuthenticationService {
         });
         tokenRepository.saveAll(validUserTokens);
     }
+
     public void accessToken(
             HttpServletRequest request,
             HttpServletResponse response
@@ -221,6 +223,7 @@ public class AuthenticationService {
             return AuthenticationResponse.builder()
                     .accessToken(jwtToken)
                     .refreshToken(refreshToken)
+                    .tenantId(user.getTenant().getTenantId())
                     .build();
         } else {
             Map<String, String> fieldErrors = new ResponseErrorMap<>();
