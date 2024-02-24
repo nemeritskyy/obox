@@ -36,6 +36,6 @@ public class IPBlackList {
 
     public void addToBlackList(String ipAddress, String requestUrl) {
         blackList.put(ipAddress,new AtomicInteger(11));
-        sendMessage.sendToTelegram(String.format("\uD83E\uDEB1 IP:%s BLOCKED,\nLAST REQUEST:%s", ipAddress, requestUrl, ipAddress));
+        sendMessage.sendToTelegram(String.format("\uD83E\uDEB1 IP:%s BLOCKED,\nLAST REQUEST:%s", ipAddress, requestUrl));
     }
 }
