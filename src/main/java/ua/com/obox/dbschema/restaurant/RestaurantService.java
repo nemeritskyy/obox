@@ -148,7 +148,7 @@ public class RestaurantService {
 
         Optional<Tenant> tenant = tenantRepository.findByTenantId(request.getTenantId());
         if (tenant.isEmpty())
-            fieldErrors.put("tenant_id", String.format(translation.getString(finalAcceptLanguage + ".tenantNotFound"), request.getTenant().getTenantId()));
+            fieldErrors.put("tenant_id", String.format(translation.getString(finalAcceptLanguage + ".tenantNotFound"), request.getTenantId()));
 
         Restaurant restaurant = Restaurant.builder()
                 .tenant(tenant.orElse(null))

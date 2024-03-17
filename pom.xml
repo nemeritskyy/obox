@@ -15,7 +15,7 @@
     <name>obox</name>
     <description>obox</description>
     <properties>
-        <obox.version>0.1.17</obox.version>
+        <obox.version>0.1.29</obox.version>
         <obox.deployment.type>DEV</obox.deployment.type>
         <java.version>19</java.version>
         <dotenv.version>4.0.0</dotenv.version>
@@ -26,7 +26,7 @@
         <commons.net.version>3.10.0</commons.net.version>
         <imgscalr.version>4.2</imgscalr.version>
         <bucket4j.version>8.7.0</bucket4j.version>
-        <telegram.version>6.8.0</telegram.version>
+        <telegram.version>6.9.7.0</telegram.version>
         <maven.compiler.version>3.11.0</maven.compiler.version>
         <heroku.maven.version>3.0.7</heroku.maven.version>
         <mockito.version>5.8.0</mockito.version>
@@ -180,6 +180,7 @@
             </resource>
         </resources>
         <finalName>${project.artifactId}</finalName>
+
         <plugins>
             <plugin>
                 <artifactId>maven-clean-plugin</artifactId>
@@ -233,28 +234,29 @@
                     <appName>${heroku.appName}</appName>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>io.sentry</groupId>
-                <artifactId>sentry-maven-plugin</artifactId>
-                <version>0.0.6</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <!-- for showing output of sentry-cli -->
-                    <debugSentryCli>true</debugSentryCli>
-                    <org>obox</org>
-                    <project>java-spring-boot</project>
-                    <!-- in case you're self hosting, provide the URL here -->
-                    <!--<url>http://localhost:8000/</url>-->
-                    <authToken>${env.SENTRY_AUTH_TOKEN}</authToken>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>uploadSourceBundle</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
+
+<!--            <plugin>-->
+<!--                <groupId>io.sentry</groupId>-->
+<!--                <artifactId>sentry-maven-plugin</artifactId>-->
+<!--                <version>0.0.6</version>-->
+<!--                <extensions>true</extensions>-->
+<!--                <configuration>-->
+<!--                    &lt;!&ndash; for showing output of sentry-cli &ndash;&gt;-->
+<!--                    <debugSentryCli>true</debugSentryCli>-->
+<!--                    <org>obox</org>-->
+<!--                    <project>java-spring-boot</project>-->
+<!--                    &lt;!&ndash; in case you're self hosting, provide the URL here &ndash;&gt;-->
+<!--                    &lt;!&ndash;<url>http://localhost:8000/</url>&ndash;&gt;-->
+<!--                    <authToken>${env.SENTRY_AUTH_TOKEN}</authToken>-->
+<!--                </configuration>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <goals>-->
+<!--                            <goal>uploadSourceBundle</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
 
             <plugin>
                 <groupId>com.spotify</groupId>
