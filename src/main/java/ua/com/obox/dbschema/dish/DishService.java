@@ -170,7 +170,7 @@ public class DishService {
                 (allergens) -> serviceHelper.updateAllergens(dish::setAllergens, allergens, finalAcceptLanguage), finalAcceptLanguage);
 
         updateField(request.getMarksArray(), required, dish, fieldErrors, "marks",
-                (marks) -> serviceHelper.updateAllergens(dish::setMarks, marks, finalAcceptLanguage), finalAcceptLanguage);
+                (marks) -> serviceHelper.updateMarks(dish::setMarks, marks, finalAcceptLanguage), finalAcceptLanguage);
 
         updateField(request.getName(), required, dish, fieldErrors, "name",
                 (name) -> serviceHelper.updateNameField(dish::setName, name, finalAcceptLanguage), finalAcceptLanguage);

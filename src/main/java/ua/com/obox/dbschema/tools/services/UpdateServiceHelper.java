@@ -1,5 +1,6 @@
 package ua.com.obox.dbschema.tools.services;
 
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -7,23 +8,27 @@ import ua.com.obox.authserver.confirmation.Confirm;
 import ua.com.obox.authserver.confirmation.ConfirmRepository;
 import ua.com.obox.authserver.mail.EmailService;
 import ua.com.obox.authserver.user.User;
+import ua.com.obox.dbschema.allergen.Allergen;
+import ua.com.obox.dbschema.allergen.AllergenRepository;
 import ua.com.obox.dbschema.dish.Dish;
+import ua.com.obox.dbschema.mark.Mark;
+import ua.com.obox.dbschema.mark.MarkRepository;
 import ua.com.obox.dbschema.tools.Validator;
 import ua.com.obox.dbschema.tools.configuration.ValidationConfiguration;
 import ua.com.obox.dbschema.tools.logging.LogLevel;
 import ua.com.obox.dbschema.tools.logging.LoggingService;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 @Service
+@RequiredArgsConstructor
 public class UpdateServiceHelper {
     @Autowired
     LoggingService loggingService;
+    private final AllergenRepository allergenRepository;
+    private final MarkRepository markRepository;
 
     private final ResourceBundle translation = ResourceBundle.getBundle("translation.messages");
 
@@ -141,7 +146,28 @@ public class UpdateServiceHelper {
             if (allergens[0].isEmpty()) {
                 setter.accept(null);
             } else if (String.join(",", allergens).matches(ValidationConfiguration.UUID_REGEX)) {
+                for (String allergen : allergens) {
+                    Optional<Allergen> allergenOptional = allergenRepository.findByAllergenId(allergen);
+                    if (allergenOptional.isEmpty())
+                        return translation.getString(acceptLanguage + ".badSortedList");
+                }
                 setter.accept(String.join(",", allergens));
+            } else return translation.getString(acceptLanguage + ".badSortedList");
+        }
+        return null;
+    }
+
+    public String updateMarks(Consumer<String> setter, String[] marks, String acceptLanguage) {
+        if (marks != null) {
+            if (marks[0].isEmpty()) {
+                setter.accept(null);
+            } else if (String.join(",", marks).matches(ValidationConfiguration.UUID_REGEX)) {
+                for (String mark : marks) {
+                    Optional<Mark> allergenOptional = markRepository.findByMarkId(mark);
+                    if (allergenOptional.isEmpty())
+                        return translation.getString(acceptLanguage + ".badSortedList");
+                }
+                setter.accept(String.join(",", marks));
             } else return translation.getString(acceptLanguage + ".badSortedList");
         }
         return null;
