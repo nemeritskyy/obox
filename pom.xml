@@ -15,7 +15,7 @@
     <name>obox</name>
     <description>obox</description>
     <properties>
-        <obox.version>0.1.28</obox.version>
+        <obox.version>0.1.29</obox.version>
         <obox.deployment.type>DEV</obox.deployment.type>
         <java.version>19</java.version>
         <dotenv.version>4.0.0</dotenv.version>

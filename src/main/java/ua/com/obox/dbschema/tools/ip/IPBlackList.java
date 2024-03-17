@@ -1,6 +1,7 @@
 package ua.com.obox.dbschema.tools.ip;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import ua.com.obox.security.notification.SendMessage;
 
@@ -22,6 +23,8 @@ public class IPBlackList {
     public static Map<String, AtomicInteger> blackList = new HashMap<>();
 
     public List<String> warmRequests;
+    @Value("${APP_VERSION}")
+    private String appVersion;
 
     @PostConstruct
     public void init() {
@@ -44,7 +47,7 @@ public class IPBlackList {
             System.out.println("Blacklist init was failed");
         }
 
-        sendMessage.sendToTelegram("\uD83D\uDD04 Application was restarted");
+        sendMessage.sendToTelegram(String.format("\uD83D\uDD04 Application was restarted. Deploy ver. %s", appVersion));
     }
 
     public boolean checkBlackList(String ipAddress) {
