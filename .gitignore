@@ -4,3 +4,4 @@
 *.iml
 HELP.md
 .env
+/src/main/resources/blacklist/*

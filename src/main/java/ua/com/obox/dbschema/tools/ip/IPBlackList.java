@@ -5,6 +5,10 @@ import org.springframework.stereotype.Service;
 import ua.com.obox.security.notification.SendMessage;
 
 import javax.annotation.PostConstruct;
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,16 +22,29 @@ public class IPBlackList {
     public static Map<String, AtomicInteger> blackList = new HashMap<>();
 
     public List<String> warmRequests;
+
     @PostConstruct
     public void init() {
         warmRequests = new ArrayList<>();
-        warmRequests.add(";");
-        warmRequests.add(".env");
-        warmRequests.add("set_LimitClient_cfg");
-        warmRequests.add("cf_scripts/scripts/ajax/ckeditor/ckeditor.js");
-        warmRequests.add("dns-query");
-        warmRequests.add("actuator");
-        warmRequests.add("cgi-bin");
+        try (BufferedReader ipReader = new BufferedReader(new InputStreamReader(new FileInputStream("src/main/resources/blacklist/ip.txt")));
+             BufferedReader maskReader = new BufferedReader(new InputStreamReader(new FileInputStream("src/main/resources/blacklist/warm-mask.txt")))) {
+
+            String ip;
+            while ((ip = ipReader.readLine()) != null) {
+                blackList.put(ip, new AtomicInteger(11));
+            }
+
+            String mask;
+            while ((mask = maskReader.readLine()) != null) {
+                warmRequests.add(mask);
+            }
+            System.out.println(warmRequests);
+
+        } catch (IOException e) {
+            System.out.println("Blacklist init was failed");
+        }
+
+        sendMessage.sendToTelegram("\uD83D\uDD04 Application was restarted");
     }
 
     public boolean checkBlackList(String ipAddress) {
@@ -35,7 +52,7 @@ public class IPBlackList {
     }
 
     public void addToBlackList(String ipAddress, String requestUrl) {
-        blackList.put(ipAddress,new AtomicInteger(11));
+        blackList.put(ipAddress, new AtomicInteger(11));
         sendMessage.sendToTelegram(String.format("\uD83E\uDEB1 IP:%s BLOCKED,\nLAST REQUEST:%s", ipAddress, requestUrl));
     }
 }

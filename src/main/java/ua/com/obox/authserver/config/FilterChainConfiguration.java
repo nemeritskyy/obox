@@ -39,6 +39,7 @@ public class FilterChainConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
+                .cors().and()
                 .csrf().disable()
                 .addFilterBefore(new LogAndSuppressRequestRejectedExceptionFilter(ApplicationContextProvider.getBean(IPBlackList.class)), BasicAuthenticationFilter.class)
                 .addFilterBefore(new LogToFile(), BasicAuthenticationFilter.class)
